@@ -1,0 +1,5 @@
+- [ ] Build shared brand system and navigation
+- [ ] Build public website routes
+- [ ] Build dashboard routes and interactions
+- [ ] Implement video footer and assets
+- [ ] Validate desktop and mobile flows
