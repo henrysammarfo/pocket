@@ -1,0 +1,3 @@
+export function BrandLogo({ compact = false }: { compact?: boolean }) {
+  return <span className={`brand-logo ${compact ? "brand-logo--compact" : ""}`} role="img" aria-label="Morrow studio logo"><svg viewBox="0 0 169 40" aria-hidden="true"><path d="M4 28C15 5 24 5 19 29C30 8 39 5 34 29C46 13 57 12 62 21C67 31 52 35 47 27C42 19 55 14 68 16C75 17 76 29 69 31C61 33 59 20 72 17C82 15 90 17 92 23C94 31 83 34 79 27C75 19 87 15 101 17C110 19 109 29 102 31C95 33 92 24 98 19C105 13 117 15 121 21C126 30 116 35 111 27C106 18 119 14 132 17C139 18 143 26 139 30C134 35 127 29 130 23C133 17 145 15 151 19C157 24 152 32 147 30C141 28 145 19 165 17" /></svg></span>;
+}
