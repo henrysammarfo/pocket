@@ -1,0 +1,4 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight } from "lucide-react";
+export const Route=createFileRoute("/contact")({head:()=>({meta:[{title:"Say Hey — Morrow Studio"},{name:"description",content:"Start a creative project with Morrow studio."},{property:"og:title",content:"Say Hey — Morrow Studio"},{property:"og:description",content:"Bring us your idea. Let’s make it matter."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:Contact});
+function Contact(){return <main className="contact-page"><div><span className="eyebrow">New business · Collaborations · Hellos</span><h1>Bring us<br/>your idea.</h1></div><div className="contact-aside"><p>Tell us what you’re making, what keeps you up, and where you want to go. We’ll bring curiosity.</p><Link to="/dashboard">Enter the client room <ArrowUpRight/></Link></div></main>}
