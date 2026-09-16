@@ -10,21 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as LabRouteImport } from './routes/lab'
-import { Route as StudioRouteImport } from './routes/studio'
-import { Route as WorkRouteImport } from './routes/work'
+import { Route as ProductRouteImport } from './routes/product'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as DashboardAssetsRouteImport } from './routes/dashboard.assets'
-import { Route as DashboardMessagesRouteImport } from './routes/dashboard.messages'
-import { Route as DashboardProjectsRouteImport } from './routes/dashboard.projects'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
-import { Route as WorkSlugRouteImport } from './routes/work.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -37,19 +44,14 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LabRoute = LabRouteImport.update({
-  id: '/lab',
-  path: '/lab',
+const ProductRoute = ProductRouteImport.update({
+  id: '/product',
+  path: '/product',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StudioRoute = StudioRouteImport.update({
-  id: '/studio',
-  path: '/studio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WorkRoute = WorkRouteImport.update({
-  id: '/work',
-  path: '/work',
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -57,125 +59,88 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAssetsRoute = DashboardAssetsRouteImport.update({
-  id: '/assets',
-  path: '/assets',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMessagesRoute = DashboardMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => DashboardRoute,
 } as any)
-const WorkSlugRoute = WorkSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => WorkRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/lab': typeof LabRoute
-  '/studio': typeof StudioRoute
-  '/work': typeof WorkRouteWithChildren
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
-  '/work/$slug': typeof WorkSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
-  '/lab': typeof LabRoute
-  '/studio': typeof StudioRoute
-  '/work': typeof WorkRouteWithChildren
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
-  '/work/$slug': typeof WorkSlugRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/lab': typeof LabRoute
-  '/studio': typeof StudioRoute
-  '/work': typeof WorkRouteWithChildren
-  '/dashboard/assets': typeof DashboardAssetsRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/product': typeof ProductRoute
+  '/security': typeof SecurityRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
-  '/work/$slug': typeof WorkSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
+    | '/activity'
     | '/contact'
     | '/dashboard'
-    | '/lab'
-    | '/studio'
-    | '/work'
-    | '/dashboard/assets'
-    | '/dashboard/messages'
-    | '/dashboard/projects'
+    | '/product'
+    | '/security'
     | '/dashboard/settings'
-    | '/work/$slug'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/activity'
     | '/contact'
-    | '/lab'
-    | '/studio'
-    | '/work'
-    | '/dashboard/assets'
-    | '/dashboard/messages'
-    | '/dashboard/projects'
+    | '/product'
+    | '/security'
     | '/dashboard/settings'
-    | '/work/$slug'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
+    | '/about'
+    | '/activity'
     | '/contact'
     | '/dashboard'
-    | '/lab'
-    | '/studio'
-    | '/work'
-    | '/dashboard/assets'
-    | '/dashboard/messages'
-    | '/dashboard/projects'
+    | '/product'
+    | '/security'
     | '/dashboard/settings'
-    | '/work/$slug'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ActivityRoute: typeof ActivityRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
-  LabRoute: typeof LabRoute
-  StudioRoute: typeof StudioRoute
-  WorkRoute: typeof WorkRouteWithChildren
+  ProductRoute: typeof ProductRoute
+  SecurityRoute: typeof SecurityRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +150,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -201,25 +180,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lab': {
-      id: '/lab'
-      path: '/lab'
-      fullPath: '/lab'
-      preLoaderRoute: typeof LabRouteImport
+    '/product': {
+      id: '/product'
+      path: '/product'
+      fullPath: '/product'
+      preLoaderRoute: typeof ProductRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/studio': {
-      id: '/studio'
-      path: '/studio'
-      fullPath: '/studio'
-      preLoaderRoute: typeof StudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/work': {
-      id: '/work'
-      path: '/work'
-      fullPath: '/work'
-      preLoaderRoute: typeof WorkRouteImport
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -229,27 +201,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/assets': {
-      id: '/dashboard/assets'
-      path: '/assets'
-      fullPath: '/dashboard/assets'
-      preLoaderRoute: typeof DashboardAssetsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/messages': {
-      id: '/dashboard/messages'
-      path: '/messages'
-      fullPath: '/dashboard/messages'
-      preLoaderRoute: typeof DashboardMessagesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/projects': {
-      id: '/dashboard/projects'
-      path: '/projects'
-      fullPath: '/dashboard/projects'
-      preLoaderRoute: typeof DashboardProjectsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -257,28 +208,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/work/$slug': {
-      id: '/work/$slug'
-      path: '/$slug'
-      fullPath: '/work/$slug'
-      preLoaderRoute: typeof WorkSlugRouteImport
-      parentRoute: typeof WorkRoute
-    }
   }
 }
 
 interface DashboardRouteChildren {
-  DashboardAssetsRoute: typeof DashboardAssetsRoute
-  DashboardMessagesRoute: typeof DashboardMessagesRoute
-  DashboardProjectsRoute: typeof DashboardProjectsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAssetsRoute: DashboardAssetsRoute,
-  DashboardMessagesRoute: DashboardMessagesRoute,
-  DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
@@ -287,23 +225,14 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
-interface WorkRouteChildren {
-  WorkSlugRoute: typeof WorkSlugRoute
-}
-
-const WorkRouteChildren: WorkRouteChildren = {
-  WorkSlugRoute: WorkSlugRoute,
-}
-
-const WorkRouteWithChildren = WorkRoute._addFileChildren(WorkRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ActivityRoute: ActivityRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
-  LabRoute: LabRoute,
-  StudioRoute: StudioRoute,
-  WorkRoute: WorkRouteWithChildren,
+  ProductRoute: ProductRoute,
+  SecurityRoute: SecurityRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

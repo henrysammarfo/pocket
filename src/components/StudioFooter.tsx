@@ -1,5 +1,8 @@
-import { Instagram, Linkedin } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowUpRight, Github } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { FooterBackground } from "./FooterBackground";
-function TikTok(){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3c.3 2.6 1.7 4.2 4 4.5v3.2a8 8 0 0 1-4-1.2V16a6 6 0 1 1-5-5.8v3.3A2.8 2.8 0 1 0 12 16V3h3Z"/></svg>}
-export function StudioFooter(){return <footer className="studio-footer" aria-label="Footer"><div className="footer-jobs"><span className="tag">have a fresh idea?</span><h2 className="footer-headline">imagination<br/>meets craft</h2><div className="footer-nav"><span>Made</span><span>Story</span><span>In the lab</span><span>Say hey</span></div></div><div className="footer-logo"><BrandLogo /></div><div className="footer-contact"><span className="tag">say hey</span><h2 className="footer-headline footer-contact-lines"><span>let’s team up!</span><span>bring us your idea*</span></h2><p className="footer-note">*good things start with one spark. let’s make yours.</p><div className="footer-socials"><span aria-label="LinkedIn"><Linkedin/></span><span aria-label="Instagram"><Instagram/></span><span aria-label="TikTok"><TikTok/></span></div></div><FooterBackground/></footer>}
+
+export function StudioFooter() {
+  return <footer className="studio-footer" aria-label="Footer"><div className="footer-jobs"><span className="tag">one plan, one approval</span><h2 className="footer-headline">your money.<br/>inside your rules.</h2><div className="footer-nav"><Link to="/product">Product</Link><Link to="/security">Safety</Link><Link to="/activity">Receipts</Link><Link to="/contact">Contact</Link></div></div><div className="footer-logo"><BrandLogo /></div><div className="footer-contact"><span className="tag">built in Accra</span><h2 className="footer-headline footer-contact-lines"><span>plan plainly.</span><span>settle safely.*</span></h2><p className="footer-note">*POCKET is currently a testnet demo. No real funds move.</p><div className="footer-socials"><a href="https://github.com/henrysammarfo" aria-label="Henry Sam Marfo on GitHub"><Github /></a><a href="https://x.com/henrysammarfo" aria-label="Henry Sam Marfo on X">X</a></div></div><FooterBackground /></footer>;
+}
