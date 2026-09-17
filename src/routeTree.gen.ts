@@ -17,6 +17,10 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ProductRouteImport } from './routes/product'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
+import { Route as DashboardNewPlanRouteImport } from './routes/dashboard.new-plan'
+import { Route as DashboardPlansRouteImport } from './routes/dashboard.plans'
+import { Route as DashboardRulesRouteImport } from './routes/dashboard.rules'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +63,26 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardActivityRoute = DashboardActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNewPlanRoute = DashboardNewPlanRouteImport.update({
+  id: '/new-plan',
+  path: '/new-plan',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPlansRoute = DashboardPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRulesRoute = DashboardRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -73,6 +97,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/new-plan': typeof DashboardNewPlanRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -83,6 +111,10 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/new-plan': typeof DashboardNewPlanRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard': typeof DashboardIndexRoute
 }
@@ -95,6 +127,10 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
+  '/dashboard/new-plan': typeof DashboardNewPlanRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -108,6 +144,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/product'
     | '/security'
+    | '/dashboard/activity'
+    | '/dashboard/new-plan'
+    | '/dashboard/plans'
+    | '/dashboard/rules'
     | '/dashboard/settings'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +158,10 @@ export interface FileRouteTypes {
     | '/contact'
     | '/product'
     | '/security'
+    | '/dashboard/activity'
+    | '/dashboard/new-plan'
+    | '/dashboard/plans'
+    | '/dashboard/rules'
     | '/dashboard/settings'
     | '/dashboard'
   id:
@@ -129,6 +173,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/product'
     | '/security'
+    | '/dashboard/activity'
+    | '/dashboard/new-plan'
+    | '/dashboard/plans'
+    | '/dashboard/rules'
     | '/dashboard/settings'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
@@ -201,6 +249,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/activity': {
+      id: '/dashboard/activity'
+      path: '/activity'
+      fullPath: '/dashboard/activity'
+      preLoaderRoute: typeof DashboardActivityRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/new-plan': {
+      id: '/dashboard/new-plan'
+      path: '/new-plan'
+      fullPath: '/dashboard/new-plan'
+      preLoaderRoute: typeof DashboardNewPlanRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/plans': {
+      id: '/dashboard/plans'
+      path: '/plans'
+      fullPath: '/dashboard/plans'
+      preLoaderRoute: typeof DashboardPlansRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/rules': {
+      id: '/dashboard/rules'
+      path: '/rules'
+      fullPath: '/dashboard/rules'
+      preLoaderRoute: typeof DashboardRulesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -212,11 +288,19 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardActivityRoute: typeof DashboardActivityRoute
+  DashboardNewPlanRoute: typeof DashboardNewPlanRoute
+  DashboardPlansRoute: typeof DashboardPlansRoute
+  DashboardRulesRoute: typeof DashboardRulesRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardActivityRoute: DashboardActivityRoute,
+  DashboardNewPlanRoute: DashboardNewPlanRoute,
+  DashboardPlansRoute: DashboardPlansRoute,
+  DashboardRulesRoute: DashboardRulesRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
