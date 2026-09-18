@@ -1,10 +1,8 @@
 export function BrandLogo({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`brand-logo ${compact ? "brand-logo--compact" : ""}`} role="img" aria-label="POCKET">
-      <svg viewBox="0 0 238 52" aria-hidden="true">
-        <path className="logo-pocket" d="M5 44V8h18c12 0 19 6 19 16s-7 16-19 16H15M57 26c0-12 8-20 20-20s20 8 20 20-8 20-20 20-20-8-20-20Zm57 0c0-12 8-20 20-20 7 0 13 3 17 8m0 24c-4 5-10 8-17 8-12 0-20-8-20-20Zm54 18V8m0 19 24-19m-20 14 21 22m10 0V8h29m-29 18h25m-25 18h30m12 0V8m-13 0h36" />
-        <path className="logo-safety" d="M49 8v36" />
-      </svg>
+      <span className="brand-mark" aria-hidden="true"><i /></span>
+      <span className="brand-word">POCKET</span>
     </span>
   );
 }
