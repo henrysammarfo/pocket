@@ -3,3 +3,8 @@
 - [x] Build clickable dashboard routes and interactions
 - [x] Preserve template video footer and local assets
 - [x] Validate desktop and mobile flows
+- [ ] Connect Made, Story, In the lab, and Say hey to full pages
+- [ ] Add POCKET hoodie, cap, and sticker shop presentation
+- [ ] Refine logo and resolve visible UI issues
+- [ ] Re-test all public and dashboard flows on desktop and mobile
+- [ ] Connect Shopify checkout (blocked: store creation declined)

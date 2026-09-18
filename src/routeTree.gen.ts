@@ -14,8 +14,11 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LabRouteImport } from './routes/lab'
+import { Route as MadeRouteImport } from './routes/made'
 import { Route as ProductRouteImport } from './routes/product'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as StoryRouteImport } from './routes/story'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
 import { Route as DashboardNewPlanRouteImport } from './routes/dashboard.new-plan'
@@ -48,6 +51,16 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabRoute = LabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MadeRoute = MadeRouteImport.update({
+  id: '/made',
+  path: '/made',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductRoute = ProductRouteImport.update({
   id: '/product',
   path: '/product',
@@ -56,6 +69,11 @@ const ProductRoute = ProductRouteImport.update({
 const SecurityRoute = SecurityRouteImport.update({
   id: '/security',
   path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoryRoute = StoryRouteImport.update({
+  id: '/story',
+  path: '/story',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -95,8 +113,11 @@ export interface FileRoutesByFullPath {
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/lab': typeof LabRoute
+  '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/story': typeof StoryRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/new-plan': typeof DashboardNewPlanRoute
   '/dashboard/plans': typeof DashboardPlansRoute
@@ -109,8 +130,11 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
+  '/lab': typeof LabRoute
+  '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/story': typeof StoryRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/new-plan': typeof DashboardNewPlanRoute
   '/dashboard/plans': typeof DashboardPlansRoute
@@ -125,8 +149,11 @@ export interface FileRoutesById {
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/lab': typeof LabRoute
+  '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
+  '/story': typeof StoryRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/new-plan': typeof DashboardNewPlanRoute
   '/dashboard/plans': typeof DashboardPlansRoute
@@ -142,8 +169,11 @@ export interface FileRouteTypes {
     | '/activity'
     | '/contact'
     | '/dashboard'
+    | '/lab'
+    | '/made'
     | '/product'
     | '/security'
+    | '/story'
     | '/dashboard/activity'
     | '/dashboard/new-plan'
     | '/dashboard/plans'
@@ -156,8 +186,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/activity'
     | '/contact'
+    | '/lab'
+    | '/made'
     | '/product'
     | '/security'
+    | '/story'
     | '/dashboard/activity'
     | '/dashboard/new-plan'
     | '/dashboard/plans'
@@ -171,8 +204,11 @@ export interface FileRouteTypes {
     | '/activity'
     | '/contact'
     | '/dashboard'
+    | '/lab'
+    | '/made'
     | '/product'
     | '/security'
+    | '/story'
     | '/dashboard/activity'
     | '/dashboard/new-plan'
     | '/dashboard/plans'
@@ -187,8 +223,11 @@ export interface RootRouteChildren {
   ActivityRoute: typeof ActivityRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  LabRoute: typeof LabRoute
+  MadeRoute: typeof MadeRoute
   ProductRoute: typeof ProductRoute
   SecurityRoute: typeof SecurityRoute
+  StoryRoute: typeof StoryRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,6 +267,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab': {
+      id: '/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof LabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/made': {
+      id: '/made'
+      path: '/made'
+      fullPath: '/made'
+      preLoaderRoute: typeof MadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product': {
       id: '/product'
       path: '/product'
@@ -240,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/security'
       fullPath: '/security'
       preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/story': {
+      id: '/story'
+      path: '/story'
+      fullPath: '/story'
+      preLoaderRoute: typeof StoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -315,8 +375,11 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityRoute: ActivityRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  LabRoute: LabRoute,
+  MadeRoute: MadeRoute,
   ProductRoute: ProductRoute,
   SecurityRoute: SecurityRoute,
+  StoryRoute: StoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
