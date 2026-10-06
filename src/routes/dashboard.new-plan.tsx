@@ -1,4 +1,0 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlanBuilder } from "@/components/PlanBuilder";
-export const Route=createFileRoute("/dashboard/new-plan")({head:()=>({meta:[{title:"New plan — POCKET demo"},{name:"description",content:"Create and review a simulated POCKET money plan."},{property:"og:title",content:"Create a POCKET plan"},{property:"og:description",content:"Turn plain English into a policy-checked money plan."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:NewPlan});
-function NewPlan(){return <section className="dash-content"><div className="dash-greeting"><div><h1>New plan</h1><p>Plain English in. Exact, policy-checked actions out.</p></div></div><PlanBuilder/></section>}
