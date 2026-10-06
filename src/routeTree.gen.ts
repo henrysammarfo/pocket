@@ -19,12 +19,6 @@ import { Route as MadeRouteImport } from './routes/made'
 import { Route as ProductRouteImport } from './routes/product'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StoryRouteImport } from './routes/story'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as DashboardActivityRouteImport } from './routes/dashboard.activity'
-import { Route as DashboardNewPlanRouteImport } from './routes/dashboard.new-plan'
-import { Route as DashboardPlansRouteImport } from './routes/dashboard.plans'
-import { Route as DashboardRulesRouteImport } from './routes/dashboard.rules'
-import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,71 +70,30 @@ const StoryRoute = StoryRouteImport.update({
   path: '/story',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardActivityRoute = DashboardActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardNewPlanRoute = DashboardNewPlanRouteImport.update({
-  id: '/new-plan',
-  path: '/new-plan',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPlansRoute = DashboardPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardRulesRoute = DashboardRulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => DashboardRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
   '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/new-plan': typeof DashboardNewPlanRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
   '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/new-plan': typeof DashboardNewPlanRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,18 +101,12 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
   '/contact': typeof ContactRoute
-  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
   '/made': typeof MadeRoute
   '/product': typeof ProductRoute
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/new-plan': typeof DashboardNewPlanRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -174,29 +121,18 @@ export interface FileRouteTypes {
     | '/product'
     | '/security'
     | '/story'
-    | '/dashboard/activity'
-    | '/dashboard/new-plan'
-    | '/dashboard/plans'
-    | '/dashboard/rules'
-    | '/dashboard/settings'
-    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/activity'
     | '/contact'
+    | '/dashboard'
     | '/lab'
     | '/made'
     | '/product'
     | '/security'
     | '/story'
-    | '/dashboard/activity'
-    | '/dashboard/new-plan'
-    | '/dashboard/plans'
-    | '/dashboard/rules'
-    | '/dashboard/settings'
-    | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -209,12 +145,6 @@ export interface FileRouteTypes {
     | '/product'
     | '/security'
     | '/story'
-    | '/dashboard/activity'
-    | '/dashboard/new-plan'
-    | '/dashboard/plans'
-    | '/dashboard/rules'
-    | '/dashboard/settings'
-    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -222,7 +152,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ActivityRoute: typeof ActivityRoute
   ContactRoute: typeof ContactRoute
-  DashboardRoute: typeof DashboardRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   LabRoute: typeof LabRoute
   MadeRoute: typeof MadeRoute
   ProductRoute: typeof ProductRoute
@@ -302,79 +232,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/activity': {
-      id: '/dashboard/activity'
-      path: '/activity'
-      fullPath: '/dashboard/activity'
-      preLoaderRoute: typeof DashboardActivityRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/new-plan': {
-      id: '/dashboard/new-plan'
-      path: '/new-plan'
-      fullPath: '/dashboard/new-plan'
-      preLoaderRoute: typeof DashboardNewPlanRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/plans': {
-      id: '/dashboard/plans'
-      path: '/plans'
-      fullPath: '/dashboard/plans'
-      preLoaderRoute: typeof DashboardPlansRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/rules': {
-      id: '/dashboard/rules'
-      path: '/rules'
-      fullPath: '/dashboard/rules'
-      preLoaderRoute: typeof DashboardRulesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/settings': {
-      id: '/dashboard/settings'
-      path: '/settings'
-      fullPath: '/dashboard/settings'
-      preLoaderRoute: typeof DashboardSettingsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
   }
 }
-
-interface DashboardRouteChildren {
-  DashboardActivityRoute: typeof DashboardActivityRoute
-  DashboardNewPlanRoute: typeof DashboardNewPlanRoute
-  DashboardPlansRoute: typeof DashboardPlansRoute
-  DashboardRulesRoute: typeof DashboardRulesRoute
-  DashboardSettingsRoute: typeof DashboardSettingsRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
-}
-
-const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardActivityRoute: DashboardActivityRoute,
-  DashboardNewPlanRoute: DashboardNewPlanRoute,
-  DashboardPlansRoute: DashboardPlansRoute,
-  DashboardRulesRoute: DashboardRulesRoute,
-  DashboardSettingsRoute: DashboardSettingsRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
-}
-
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivityRoute: ActivityRoute,
   ContactRoute: ContactRoute,
-  DashboardRoute: DashboardRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   LabRoute: LabRoute,
   MadeRoute: MadeRoute,
   ProductRoute: ProductRoute,
