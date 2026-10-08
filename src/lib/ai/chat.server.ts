@@ -24,7 +24,7 @@ How to respond:
 export async function handleChat(request: Request) {
   const auth = await authenticate(request);
   if (!auth) return json({ error: "Please sign in again." }, 401);
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env['LOVABLE_API_KEY'];
   if (!apiKey) return json({ error: "AI is not configured." }, 500);
 
   const body = (await request.json().catch(() => null)) as { messages?: UIMessage[]; threadId?: string } | null;

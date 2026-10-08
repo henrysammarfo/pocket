@@ -1,10 +1,5 @@
-- [x] Build POCKET brand system and navigation
-- [x] Build complete public product routes
-- [x] Build clickable dashboard routes and interactions
-- [x] Preserve template video footer and local assets
-- [x] Validate desktop and mobile flows
-- [ ] Connect Made, Story, In the lab, and Say hey to full pages
-- [ ] Add POCKET hoodie, cap, and sticker shop presentation
-- [ ] Refine logo and resolve visible UI issues
-- [ ] Re-test all public and dashboard flows on desktop and mobile
+- [x] POCKET brand, public pages, merch, story, lab
+- [x] Conversational assistant with threads, member accounts, voice input
+- [x] Desktop + mobile QA of public pages and sign-in
+- [ ] Signed-in chat check in preview (blocked: no member account exists yet)
 - [ ] Connect Shopify checkout (blocked: store creation declined)

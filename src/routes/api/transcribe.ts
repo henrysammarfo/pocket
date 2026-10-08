@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/transcribe")({
       POST: async ({ request }) => {
         const auth = await authenticate(request);
         if (!auth) return json({ error: "Please sign in again." }, 401);
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env['LOVABLE_API_KEY'];
         if (!apiKey) return json({ error: "AI is not configured." }, 500);
         const length = Number(request.headers.get("content-length") ?? 0);
         if (length > MAX + 1024 * 64) return json({ error: "Recording is too long." }, 413);
