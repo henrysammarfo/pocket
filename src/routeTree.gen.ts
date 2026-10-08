@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LabRouteImport } from './routes/lab'
@@ -21,6 +23,8 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StoryRouteImport } from './routes/story'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppThreadIdRouteImport } from './routes/app.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,6 +39,16 @@ const AboutRoute = AboutRouteImport.update({
 const ActivityRoute = ActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -82,11 +96,23 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppThreadIdRoute = AppThreadIdRouteImport.update({
+  id: '/$threadId',
+  path: '/$threadId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
@@ -96,11 +122,14 @@ export interface FileRoutesByFullPath {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/app/$threadId': typeof AppThreadIdRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
@@ -110,12 +139,16 @@ export interface FileRoutesByTo {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/app/$threadId': typeof AppThreadIdRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/activity': typeof ActivityRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/lab': typeof LabRoute
@@ -125,6 +158,8 @@ export interface FileRoutesById {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/app/$threadId': typeof AppThreadIdRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,6 +167,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/activity'
+    | '/app'
+    | '/auth'
     | '/contact'
     | '/dashboard'
     | '/lab'
@@ -141,11 +178,14 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/transcribe'
+    | '/app/$threadId'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/activity'
+    | '/auth'
     | '/contact'
     | '/dashboard'
     | '/lab'
@@ -155,11 +195,15 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/transcribe'
+    | '/app/$threadId'
+    | '/app'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/activity'
+    | '/app'
+    | '/auth'
     | '/contact'
     | '/dashboard'
     | '/lab'
@@ -169,12 +213,16 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/transcribe'
+    | '/app/$threadId'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ActivityRoute: typeof ActivityRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
   LabRoute: typeof LabRoute
@@ -207,6 +255,20 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -272,13 +334,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/$threadId': {
+      id: '/app/$threadId'
+      path: '/$threadId'
+      fullPath: '/app/$threadId'
+      preLoaderRoute: typeof AppThreadIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
+
+interface AppRouteChildren {
+  AppThreadIdRoute: typeof AppThreadIdRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppThreadIdRoute: AppThreadIdRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ActivityRoute: ActivityRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
   LabRoute: LabRoute,
