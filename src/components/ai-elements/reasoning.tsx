@@ -72,7 +72,7 @@ export const Reasoning = memo(
 
     const [isOpen, setIsOpen] = useControllableState<boolean>({
       defaultProp: resolvedDefaultOpen,
-      onChange: onOpenChange,
+      onChange: onOpenChange ?? (() => {}),
       prop: open,
     });
     const [duration, setDuration] = useControllableState<number | undefined>({
