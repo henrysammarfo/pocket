@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 export async function authenticate(request: Request) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const url = process.env['SUPABASE_URL'];
+  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!url || !key || !token || token.split(".").length !== 3) return null;
   const supabase = createClient<Database>(url, key, {

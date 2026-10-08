@@ -112,7 +112,7 @@ function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError
         stream.getTracks().forEach((t) => t.stop());
         setState("busy");
         try {
-          const type = (r.mimeType || "audio/webm").split(";")[0];
+          const type = (r.mimeType || "audio/webm").split(";")[0] ?? "audio/webm";
           const blob = new Blob(chunks.current, { type });
           if (!blob.size) throw new Error("No audio was captured.");
           const form = new FormData();
