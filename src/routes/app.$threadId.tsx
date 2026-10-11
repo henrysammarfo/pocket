@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { Mic, Square } from "lucide-react";
+import { Check, Copy, CornerDownRight, Mic, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createParser } from "eventsource-parser";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,9 @@ import { Conversation, ConversationContent, ConversationScrollButton } from "@/c
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputButton, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, PromptInputTools } from "@/components/ai-elements/prompt-input";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { BrandMark } from "@/components/BrandLogo";
+import { LoadingState } from "@/components/pocket-ui/LoadingState";
+import { GoalCard } from "@/components/pocket-ui/GoalCard";
 import { threadsKey } from "./app";
 
 export const Route = createFileRoute("/app/$threadId")({ component: ThreadPage });
@@ -27,23 +29,34 @@ function ThreadPage() {
     },
     staleTime: Infinity,
   });
-  if (isLoading) return <div className="app-loading">Loading conversation…</div>;
-  if (error) return <div className="app-loading">This conversation could not be loaded.</div>;
+  if (isLoading) return <div className="pk-center"><LoadingState label="Loading conversation" /></div>;
+  if (error) return <div className="pk-center">This conversation could not be loaded.</div>;
   return <ChatWindow key={threadId} threadId={threadId} initial={data ?? []} />;
 }
 
 const SUGGESTIONS = [
-  "Save $3,000 for a trip to Lisbon by June",
-  "Pay off a $2,400 credit card without missing rent",
-  "Build a 3-month emergency fund on a $2,800 salary",
+  "Save $3,000 for a trip by June",
+  "Pay off $2,400 of card debt without missing rent",
+  "Build a 3-month emergency fund on $2,800/month",
 ];
+const FOLLOW_UPS = ["Make it more aggressive", "What if my income drops 20%?", "Turn this into weekly steps"];
+const COMMANDS = [
+  { cmd: "/save", text: "Help me save $ for " },
+  { cmd: "/debt", text: "Help me pay off $ of debt. My minimum payment is $" },
+  { cmd: "/budget", text: "Budget my monthly pay of $. Fixed bills are $" },
+  { cmd: "/reserve", text: "Build an emergency reserve. I earn $ a month and spend $" },
+];
+
+const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 
 function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessage[] }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [showGoal, setShowGoal] = useState(true);
+  const [copied, setCopied] = useState<string | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, status, stop, regenerate } = useChat({
     id: threadId,
     messages: initial,
     transport: new DefaultChatTransport({ api: "/api/chat", headers: authHeader, body: { threadId } }),
@@ -60,55 +73,79 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     sendMessage({ text: v });
     setText("");
   };
+  const slash = /^\/\w*$/.test(text) ? COMMANDS.filter((c) => c.cmd.startsWith(text)) : [];
+  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
 
-  return <div className="chat-window">
-    <Conversation className="chat-scroll">
-      <ConversationContent className="chat-content">
-        {messages.length === 0 && <div className="chat-empty">
-          <span className="chat-orb" aria-hidden="true"><i /></span>
-          <h1>What's your money goal?</h1>
-          <p>Type it or tap the mic. POCKET turns it into a plan with guardrails.</p>
-          <div className="chat-suggestions">{SUGGESTIONS.map((s) => <button key={s} onClick={() => send(s)}>{s}</button>)}</div>
+  return <div className="pk-chat">
+    <Conversation className="pk-scroll">
+      <ConversationContent className="pk-thread-body">
+        {messages.length === 0 && <div className="pk-hero">
+          <span className="pk-hero-mark"><BrandMark size={52} /></span>
+          <h1>What should your money do?</h1>
+          <p>Say it out loud or type it. POCKET turns your goal into a plan with rules that can't overspend.</p>
+          {showGoal
+            ? <GoalCard onComplete={send} onDismiss={() => setShowGoal(false)} />
+            : <div className="pk-suggest">{SUGGESTIONS.map((s) => <button key={s} onClick={() => send(s)}><CornerDownRight size={12} />{s}</button>)}</div>}
         </div>}
-        {messages.map((m) => <Message key={m.id} from={m.role}>
-          <MessageContent className={m.role === "user" ? "chat-user" : "chat-assistant"}>
+        {messages.map((m) => <Message key={m.id} from={m.role} className="pk-msg">
+          <MessageContent className={m.role === "user" ? "pk-user" : "pk-assistant"}>
             {m.parts.map((p, i) => {
               if (p.type === "text") return m.role === "user" ? <p key={i}>{p.text}</p> : <MessageResponse key={i}>{p.text}</MessageResponse>;
               if (p.type === "reasoning" && p.text) return <Reasoning key={i} isStreaming={status === "streaming" && m.id === messages.at(-1)?.id}><ReasoningTrigger /><ReasoningContent>{p.text}</ReasoningContent></Reasoning>;
               return null;
             })}
+            {m.role === "assistant" && !(busy && m.id === messages.at(-1)?.id) && <div className="pk-actions">
+              <button aria-label="Copy plan" onClick={() => { navigator.clipboard.writeText(textOf(m)); setCopied(m.id); setTimeout(() => setCopied(null), 1400); }}>{copied === m.id ? <Check size={14} /> : <Copy size={14} />}</button>
+              {m.id === lastAssistant?.id && <button aria-label="Regenerate" onClick={() => regenerate()}><RotateCcw size={14} /></button>}
+            </div>}
           </MessageContent>
         </Message>)}
-        {status === "submitted" && <Message from="assistant"><MessageContent className="chat-assistant"><Shimmer>Building your plan…</Shimmer></MessageContent></Message>}
-        {err && <p className="chat-error" role="alert">{err}</p>}
+        {status === "submitted" && <div className="pk-msg"><LoadingState /></div>}
+        {status === "ready" && lastAssistant && lastAssistant.id === messages.at(-1)?.id && <div className="pk-followups">
+          <p>Follow-ups</p>
+          {FOLLOW_UPS.map((f, i) => <button key={f} style={{ animationDelay: `${i * 90}ms` }} onClick={() => send(f)}><CornerDownRight size={12} />{f}</button>)}
+        </div>}
+        {err && <p className="pk-error" role="alert">{err}</p>}
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
-    <div className="chat-composer">
-      <PromptInput onSubmit={(msg) => send(msg.text)}>
-        <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Describe a goal, e.g. save $500 a month for a car…" autoFocus />
+    <div className="pk-composer">
+      {slash.length > 0 && <div className="pk-menu" role="listbox" aria-label="Plan templates">
+        {slash.map((c) => <button key={c.cmd} role="option" aria-selected="false" onClick={() => { setText(c.text); taRef.current?.focus(); }}><code>{c.cmd}</code><span>{c.text.replace(/\$/g, "$…")}</span></button>)}
+      </div>}
+      <PromptInput onSubmit={(msg) => send(msg.text)} className="pk-prompt">
+        <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Describe a money goal, or type / for templates" autoFocus />
         <PromptInputFooter className="justify-between">
           <PromptInputTools><VoiceButton onText={(t) => { setText((cur) => (cur ? cur + " " : "") + t); taRef.current?.focus(); }} onError={setErr} /></PromptInputTools>
-          <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} />
+          <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} className="pk-send" />
         </PromptInputFooter>
       </PromptInput>
-      <p className="chat-disclaimer">Guidance, not regulated financial advice. No real money moves in this demo.</p>
+      <p className="pk-disclaimer">Guidance, not regulated financial advice. No real money moves in this demo.</p>
     </div>
   </div>;
 }
 
 function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError: (m: string) => void }) {
   const [state, setState] = useState<"idle" | "rec" | "busy">("idle");
+  const [level, setLevel] = useState<number[]>([0, 0, 0, 0, 0]);
   const rec = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const raf = useRef(0);
 
   const start = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = new AudioContext();
+      const an = ctx.createAnalyser(); an.fftSize = 64;
+      ctx.createMediaStreamSource(stream).connect(an);
+      const buf = new Uint8Array(an.frequencyBinCount);
+      const tick = () => { an.getByteFrequencyData(buf); setLevel([2, 5, 8, 11, 14].map((i) => (buf[i] ?? 0) / 255)); raf.current = requestAnimationFrame(tick); };
+      tick();
       const r = new MediaRecorder(stream);
       chunks.current = [];
-      r.ondataavailable = (e) => e.data.size && chunks.current.push(e.data);
+      r.ondataavailable = (e) => { if (e.data.size) chunks.current.push(e.data); };
       r.onstop = async () => {
+        cancelAnimationFrame(raf.current); ctx.close();
         stream.getTracks().forEach((t) => t.stop());
         setState("busy");
         try {
@@ -143,12 +180,13 @@ function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError
   };
 
   return <PromptInputButton
-    aria-label={state === "rec" ? "Stop recording" : "Speak your goal"}
-    className={state === "rec" ? "mic-live" : ""}
+    aria-label={state === "rec" ? "Stop recording" : "Speak your money goal"}
+    className={`pk-mic ${state === "rec" ? "is-live" : ""}`}
     disabled={state === "busy"}
     onClick={() => (state === "rec" ? rec.current?.stop() : start())}
   >
-    {state === "rec" ? <Square className="size-4" /> : <Mic className="size-4" />}
-    <span className="mic-label">{state === "rec" ? "Listening… tap to stop" : state === "busy" ? "Transcribing…" : ""}</span>
+    {state === "rec" ? <Square className="size-3.5" /> : <Mic className="size-4" />}
+    {state === "rec" && <span className="pk-wave" aria-hidden>{level.map((l, i) => <i key={i} style={{ transform: `scaleY(${0.25 + l * 1.4})` }} />)}</span>}
+    <span>{state === "rec" ? "Listening — tap to stop" : state === "busy" ? "Transcribing…" : "Speak"}</span>
   </PromptInputButton>;
 }
