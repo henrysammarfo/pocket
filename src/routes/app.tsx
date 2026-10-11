@@ -1,10 +1,11 @@
 import { createFileRoute, Link, Outlet, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Menu, MessageSquarePlus, Trash2, X } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, SquarePen, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo, BrandMark } from "@/components/BrandLogo";
+import { LoadingState } from "@/components/pocket-ui/LoadingState";
 
 export const Route = createFileRoute("/app")({
   head: () => ({ meta: [
@@ -32,6 +33,8 @@ function AppLayout() {
   const qc = useQueryClient();
   const params = useParams({ strict: false }) as { threadId?: string };
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [query, setQuery] = useState("");
   useEffect(() => { if (!loading && !session) navigate({ to: "/auth" }); }, [loading, session, navigate]);
   const { data: threads = [] } = useQuery({
     queryKey: threadsKey,
@@ -44,7 +47,7 @@ function AppLayout() {
   });
   useEffect(() => setOpen(false), [params.threadId]);
 
-  if (loading || !session) return <div className="app-loading">Opening POCKET…</div>;
+  if (loading || !session) return <div className="pk-app pk-center"><LoadingState label="Opening POCKET" /></div>;
 
   const newThread = async () => {
     const id = await createThread();
@@ -56,32 +59,38 @@ function AppLayout() {
     await qc.invalidateQueries({ queryKey: threadsKey });
     if (id === params.threadId) navigate({ to: "/app" });
   };
+  const shown = threads.filter((t) => t.title.toLowerCase().includes(query.toLowerCase()));
+  const initial = (session.user.email ?? "P")[0]!.toUpperCase();
 
-  return <div className="assistant-shell">
-    <aside className={`assistant-side ${open ? "is-open" : ""}`} aria-label="Conversations">
-      <div className="side-top">
-        <Link to="/" aria-label="POCKET home"><BrandLogo compact /></Link>
-        <button className="icon-btn side-close" aria-label="Close conversations" onClick={() => setOpen(false)}><X /></button>
+  return <div className={`pk-app ${collapsed ? "is-collapsed" : ""}`}>
+    <aside className={`pk-side ${open ? "is-open" : ""}`} aria-label="Conversations">
+      <div className="pk-side-top">
+        <Link to="/" aria-label="POCKET home" className="pk-side-brand">{collapsed ? <BrandMark size={26} /> : <BrandLogo compact />}</Link>
+        <button className="pk-icon-btn pk-only-desktop" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button>
+        <button className="pk-icon-btn pk-only-mobile" aria-label="Close conversations" onClick={() => setOpen(false)}><X size={17} /></button>
       </div>
-      <button className="new-thread" onClick={newThread}><MessageSquarePlus /> New conversation</button>
-      <nav className="thread-list">
-        {threads.map((t) => <div key={t.id} className={`thread-row ${t.id === params.threadId ? "is-active" : ""}`}>
-          <Link to="/app/$threadId" params={{ threadId: t.id }}>{t.title}</Link>
-          <button aria-label={`Delete ${t.title}`} onClick={() => remove(t.id)}><Trash2 /></button>
+      <button className="pk-nav-item pk-new" onClick={newThread}><SquarePen size={17} /><span>New plan</span></button>
+      <label className="pk-search"><Search size={14} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search plans…" aria-label="Search conversations" />{query && <button aria-label="Clear search" onClick={() => setQuery("")}><X size={12} /></button>}</label>
+      <p className="pk-side-label">Recents</p>
+      <nav className="pk-threads">
+        {shown.map((t) => <div key={t.id} className={`pk-thread ${t.id === params.threadId ? "is-active" : ""}`}>
+          <Link to="/app/$threadId" params={{ threadId: t.id }} title={t.title}>{t.title}</Link>
+          <button aria-label={`Delete ${t.title}`} onClick={() => remove(t.id)}><Trash2 size={13} /></button>
         </div>)}
-        {threads.length === 0 && <p className="thread-empty">No conversations yet.</p>}
+        {shown.length === 0 && <p className="pk-empty">{query ? "No plans match" : "No conversations yet"}</p>}
       </nav>
-      <div className="side-foot">
-        <span>{session.user.email}</span>
-        <button className="icon-btn" aria-label="Sign out" onClick={() => supabase.auth.signOut()}><LogOut /></button>
+      <div className="pk-side-foot">
+        <span className="pk-avatar">{initial}</span>
+        <span className="pk-email">{session.user.email}</span>
+        <button className="pk-icon-btn" aria-label="Sign out" onClick={() => supabase.auth.signOut()}><LogOut size={15} /></button>
       </div>
     </aside>
-    {open && <button className="side-scrim" aria-label="Close conversations" onClick={() => setOpen(false)} />}
-    <main className="assistant-main">
-      <header className="assistant-top">
-        <button className="icon-btn side-open" aria-label="Open conversations" onClick={() => setOpen(true)}><Menu /></button>
-        <span className="eyebrow">Guidance · Testnet demo</span>
-        <button className="icon-btn" aria-label="New conversation" onClick={newThread}><MessageSquarePlus /></button>
+    {open && <button className="pk-scrim" aria-label="Close conversations" onClick={() => setOpen(false)} />}
+    <main className="pk-main">
+      <header className="pk-top">
+        <button className="pk-icon-btn pk-only-mobile" aria-label="Open conversations" onClick={() => setOpen(true)}><Menu size={18} /></button>
+        <span className="pk-chip"><span className="pk-dot" />Testnet demo · Guidance only</span>
+        <button className="pk-icon-btn" aria-label="New plan" onClick={newThread}><SquarePen size={17} /></button>
       </header>
       <Outlet />
     </main>
