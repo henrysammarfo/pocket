@@ -22,7 +22,7 @@ export function GoalCard({ onComplete, onDismiss }: { onComplete: (prompt: strin
     setAnswers(next);
     setCustom("");
     if (last) {
-      onComplete(`Make me a money plan. Goal: ${next.goal}. Timeline: ${next.when}. Monthly income: ${next.income}.`);
+      onComplete(`Make me a money plan. Goal: ${next["goal"]}. Timeline: ${next["when"]}. Monthly income: ${next["income"]}.`);
     } else setTimeout(() => setQi(qi + 1), 260);
   };
 
