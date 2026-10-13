@@ -1,0 +1,13 @@
+---
+description: Consumer UX — invisible chain, persona walkthroughs, block-screen craft
+globs: src/routes/**/*,src/components/**/*
+alwaysApply: false
+---
+
+# Consumer UX & Personas
+
+- Non-crypto adults must finish core flows without seed phrases, gas, or chain pickers.
+- Walk as: first-timer, busy parent, returning user, curious visitor — log in `memory/PERSONAS.md`.
+- Prefer plain English: “Rent paid”, “Blocked — keep your $200”, not tx hashes in the hero UI.
+- Demo opens on the block screen, not an empty composer.
+- If removing a wallet/chain label does not hurt understanding, remove it.

@@ -1,0 +1,16 @@
+---
+description: Always read memory, fact-check live docs/web, update session logs
+alwaysApply: true
+---
+
+# Research · Memory · Fact-check
+
+Before material claims or integrations:
+
+1. Read `memory/CURRENT_STATE.md`, `memory/FACT_CHECK.md`, and the latest `memory/SESSION_LOG.md`.
+2. Prefer official docs (Privy, Agora, Envio, Monad, Kuru, Mera).
+3. Live-check with Tavily and/or TinyFish (`agent.tinyfish.ai`, `X-API-Key`).
+4. Never invent contract addresses, chain IDs, or API shapes.
+5. After work: append `SESSION_LOG`, update `CURRENT_STATE`, record verified facts in `FACT_CHECK`.
+
+If docs and Bible conflict, fact-check wins — then update memory.

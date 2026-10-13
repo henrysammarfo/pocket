@@ -16,9 +16,19 @@ dist-ssr
 .nitro
 *.local
 
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+.dev.vars
+
 # Wrangler / Cloudflare
 .wrangler/
-.dev.vars
+
+# Indexer build
+indexer/node_modules
+indexer/generated
+indexer/.envio
 
 # Editor directories and files
 .vscode/*
