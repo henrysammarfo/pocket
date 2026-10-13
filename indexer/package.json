@@ -7,8 +7,13 @@
     "dev": "envio dev",
     "build": "envio codegen"
   },
+  "dependencies": {
+    "envio": "3.14.0"
+  },
   "devDependencies": {
-    "envio": "latest",
-    "typescript": "^5.8.3"
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

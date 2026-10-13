@@ -1,8 +1,7 @@
-# Envio HyperIndex — Monad testnet (10143)
-# Deploy with Envio Cloud after `ENVIO_API_TOKEN` is set.
+# Envio HyperIndex V3 — Monad testnet (10143)
 name: pocket-settlement
-description: Indexes Agora Instant Settlement swaps + POCKET settlement semantics on Monad testnet
-networks:
+description: Indexes Agora Instant Settlement Swap events on Monad testnet for POCKET receipts
+chains:
   - id: 10143
     start_block: 0
     contracts:
