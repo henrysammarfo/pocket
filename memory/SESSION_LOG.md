@@ -24,3 +24,11 @@
 - Chat + transcribe → AgentRouter; Vite config is stock TanStack Start + Nitro (no Lovable vite package).
 - Page-by-page key guide: `memory/KEYS_GUIDE.md`.
 - Blocked on user Marketplace click for Neon `DATABASE_URL` + Privy/AgentRouter secrets.
+
+
+## 2026-10-13 — Neon provisioned with Vercel token
+
+- Provisioned Marketplace Neon resource `pocket-db` (`store_LtXiM2qzkXRjCreY`) on team `teamtitanlink`.
+- Connected to project `pocket` for production/preview/development; env pulled to `.env.local`.
+- Applied `0002_neon_privy_schema.sql` — tables: households, members, household_members, threads, thread_messages, money_plans, plan_rules, intents, settlements, receipts.
+- Ask user to rotate the Vercel token shared in chat.

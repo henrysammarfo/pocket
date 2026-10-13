@@ -7,7 +7,7 @@ Updated: 2026-10-13
 - **Job:** Money plan that cannot overspend. Approved plan = only permission.
 - **Surface:** ChatGPT-like consumer chat at `/app/$threadId`. Crypto under the hood.
 - **Account:** Privy-primary (needs `VITE_PRIVY_APP_ID` + `PRIVY_APP_SECRET`).
-- **Data plane:** Neon Postgres via Drizzle (Vercel project `pocket`).
+- **Data plane:** Neon Postgres via Drizzle — **LIVE** (`pocket-db` on Vercel project `pocket`).
 - **AI:** AgentRouter OpenAI-compatible (`AGENTROUTER_API_KEY`).
 - **Network:** Monad testnet (10143) only.
 
@@ -16,29 +16,20 @@ Updated: 2026-10-13
 | Area | Status |
 |---|---|
 | Marketing site + chat UI | Live |
-| Lovable / Supabase auth & AI gateway | **Removed** |
-| Neon schema + Drizzle client | Ready (`0002_neon_privy_schema.sql`) — needs `DATABASE_URL` |
+| Lovable / Supabase | **Removed** |
+| Neon `pocket-db` + schema `0002` | **Live** (tables created) |
 | Privy session → Neon member link | Live (`/api/auth/privy-link`) |
-| Threads API (list/create/delete/messages) | Live (`/api/threads`) |
-| PolicyEngine + PlanParser + IntentComposer | Live + unit tests + harness 3/3 |
-| `/api/settle` + BlockScreen | Live (deny path); allow path needs Privy wallet + RPC |
-| Agora Instant Settlement module | Live code (testnet addresses fact-checked) |
-| Envio indexer config + `/api/receipts` | Ready (needs `ENVIO_GRAPHQL_URL`) |
-| ElevenLabs `/api/speak` | Ready (needs `ELEVENLABS_API_KEY`) |
-| Cursor rules + skills + memory | Live |
-| Key acquisition guide | `memory/KEYS_GUIDE.md` |
+| Threads API | Live |
+| PolicyEngine + settle deny path | Live + tests |
+| Agora / Envio / ElevenLabs | Code ready; need remaining keys |
+| Key guide | `memory/KEYS_GUIDE.md` |
 
-## Keys needed next
+## Keys still needed
 
-Follow click-path in `memory/KEYS_GUIDE.md`:
-
-1. `DATABASE_URL` — Neon via Vercel Storage on project **pocket**
-2. `VITE_PRIVY_APP_ID` + `PRIVY_APP_ID` + `PRIVY_APP_SECRET` (+ Monad testnet + gas sponsorship)
-3. `AGENTROUTER_API_KEY` (base URL already known)
-4. `MONAD_RPC_URL` (public testnet RPC OK to start)
-5. `ENVIO_API_TOKEN` + `ENVIO_GRAPHQL_URL`
-6. `ELEVENLABS_API_KEY` (optional TTS)
+1. `VITE_PRIVY_APP_ID` + `PRIVY_APP_ID` + `PRIVY_APP_SECRET` (+ Monad testnet + gas sponsorship)
+2. Confirm `AGENTROUTER_API_KEY`
+3. Optional: `ENVIO_*`, `ELEVENLABS_*`, custom `MONAD_RPC_URL`
 
 ## Do not
 
-- Fake settles · Dual login stacks · Trading-first UI · Mainnet-only features · Unhackable claims · Reintroduce Lovable/Supabase
+- Fake settles · Dual login stacks · Trading-first UI · Mainnet-only features · Unhackable claims · Reintroduce Lovable/Supabase · Commit `.env` / tokens

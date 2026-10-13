@@ -41,3 +41,4 @@ indexer/.envio
 *.njsproj
 *.sln
 *.sw?
+.env*
