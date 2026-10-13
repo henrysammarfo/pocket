@@ -21,7 +21,9 @@ Updated: 2026-10-13
 | `AGENTROUTER_API_KEY` | Live local + Vercel |
 | `ELEVENLABS_API_KEY` | Live local + Vercel |
 | `MONAD_RPC_URL` | Live (`testnet-rpc.monad.xyz`) |
-| `ENVIO_GRAPHQL_URL` / `ENVIO_API_TOKEN` | Waiting — Connect form in progress |
+| `ENVIO_API_TOKEN` (HyperSync) | Live |
+| `ENVIO_HYPERRPC_URL` | Live (server Monad RPC) |
+| `ENVIO_GRAPHQL_URL` | Still need from Envio Cloud **Projects → pocket** deploy |
 
 ## Envio Connect form (exact)
 

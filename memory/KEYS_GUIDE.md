@@ -26,19 +26,37 @@ Neon Marketplace is already installed on this team — you only need to **Create
 
 ---
 
-## 2) Privy (`VITE_PRIVY_APP_ID`, `PRIVY_APP_ID`, `PRIVY_APP_SECRET`) — required
+## 2) Privy — finish dashboard (keys already wired)
 
-1. Open [https://dashboard.privy.io](https://dashboard.privy.io)
-2. Sign in → **Create app** (or open existing) → name `POCKET`
-3. **Settings** → **Basics**
-   - Copy **App ID** → set as both `VITE_PRIVY_APP_ID` and `PRIVY_APP_ID`
-4. **Settings** → **Basics** / **App secrets**
-   - Reveal **App secret** → `PRIVY_APP_SECRET`
-5. **Login methods**: enable **Email** + **Google** (+ Apple optional)
-6. **Embedded wallets** → Ethereum → create on login for users without wallets
-7. **Chains** → add **Monad Testnet** (chain id `10143`, RPC `https://testnet-rpc.monad.xyz`)
-8. **Gas sponsorship / Wallet funding** (if shown) → enable for Monad testnet so users never see gas
-9. **Allowed domains** → add your Vercel URL (`https://pocket-….vercel.app`) and `http://localhost:3000`
+App ID/secret are already in Vercel. Finish these UI clicks:
+
+### A) Domains (you are on this page)
+Left nav → **Configuration** → **App settings** → **Domains and clients**
+1. Under **Allowed origins**, paste each and click **Add**:
+   - `http://localhost:3000`
+   - `https://pocket-zeta-lime.vercel.app`
+   - `https://*.vercel.app` (if Privy accepts wildcard; else add each preview URL)
+2. Leave HttpOnly cookies OFF for now (optional later)
+3. Save if a Save button appears
+
+### B) Gas sponsorship (Monad testnet)
+Left nav look for one of these exact labels (Privy renamed it):
+- **Wallet infrastructure** → **Gas sponsorship** / **Fee sponsorship**
+- or top app menu → **Gas sponsorship**
+1. Turn **Sponsor gas fees** ON
+2. Under **Supported chains**, enable **Monad Testnet** (`10143`)
+3. Turn ON **Allow transactions from the client** (needed for settle from the app)
+4. Save
+
+### C) Advanced (optional — good defaults for POCKET)
+**Authentication** → **Advanced**
+- Prioritize options: **Web2: Email, SMS, and socials**
+- Guest accounts: OFF
+- Leave session durations at defaults unless you want longer mobile sessions
+
+### D) Login + wallets (if not done)
+**Authentication** → **Login methods**: Email ON, Google ON → Save  
+Embedded wallets: auto-create ON, Ethereum ON
 
 ---
 
