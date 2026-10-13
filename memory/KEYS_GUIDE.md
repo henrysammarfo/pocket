@@ -2,26 +2,27 @@
 
 Do these in order. After each key, paste it into this chat **or** add it under Cursor Cloud Agent secrets / Vercel project **pocket** → Settings → Environment Variables (Production + Preview + Development).
 
-Project on Vercel: **pocket** (`prj_QxdIQfsnFnx5F7ZMtUywK2gO15IG`).
+Project on Vercel: **pocket** on team **teamtitanlink**  
+Direct links:
+- Project: [https://vercel.com/teamtitanlink/pocket](https://vercel.com/teamtitanlink/pocket)
+- Storage: [https://vercel.com/teamtitanlink/pocket/stores](https://vercel.com/teamtitanlink/pocket/stores)
+- Env vars: [https://vercel.com/teamtitanlink/pocket/settings/environment-variables](https://vercel.com/teamtitanlink/pocket/settings/environment-variables)
+
+Neon Marketplace is already installed on this team — you only need to **Create Database** and connect it to `pocket`.
 
 ---
 
-## 1) Neon Postgres (`DATABASE_URL`) — required
+## 1) Neon Postgres (`DATABASE_URL`) — required (do this first)
 
-1. Open [https://vercel.com/dashboard](https://vercel.com/dashboard)
-2. Select the team that owns **pocket**
-3. Click project **pocket**
-4. Top nav → **Storage**
-5. Click **Create Database** / **Browse Storage**
-6. Choose **Neon** → **Continue**
-7. Region: pick closest (e.g. `iad1`) → **Create**
-8. When asked to connect: select **pocket** → environments **Production**, **Preview**, **Development** → **Connect**
-9. Confirm env vars appear under Project → **Settings** → **Environment Variables**:
+1. Open [https://vercel.com/teamtitanlink/pocket/stores](https://vercel.com/teamtitanlink/pocket/stores)
+2. Click **Create Database** (or **Browse Marketplace** → Storage)
+3. Choose **Neon** → **Continue**
+4. Region: `iad1` (US East) → plan **Free** → **Create**
+5. Connect to project **pocket** → check **Production**, **Preview**, **Development** → **Connect**
+6. Open [Environment Variables](https://vercel.com/teamtitanlink/pocket/settings/environment-variables) and confirm:
    - `DATABASE_URL` (pooled)
    - `DATABASE_URL_UNPOOLED` (direct)
-10. Optional verify: Neon console opens → **Dashboard** → **Connection details** → copy pooled string
-
-Paste `DATABASE_URL` here so migrations can run.
+7. Paste `DATABASE_URL` into this chat (or Cloud Agent secrets) so I can run migration `0002_neon_privy_schema.sql`
 
 ---
 
