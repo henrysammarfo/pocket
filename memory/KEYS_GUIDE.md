@@ -68,11 +68,17 @@ Neon Marketplace is already installed on this team — you only need to **Create
 
 ## 5) Envio (`ENVIO_API_TOKEN`, `ENVIO_GRAPHQL_URL`) — for live receipts
 
-1. Open [https://envio.dev](https://envio.dev) → sign in
-2. **Create HyperIndex** / open existing indexer for this repo’s `indexer/` folder
-3. Deploy against Monad testnet (chain id `10143`)
-4. Copy GraphQL endpoint → `ENVIO_GRAPHQL_URL`
-5. Account / API → create token → `ENVIO_API_TOKEN`
+1. Open Envio Cloud → Organisations → **henrysammarfo** → **Connect Repository**
+2. Select GitHub repo **pocket**
+3. Fill exactly:
+   - Indexer Name: `pocket`
+   - Indexer Directory: `indexer`  ← not `./`
+   - Config File: `config.yaml`
+   - Git Release Branch: `envio`
+   - Plan: **Development** (Free)
+4. Click **Connect**
+5. After deploy: copy GraphQL URL → `ENVIO_GRAPHQL_URL`
+6. Tokens & Packages → create token → `ENVIO_API_TOKEN`
 
 ---
 

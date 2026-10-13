@@ -32,3 +32,10 @@
 - Connected to project `pocket` for production/preview/development; env pulled to `.env.local`.
 - Applied `0002_neon_privy_schema.sql` — tables: households, members, household_members, threads, thread_messages, money_plans, plan_rules, intents, settlements, receipts.
 - Ask user to rotate the Vercel token shared in chat.
+
+## 2026-10-13 — Keys wired (Privy / AgentRouter / ElevenLabs / Monad)
+
+- Stored secrets in gitignored `.env` + Vercel project pocket (sensitive/encrypted).
+- `privyConfigured() === true`; AgentRouter `/v1/models` HTTP 200.
+- Pushed `envio` branch for Envio Cloud default release branch.
+- Waiting on Envio Connect (directory must be `indexer`) + Privy dashboard Monad/domain settings.

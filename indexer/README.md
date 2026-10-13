@@ -2,10 +2,33 @@
 
 Indexes Agora Instant Settlement `Swap` events on **Monad testnet (10143)** into GraphQL entities consumed by `/api/receipts` → Activity chips.
 
-## Setup
+## Envio Cloud — Connect Repository form (exact values)
 
-1. Claim Envio free API token / Metropolis Cloud hosting.
-2. Set `ENVIO_API_TOKEN` and `ENVIO_GRAPHQL_URL` in app `.env`.
-3. From this folder: `npm i && npx envio codegen && npx envio dev` (or deploy to Envio Cloud).
+| Field | Value |
+|---|---|
+| Connect pocket from Github | `henrysammarfo/pocket` |
+| Indexer Name | `pocket` |
+| Indexer Directory | `indexer` |
+| Config File | `config.yaml` |
+| Git Release Branch | `envio` |
+| Indexer Plan | **Development** (Free) |
+| Allow public visibility | optional |
+
+Then click **Connect**.
+
+After the first deploy succeeds, open the deployment → copy:
+- GraphQL endpoint → `ENVIO_GRAPHQL_URL`
+- Account → **Tokens & Packages** → create **HyperSync** / API token if needed → `ENVIO_API_TOKEN`
+
+Paste both into chat (or Vercel env) so `/api/receipts` can merge live indexed events.
+
+## Local
+
+```sh
+cd indexer
+npm i
+npx envio codegen
+npx envio dev
+```
 
 Addresses verified in `memory/FACT_CHECK.md` from Agora protocol deployments.
