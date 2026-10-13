@@ -2,13 +2,23 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import type { ReactNode } from "react";
 import { monadTestnet } from "@/lib/monad/config";
 import { PrivySessionBridge } from "./PrivySessionBridge";
+import { PrivySessionContext } from "./PrivySessionContext";
 
 const appId = import.meta.env["VITE_PRIVY_APP_ID"] as string | undefined;
 
+const emptySession = {
+  ready: true,
+  authenticated: false,
+  userId: null,
+  email: null,
+  accessToken: null,
+  logout: async () => undefined,
+  getAccessToken: async () => null,
+};
+
 export function PrivyAppProvider({ children }: { children: ReactNode }) {
   if (!appId) {
-    // Provider absent until key is wired — children still render (Supabase auth path).
-    return <>{children}</>;
+    return <PrivySessionContext.Provider value={emptySession}>{children}</PrivySessionContext.Provider>;
   }
 
   return (
@@ -30,8 +40,7 @@ export function PrivyAppProvider({ children }: { children: ReactNode }) {
         supportedChains: [monadTestnet],
       }}
     >
-      <PrivySessionBridge />
-      {children}
+      <PrivySessionBridge>{children}</PrivySessionBridge>
     </PrivyProvider>
   );
 }

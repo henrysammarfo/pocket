@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 type LinkState = { userId?: string; householdId?: string; walletAddress?: string };
 
 /**
- * After Privy login, link identity to POCKET member (Supabase data plane).
+ * After Privy login, link identity to a Neon member + household row.
  * Uses dynamic import so the app boots when Privy provider is not configured.
  */
 export function usePrivyLink() {

@@ -14,3 +14,13 @@
 - ElevenLabs `/api/speak`; harness 3/3 PASS; vitest 4/4; `tsc` clean.
 - Under-hood Nansen/Mera PRF/Tenderly gated; GTM + threat model docs.
 - Waiting on Privy/RPC/Envio/ElevenLabs keys for end-to-end live pays.
+
+## 2026-10-13 — Purge Lovable → Neon + Privy + AgentRouter
+
+- Removed all Lovable packages, integrations, AI gateway, OAuth, error reporting, `.lovable/`, AGENTS/README Lovable blocks.
+- Created Vercel project `pocket`; wired Drizzle + `@neondatabase/serverless` (lazy `getDb()`).
+- Neon schema `0002_neon_privy_schema.sql` (Privy member ids, no Supabase auth.uid/RLS).
+- Auth/data plane: Privy bearer → Neon members/households/threads/plans/settlements.
+- Chat + transcribe → AgentRouter; Vite config is stock TanStack Start + Nitro (no Lovable vite package).
+- Page-by-page key guide: `memory/KEYS_GUIDE.md`.
+- Blocked on user Marketplace click for Neon `DATABASE_URL` + Privy/AgentRouter secrets.

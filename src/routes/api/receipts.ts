@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { desc, eq } from "drizzle-orm";
 import { authenticate, json } from "@/lib/ai/auth.server";
+import { getDb } from "@/lib/db/client";
+import { receipts } from "../../../drizzle/schema";
 import { fetchEnvioReceipts } from "@/lib/settlement/envio";
 
 export const Route = createFileRoute("/api/receipts")({
@@ -8,23 +11,25 @@ export const Route = createFileRoute("/api/receipts")({
       GET: async ({ request }) => {
         const auth = await authenticate(request);
         if (!auth) return json({ error: "Please sign in again." }, 401);
-        const { supabase, userId } = auth;
 
-        const { data: member } = await supabase.from("members").select("household_id").eq("id", userId).maybeSingle();
-        let dbReceipts: { plain_english: string; kind: string; created_at: string; envio_entity_id: string | null }[] = [];
-        if (member?.household_id) {
-          const { data } = await supabase
-            .from("receipts")
-            .select("plain_english,kind,created_at,envio_entity_id")
-            .eq("household_id", member.household_id)
-            .order("created_at", { ascending: false })
+        let dbReceipts: { plainEnglish: string; kind: string }[] = [];
+        if (auth.member.householdId) {
+          const db = getDb();
+          const rows = await db
+            .select({
+              plainEnglish: receipts.plainEnglish,
+              kind: receipts.kind,
+            })
+            .from(receipts)
+            .where(eq(receipts.householdId, auth.member.householdId))
+            .orderBy(desc(receipts.createdAt))
             .limit(20);
-          dbReceipts = data ?? [];
+          dbReceipts = rows;
         }
 
-        const envio = await fetchEnvioReceipts(userId).catch(() => []);
+        const envio = await fetchEnvioReceipts(auth.userId).catch(() => []);
         const merged = [
-          ...dbReceipts.map((r) => ({ plain_english: r.plain_english, kind: r.kind, source: "db" as const })),
+          ...dbReceipts.map((r) => ({ plain_english: r.plainEnglish, kind: r.kind, source: "db" as const })),
           ...envio.map((r) => ({ plain_english: r.plainEnglish, kind: r.kind, source: "envio" as const })),
         ];
         return json({ receipts: merged });

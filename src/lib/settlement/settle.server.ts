@@ -1,7 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database, Json } from "@/integrations/supabase/types";
+import { and, desc, eq } from "drizzle-orm";
 import { authenticate, json } from "@/lib/ai/auth.server";
-import { verifyPrivyAccessToken } from "@/lib/auth/privy.server";
+import { getDb } from "@/lib/db/client";
+import { intents, moneyPlans, receipts, settlements } from "../../../drizzle/schema";
 import { parseSpendIntent, assertMoneyPlan } from "@/lib/policy/plan-parser";
 import { evaluatePolicy } from "@/lib/policy/policy-engine";
 import { composeIntent } from "@/lib/policy/intent-composer";
@@ -17,76 +17,75 @@ type SettleBody = {
   walletAddress?: `0x${string}`;
 };
 
-function adminClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Supabase not configured");
-  return createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-}
-
-async function resolveUser(request: Request): Promise<{ userId: string; privyWallet?: `0x${string}` } | null> {
-  const auth = await authenticate(request);
-  if (auth) return { userId: auth.userId };
-  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
-  if (!token) return null;
-  const privy = await verifyPrivyAccessToken(token);
-  if (!privy) return null;
-  const admin = adminClient();
-  const { data: member } = await admin.from("members").select("id,wallet_address").eq("privy_user_id", privy.userId).maybeSingle();
-  if (!member) return null;
-  const wallet = (member.wallet_address as `0x${string}` | null) ?? privy.walletAddress;
-  return wallet ? { userId: member.id, privyWallet: wallet } : { userId: member.id };
-}
-
 export async function handleSettle(request: Request): Promise<Response> {
-  const user = await resolveUser(request);
-  if (!user) return json({ error: "Please sign in again." }, 401);
+  const auth = await authenticate(request);
+  if (!auth) return json({ error: "Please sign in again." }, 401);
 
   const body = (await request.json().catch(() => null)) as SettleBody | null;
   if (!body?.text?.trim()) return json({ error: "Missing settle text" }, 400);
 
-  const admin = adminClient();
+  const db = getDb();
   const source = body.source ?? "typed";
   const intent = parseSpendIntent(body.text, source);
+  const userId = auth.userId;
 
-  let planRow = null as {
+  let planRow: {
     id: string;
-    household_id: string;
-    plan_json: Json;
-    reserve_floor_cents: number;
+    householdId: string;
+    planJson: unknown;
+    reserveFloorCents: number;
     status: string;
-    expires_at: string | null;
-  } | null;
+    expiresAt: Date | null;
+  } | null = null;
 
   if (body.planId) {
-    const { data } = await admin.from("money_plans").select("id,household_id,plan_json,reserve_floor_cents,status,expires_at").eq("id", body.planId).maybeSingle();
-    planRow = data;
+    const [row] = await db
+      .select({
+        id: moneyPlans.id,
+        householdId: moneyPlans.householdId,
+        planJson: moneyPlans.planJson,
+        reserveFloorCents: moneyPlans.reserveFloorCents,
+        status: moneyPlans.status,
+        expiresAt: moneyPlans.expiresAt,
+      })
+      .from(moneyPlans)
+      .where(eq(moneyPlans.id, body.planId))
+      .limit(1);
+    planRow = row ?? null;
   } else {
-    const { data } = await admin
-      .from("money_plans")
-      .select("id,household_id,plan_json,reserve_floor_cents,status,expires_at")
-      .eq("member_id", user.userId)
-      .eq("status", "approved")
-      .order("approved_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    planRow = data;
+    const [row] = await db
+      .select({
+        id: moneyPlans.id,
+        householdId: moneyPlans.householdId,
+        planJson: moneyPlans.planJson,
+        reserveFloorCents: moneyPlans.reserveFloorCents,
+        status: moneyPlans.status,
+        expiresAt: moneyPlans.expiresAt,
+      })
+      .from(moneyPlans)
+      .where(and(eq(moneyPlans.memberId, userId), eq(moneyPlans.status, "approved")))
+      .orderBy(desc(moneyPlans.approvedAt))
+      .limit(1);
+    planRow = row ?? null;
   }
 
   let plan: MoneyPlan | null = null;
   if (planRow?.status === "approved") {
     try {
       plan = assertMoneyPlan({
-        ...(planRow.plan_json as object),
-        reserveFloorCents: planRow.reserve_floor_cents,
-        expiresAt: planRow.expires_at ?? undefined,
+        ...(planRow.planJson as object),
+        reserveFloorCents: planRow.reserveFloorCents,
+        expiresAt: planRow.expiresAt?.toISOString(),
       });
     } catch {
       plan = null;
     }
   }
 
-  const walletAddress = body.walletAddress ?? user.privyWallet;
+  const walletAddress =
+    body.walletAddress ??
+    (auth.member.walletAddress as `0x${string}` | null) ??
+    undefined;
   let balanceCents = plan?.reserveFloorCents ?? 0;
   if (walletAddress) {
     try {
@@ -111,36 +110,35 @@ export async function handleSettle(request: Request): Promise<Response> {
     });
   }
 
-  const { data: intentRow, error: intentErr } = await admin
-    .from("intents")
-    .insert({
-      plan_id: planRow.id,
-      member_id: user.userId,
+  const [intentRow] = await db
+    .insert(intents)
+    .values({
+      planId: planRow.id,
+      memberId: userId,
       source,
-      raw_text: intent.rawText,
-      parsed: intent as unknown as Json,
+      rawText: intent.rawText,
+      parsed: intent as unknown as Record<string, unknown>,
       status: decision.allowed ? "allowed" : "blocked",
-      deny_reason: decision.allowed ? null : decision.reason,
+      denyReason: decision.allowed ? null : decision.reason,
     })
-    .select("id")
-    .single();
-  if (intentErr || !intentRow) return json({ error: intentErr?.message ?? "intent persist failed" }, 500);
+    .returning({ id: intents.id });
+  if (!intentRow) return json({ error: "intent persist failed" }, 500);
 
   if (!decision.allowed) {
-    await admin.from("settlements").insert({
-      intent_id: intentRow.id,
-      plan_id: planRow.id,
-      member_id: user.userId,
+    await db.insert(settlements).values({
+      intentId: intentRow.id,
+      planId: planRow.id,
+      memberId: userId,
       rail: "blocked",
       status: "blocked",
-      amount_cents: intent.amountCents ?? 0,
+      amountCents: intent.amountCents ?? 0,
       asset: "AUSD",
-      receipt_json: { code: decision.code, reason: decision.reason } as unknown as Json,
+      receiptJson: { code: decision.code, reason: decision.reason },
     });
-    await admin.from("receipts").insert({
-      household_id: planRow.household_id,
-      member_id: user.userId,
-      plain_english: decision.reason,
+    await db.insert(receipts).values({
+      householdId: planRow.householdId,
+      memberId: userId,
+      plainEnglish: decision.reason,
       kind: "blocked",
     });
     return json({
@@ -151,7 +149,7 @@ export async function handleSettle(request: Request): Promise<Response> {
         bufferCents: decision.bufferRemainingCents,
         nothingMoved: true,
         headline: "Nothing moved",
-        planCatch: plan?.steps.find((s) => s.action === "hold")?.label ?? `Keep $${(planRow.reserve_floor_cents / 100).toFixed(0)}`,
+        planCatch: plan?.steps.find((s) => s.action === "hold")?.label ?? `Keep $${(planRow.reserveFloorCents / 100).toFixed(0)}`,
       },
     });
   }
@@ -184,29 +182,28 @@ export async function handleSettle(request: Request): Promise<Response> {
             mode: "transfer",
           });
 
-    await admin.from("intents").update({ status: "executed" }).eq("id", intentRow.id);
-    const { data: settlement } = await admin
-      .from("settlements")
-      .insert({
-        intent_id: intentRow.id,
-        plan_id: planRow.id,
-        member_id: user.userId,
+    await db.update(intents).set({ status: "executed" }).where(eq(intents.id, intentRow.id));
+    const [settlement] = await db
+      .insert(settlements)
+      .values({
+        intentId: intentRow.id,
+        planId: planRow.id,
+        memberId: userId,
         rail: leg.rail,
         status: "confirmed",
-        amount_cents: leg.amountCents,
+        amountCents: leg.amountCents,
         asset: leg.asset,
-        tx_hash: exec.txHash,
-        explorer_url: exec.explorerUrl,
-        receipt_json: { composed } as unknown as Json,
+        txHash: exec.txHash,
+        explorerUrl: exec.explorerUrl,
+        receiptJson: { composed },
       })
-      .select("id")
-      .single();
+      .returning({ id: settlements.id });
 
-    await admin.from("receipts").insert({
-      settlement_id: settlement?.id ?? null,
-      household_id: planRow.household_id,
-      member_id: user.userId,
-      plain_english: composed.plainEnglish,
+    await db.insert(receipts).values({
+      settlementId: settlement?.id,
+      householdId: planRow.householdId,
+      memberId: userId,
+      plainEnglish: composed.plainEnglish,
       kind: "paid",
     });
 
@@ -218,16 +215,16 @@ export async function handleSettle(request: Request): Promise<Response> {
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Settlement failed";
-    await admin.from("intents").update({ status: "failed", deny_reason: message }).eq("id", intentRow.id);
-    await admin.from("settlements").insert({
-      intent_id: intentRow.id,
-      plan_id: planRow.id,
-      member_id: user.userId,
+    await db.update(intents).set({ status: "failed", denyReason: message }).where(eq(intents.id, intentRow.id));
+    await db.insert(settlements).values({
+      intentId: intentRow.id,
+      planId: planRow.id,
+      memberId: userId,
       rail: leg.rail,
       status: "failed",
-      amount_cents: leg.amountCents,
+      amountCents: leg.amountCents,
       asset: leg.asset,
-      receipt_json: { error: message } as unknown as Json,
+      receiptJson: { error: message },
     });
     return json({ error: message }, 502);
   }

@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { eq } from "drizzle-orm";
 import { authenticate, json } from "@/lib/ai/auth.server";
+import { getDb } from "@/lib/db/client";
+import { ensureMemberForPrivy } from "@/lib/db/members";
+import { verifyPrivyAccessToken } from "@/lib/auth/privy.server";
 import { parseMoneyPlanFromGoal } from "@/lib/policy/plan-parser";
-import type { Json } from "@/integrations/supabase/types";
+import { householdMembers, households, members, moneyPlans, planRules } from "../../../../drizzle/schema";
 
 export const Route = createFileRoute("/api/plans/approve")({
   server: {
@@ -16,66 +20,65 @@ export const Route = createFileRoute("/api/plans/approve")({
         } | null;
         if (!body?.goalText?.trim()) return json({ error: "goalText required" }, 400);
 
-        const { supabase, userId } = auth;
-        let householdId: string | null = null;
-        const { data: member } = await supabase.from("members").select("id,household_id").eq("id", userId).maybeSingle();
-        householdId = member?.household_id ?? null;
+        const db = getDb();
+        let householdId = auth.member.householdId;
         if (!householdId) {
-          const { data: hh, error } = await supabase
-            .from("households")
-            .insert({ name: "My household", created_by: userId })
-            .select("id")
-            .single();
-          if (error || !hh) return json({ error: error?.message ?? "household failed" }, 500);
-          householdId = hh.id;
-          await supabase.from("members").upsert({
-            id: userId,
-            household_id: householdId,
-            display_name: "Member",
-          });
-          await supabase.from("household_members").upsert({
-            household_id: householdId,
-            member_id: userId,
-            role: "owner",
-          });
+          const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+          const privy = await verifyPrivyAccessToken(token);
+          if (!privy) return json({ error: "Please sign in again." }, 401);
+          const member = await ensureMemberForPrivy(privy);
+          householdId = member.householdId;
+          if (!householdId) {
+            const [hh] = await db
+              .insert(households)
+              .values({ name: "My household", createdBy: auth.userId })
+              .returning({ id: households.id });
+            if (!hh) return json({ error: "household failed" }, 500);
+            householdId = hh.id;
+            await db.update(members).set({ householdId }).where(eq(members.id, auth.userId));
+            await db.insert(householdMembers).values({
+              householdId,
+              memberId: auth.userId,
+              role: "owner",
+            });
+          }
         }
 
         const plan = parseMoneyPlanFromGoal(
           body.goalText,
           body.reserveFloorCents != null ? { reserveFloorCents: body.reserveFloorCents } : undefined,
         );
-        const { data: row, error: planErr } = await supabase
-          .from("money_plans")
-          .insert({
-            household_id: householdId,
-            member_id: userId,
-            thread_id: body.threadId ?? null,
-            title: plan.title,
-            status: "approved",
-            currency: plan.currency,
-            reserve_floor_cents: plan.reserveFloorCents,
-            spending_cap_cents: plan.spendingCapCents ?? null,
-            expires_at: plan.expiresAt ?? null,
-            approved_at: new Date().toISOString(),
-            plan_json: plan as unknown as Json,
-          })
-          .select("id")
-          .single();
-        if (planErr || !row) return json({ error: planErr?.message ?? "plan create failed" }, 500);
 
-        await supabase.from("plan_rules").insert([
+        const insertValues: typeof moneyPlans.$inferInsert = {
+          householdId,
+          memberId: auth.userId,
+          title: plan.title,
+          status: "approved",
+          currency: plan.currency,
+          reserveFloorCents: plan.reserveFloorCents,
+          approvedAt: new Date(),
+          planJson: plan as unknown as Record<string, unknown>,
+        };
+        if (body.threadId) insertValues.threadId = body.threadId;
+        if (plan.spendingCapCents != null) insertValues.spendingCapCents = plan.spendingCapCents;
+        if (plan.expiresAt) insertValues.expiresAt = new Date(plan.expiresAt);
+
+        const [row] = await db.insert(moneyPlans).values(insertValues).returning({ id: moneyPlans.id });
+        if (!row) return json({ error: "plan create failed" }, 500);
+
+        await db.insert(planRules).values([
           {
-            plan_id: row.id,
+            planId: row.id,
             kind: "reserve_floor",
             label: `Keep $${(plan.reserveFloorCents / 100).toFixed(0)}`,
-            config: { cents: plan.reserveFloorCents } as unknown as Json,
+            config: { cents: plan.reserveFloorCents },
             pinned: true,
           },
           ...plan.allowlist.map((p) => ({
-            plan_id: row.id,
+            planId: row.id,
             kind: "allowlist_payee" as const,
             label: p.label,
-            config: p as unknown as Json,
+            config: p as unknown as Record<string, unknown>,
             pinned: true,
           })),
         ]);

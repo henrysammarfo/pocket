@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 days
-const COOKIE_PREFIX = "pk_sb_";
+const COOKIE_PREFIX = "pk_sess_";
 
 function cookieName(key: string): string {
   return `${COOKIE_PREFIX}${encodeURIComponent(key).replace(/%/g, "_")}`;
@@ -29,6 +29,7 @@ function clearCookieHeader(name: string): string {
   return `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
+/** Generic httpOnly cookie bag for optional server-readable session fragments. */
 export const Route = createFileRoute("/api/auth/session")({
   server: {
     handlers: {

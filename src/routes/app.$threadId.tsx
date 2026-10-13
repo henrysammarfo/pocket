@@ -5,7 +5,6 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { Check, Copy, CornerDownRight, Mic, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createParser } from "eventsource-parser";
-import { supabase } from "@/integrations/supabase/client";
 import { authHeader } from "@/hooks/useAuth";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -25,9 +24,17 @@ function ThreadPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["thread-messages", threadId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("thread_messages").select("message_id,role,parts").eq("thread_id", threadId).order("created_at");
-      if (error) throw error;
-      return data.map((m) => ({ id: m.message_id, role: m.role, parts: m.parts })) as unknown as UIMessage[];
+      const res = await fetch(`/api/threads/${threadId}`, { headers: await authHeader() });
+      const body = (await res.json()) as {
+        messages?: { message_id: string; role: string; parts: unknown }[];
+        error?: string;
+      };
+      if (!res.ok) throw new Error(body.error ?? "Could not load conversation");
+      return (body.messages ?? []).map((m) => ({
+        id: m.message_id,
+        role: m.role,
+        parts: m.parts,
+      })) as unknown as UIMessage[];
     },
     staleTime: Infinity,
   });

@@ -25,12 +25,14 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiReceiptsRouteImport } from './routes/api/receipts'
 import { Route as ApiSettleRouteImport } from './routes/api/settle'
 import { Route as ApiSpeakRouteImport } from './routes/api/speak'
+import { Route as ApiThreadsRouteImport } from './routes/api/threads'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppThreadIdRouteImport } from './routes/app.$threadId'
 import { Route as ApiAuthPrivyLinkRouteImport } from './routes/api/auth/privy-link'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiPlansApproveRouteImport } from './routes/api/plans/approve'
+import { Route as ApiThreadsThreadIdRouteImport } from './routes/api/threads.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +114,11 @@ const ApiSpeakRoute = ApiSpeakRouteImport.update({
   path: '/api/speak',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiThreadsRoute = ApiThreadsRouteImport.update({
+  id: '/api/threads',
+  path: '/api/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   id: '/api/transcribe',
   path: '/api/transcribe',
@@ -142,6 +149,11 @@ const ApiPlansApproveRoute = ApiPlansApproveRouteImport.update({
   path: '/api/plans/approve',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiThreadsThreadIdRoute = ApiThreadsThreadIdRouteImport.update({
+  id: '/$threadId',
+  path: '/$threadId',
+  getParentRoute: () => ApiThreadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -160,12 +172,14 @@ export interface FileRoutesByFullPath {
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -183,12 +197,14 @@ export interface FileRoutesByTo {
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,12 +224,14 @@ export interface FileRoutesById {
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,12 +252,14 @@ export interface FileRouteTypes {
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
     | '/app/'
     | '/api/auth/privy-link'
     | '/api/auth/session'
     | '/api/plans/approve'
+    | '/api/threads/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -257,12 +277,14 @@ export interface FileRouteTypes {
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
     | '/app'
     | '/api/auth/privy-link'
     | '/api/auth/session'
     | '/api/plans/approve'
+    | '/api/threads/$threadId'
   id:
     | '__root__'
     | '/'
@@ -281,12 +303,14 @@ export interface FileRouteTypes {
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
     | '/app/'
     | '/api/auth/privy-link'
     | '/api/auth/session'
     | '/api/plans/approve'
+    | '/api/threads/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -306,6 +330,7 @@ export interface RootRouteChildren {
   ApiReceiptsRoute: typeof ApiReceiptsRoute
   ApiSettleRoute: typeof ApiSettleRoute
   ApiSpeakRoute: typeof ApiSpeakRoute
+  ApiThreadsRoute: typeof ApiThreadsRouteWithChildren
   ApiTranscribeRoute: typeof ApiTranscribeRoute
   ApiAuthPrivyLinkRoute: typeof ApiAuthPrivyLinkRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
@@ -426,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSpeakRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/threads': {
+      id: '/api/threads'
+      path: '/api/threads'
+      fullPath: '/api/threads'
+      preLoaderRoute: typeof ApiThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/transcribe': {
       id: '/api/transcribe'
       path: '/api/transcribe'
@@ -468,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlansApproveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/threads/$threadId': {
+      id: '/api/threads/$threadId'
+      path: '/$threadId'
+      fullPath: '/api/threads/$threadId'
+      preLoaderRoute: typeof ApiThreadsThreadIdRouteImport
+      parentRoute: typeof ApiThreadsRoute
+    }
   }
 }
 
@@ -482,6 +521,18 @@ const AppRouteChildren: AppRouteChildren = {
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface ApiThreadsRouteChildren {
+  ApiThreadsThreadIdRoute: typeof ApiThreadsThreadIdRoute
+}
+
+const ApiThreadsRouteChildren: ApiThreadsRouteChildren = {
+  ApiThreadsThreadIdRoute: ApiThreadsThreadIdRoute,
+}
+
+const ApiThreadsRouteWithChildren = ApiThreadsRoute._addFileChildren(
+  ApiThreadsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -500,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiReceiptsRoute: ApiReceiptsRoute,
   ApiSettleRoute: ApiSettleRoute,
   ApiSpeakRoute: ApiSpeakRoute,
+  ApiThreadsRoute: ApiThreadsRouteWithChildren,
   ApiTranscribeRoute: ApiTranscribeRoute,
   ApiAuthPrivyLinkRoute: ApiAuthPrivyLinkRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
