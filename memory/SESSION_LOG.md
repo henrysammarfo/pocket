@@ -39,3 +39,9 @@
 - `privyConfigured() === true`; AgentRouter `/v1/models` HTTP 200.
 - Pushed `envio` branch for Envio Cloud default release branch.
 - Waiting on Envio Connect (directory must be `indexer`) + Privy dashboard Monad/domain settings.
+
+## 2026-10-13 — Envio Cloud deploy trigger
+
+- Fixed indexer for Envio Cloud V3: `networks`→`chains`, pin `envio@3.14.0`, `indexer.onEvent` handlers.
+- Pushed to `envio` branch to trigger hosted deployment.
+- Privy: guide user to enable Email + Google + Ethereum embedded wallets.
