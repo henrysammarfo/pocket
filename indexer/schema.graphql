@@ -1,0 +1,20 @@
+type PocketSettlement {
+  id: ID!
+  memberId: String!
+  status: String!
+  amountCents: BigInt!
+  txHash: String
+  plainEnglish: String!
+  rail: String!
+}
+
+type AgoraSwap {
+  id: ID!
+  sender: String!
+  to: String!
+  amount0In: BigInt!
+  amount1In: BigInt!
+  amount0Out: BigInt!
+  amount1Out: BigInt!
+  txHash: String!
+}

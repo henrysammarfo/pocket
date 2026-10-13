@@ -6,34 +6,34 @@ Updated: 2026-10-13
 
 - **Job:** Money plan that cannot overspend. Approved plan = only permission.
 - **Surface:** ChatGPT-like consumer chat at `/app/$threadId`. Crypto under the hood.
-- **Account:** Privy-primary (target). Supabase Auth currently powers chat.
+- **Account:** Privy-primary (wired; needs `VITE_PRIVY_APP_ID` + `PRIVY_APP_SECRET`).
 - **Network:** Monad testnet (10143) only.
 
 ## What is live in repo
 
 | Area | Status |
 |---|---|
-| Marketing site + chat UI | Live (TanStack Start) |
+| Marketing site + chat UI | Live |
 | Supabase threads/messages + RLS | Live |
-| AI chat via Lovable gateway | Live when `LOVABLE_API_KEY` set |
-| Voice transcribe route | Live when gateway key set |
-| Privy embedded wallet | Building |
-| PolicyEngine / IntentComposer | Building |
-| Agora Instant Settlement exec | Building |
-| Envio indexer → Activity | Building |
-| Cookie/httpOnly session (no localStorage auth) | Building |
-| Multi-tenant households | Building |
+| Cookie httpOnly session storage (prod) | Live (`/api/auth/session`) |
+| Multi-tenant schema migration | Ready (`0001_pocket_multitenant_settlement.sql`) |
+| PolicyEngine + PlanParser + IntentComposer | Live + unit tests + harness 3/3 |
+| `/api/settle` + BlockScreen | Live (deny path); allow path needs Privy wallet + RPC |
+| Agora Instant Settlement module | Live code (testnet addresses fact-checked) |
+| Envio indexer config + `/api/receipts` | Ready (needs `ENVIO_GRAPHQL_URL`) |
+| ElevenLabs `/api/speak` | Ready (needs `ELEVENLABS_API_KEY`) |
+| Under-hood Nansen / Mera PRF / Tenderly | Gated modules (no fake data) |
+| Cursor rules + skills + memory | Live |
 
-## Keys needed next
+## Keys needed next (ask user — do not paste in chat)
 
-1. `VITE_PRIVY_APP_ID` + `PRIVY_APP_SECRET`
+1. `VITE_PRIVY_APP_ID` + `PRIVY_APP_SECRET` (+ gas sponsorship on Monad testnet)
 2. `MONAD_RPC_URL`
-3. Agora whitelist / API for Instant Settlement swappers
-4. `ENVIO_API_TOKEN`
+3. Agora Instant Settlement whitelist for testnet swappers
+4. `ENVIO_API_TOKEN` + deploy indexer → `ENVIO_GRAPHQL_URL`
 5. `LOVABLE_API_KEY` and/or AgentRouter for chat
-6. `ELEVENLABS_API_KEY` for speak-back
-
-Research keys (Tavily, TinyFish, AgentRouter) are wired in local `.env` (gitignored).
+6. `ELEVENLABS_API_KEY`
+7. `SUPABASE_SERVICE_ROLE_KEY` for Privy↔member link
 
 ## Do not
 

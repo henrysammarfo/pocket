@@ -1,0 +1,14 @@
+{
+  "name": "pocket-envio-indexer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "build": "envio codegen"
+  },
+  "devDependencies": {
+    "envio": "latest",
+    "typescript": "^5.8.3"
+  }
+}

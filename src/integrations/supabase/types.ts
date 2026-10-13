@@ -76,12 +76,252 @@ export type Database = {
         }
         Relationships: []
       }
+      households: {
+        Row: { id: string; name: string; created_by: string | null; created_at: string }
+        Insert: { id?: string; name?: string; created_by?: string | null; created_at?: string }
+        Update: { id?: string; name?: string; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          id: string
+          household_id: string | null
+          privy_user_id: string | null
+          wallet_address: string | null
+          display_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          household_id?: string | null
+          privy_user_id?: string | null
+          wallet_address?: string | null
+          display_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          household_id?: string | null
+          privy_user_id?: string | null
+          wallet_address?: string | null
+          display_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      household_members: {
+        Row: { household_id: string; member_id: string; role: string; created_at: string }
+        Insert: { household_id: string; member_id: string; role?: string; created_at?: string }
+        Update: { household_id?: string; member_id?: string; role?: string; created_at?: string }
+        Relationships: []
+      }
+      money_plans: {
+        Row: {
+          id: string
+          household_id: string
+          member_id: string
+          thread_id: string | null
+          title: string
+          status: string
+          currency: string
+          reserve_floor_cents: number
+          spending_cap_cents: number | null
+          expires_at: string | null
+          approved_at: string | null
+          plan_json: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          household_id: string
+          member_id: string
+          thread_id?: string | null
+          title?: string
+          status?: string
+          currency?: string
+          reserve_floor_cents?: number
+          spending_cap_cents?: number | null
+          expires_at?: string | null
+          approved_at?: string | null
+          plan_json?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          household_id?: string
+          member_id?: string
+          thread_id?: string | null
+          title?: string
+          status?: string
+          currency?: string
+          reserve_floor_cents?: number
+          spending_cap_cents?: number | null
+          expires_at?: string | null
+          approved_at?: string | null
+          plan_json?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_rules: {
+        Row: {
+          id: string
+          plan_id: string
+          kind: string
+          label: string
+          config: Json
+          pinned: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          plan_id: string
+          kind: string
+          label: string
+          config?: Json
+          pinned?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          plan_id?: string
+          kind?: string
+          label?: string
+          config?: Json
+          pinned?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      intents: {
+        Row: {
+          id: string
+          plan_id: string
+          member_id: string
+          source: string
+          raw_text: string
+          parsed: Json
+          status: string
+          deny_reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          plan_id: string
+          member_id: string
+          source?: string
+          raw_text: string
+          parsed?: Json
+          status?: string
+          deny_reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          plan_id?: string
+          member_id?: string
+          source?: string
+          raw_text?: string
+          parsed?: Json
+          status?: string
+          deny_reason?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      settlements: {
+        Row: {
+          id: string
+          intent_id: string
+          plan_id: string
+          member_id: string
+          rail: string
+          status: string
+          amount_cents: number
+          asset: string
+          tx_hash: string | null
+          explorer_url: string | null
+          receipt_json: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          intent_id: string
+          plan_id: string
+          member_id: string
+          rail?: string
+          status: string
+          amount_cents?: number
+          asset?: string
+          tx_hash?: string | null
+          explorer_url?: string | null
+          receipt_json?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          intent_id?: string
+          plan_id?: string
+          member_id?: string
+          rail?: string
+          status?: string
+          amount_cents?: number
+          asset?: string
+          tx_hash?: string | null
+          explorer_url?: string | null
+          receipt_json?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      receipts: {
+        Row: {
+          id: string
+          settlement_id: string | null
+          household_id: string
+          member_id: string
+          plain_english: string
+          kind: string
+          envio_entity_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          settlement_id?: string | null
+          household_id: string
+          member_id: string
+          plain_english: string
+          kind: string
+          envio_entity_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          settlement_id?: string | null
+          household_id?: string
+          member_id?: string
+          plain_english?: string
+          kind?: string
+          envio_entity_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_household_member: {
+        Args: { hh: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

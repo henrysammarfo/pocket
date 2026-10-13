@@ -14,7 +14,9 @@ import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-e
 import { BrandMark } from "@/components/BrandLogo";
 import { LoadingState } from "@/components/pocket-ui/LoadingState";
 import { GoalCard } from "@/components/pocket-ui/GoalCard";
+import { BlockScreen } from "@/components/pocket-ui/BlockScreen";
 import { threadsKey } from "./app";
+import { parseSpendIntent } from "@/lib/policy/plan-parser";
 
 export const Route = createFileRoute("/app/$threadId")({ component: ThreadPage });
 
@@ -55,6 +57,9 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const [err, setErr] = useState<string | null>(null);
   const [showGoal, setShowGoal] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [block, setBlock] = useState<{ message: string; bufferCents: number; planCatch?: string } | null>(null);
+  const [receipts, setReceipts] = useState<{ plain_english: string; kind: string }[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const { messages, sendMessage, status, stop, regenerate } = useChat({
     id: threadId,
@@ -65,11 +70,76 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   });
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => { if (!busy) taRef.current?.focus(); }, [busy]);
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/receipts", { headers: await authHeader() });
+      if (!res.ok) return;
+      const body = (await res.json()) as { receipts?: { plain_english: string; kind: string }[] };
+      setReceipts(body.receipts ?? []);
+    })();
+  }, [block, planId]);
 
-  const send = (value: string) => {
+  const approvePlan = async (goalText: string) => {
+    const res = await fetch("/api/plans/approve", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(await authHeader()) },
+      body: JSON.stringify({ goalText, threadId, reserveFloorCents: 20_000 }),
+    });
+    const body = (await res.json()) as { planId?: string; error?: string };
+    if (!res.ok) throw new Error(body.error ?? "Could not approve plan");
+    setPlanId(body.planId ?? null);
+  };
+
+  const trySettle = async (value: string, source: "typed" | "spoken" = "typed") => {
+    const intent = parseSpendIntent(value, source);
+    if (intent.kind === "unknown" && !planId) return false;
+    if (intent.kind === "unknown") return false;
+    const res = await fetch("/api/settle", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(await authHeader()) },
+      body: JSON.stringify({ text: value, source, planId }),
+    });
+    const body = (await res.json()) as {
+      blocked?: boolean;
+      screen?: { message: string; bufferCents: number; planCatch?: string };
+      error?: string;
+      settlement?: { explorerUrl: string };
+    };
+    if (body.blocked && body.screen) {
+      const screen: { message: string; bufferCents: number; planCatch?: string } = {
+        message: body.screen.message,
+        bufferCents: body.screen.bufferCents,
+      };
+      if (body.screen.planCatch) screen.planCatch = body.screen.planCatch;
+      setBlock(screen);
+      return true;
+    }
+    if (!res.ok && body.error) {
+      // Missing wallet keys is expected until Privy is wired — still surface honestly.
+      setErr(body.error);
+      return true;
+    }
+    if (body.settlement) {
+      setBlock(null);
+      setErr(null);
+    }
+    return true;
+  };
+
+  const send = async (value: string, source: "typed" | "spoken" = "typed") => {
     const v = value.trim();
     if (!v || busy) return;
     setErr(null);
+    try {
+      if (!planId && /keep\s*\$?\s*\d+/i.test(v)) await approvePlan(v);
+      const settled = await trySettle(v, source);
+      if (settled && parseSpendIntent(v).kind === "send_rest") {
+        setText("");
+        return;
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not run plan guards");
+    }
     sendMessage({ text: v });
     setText("");
   };
@@ -79,13 +149,26 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   return <div className="pk-chat">
     <Conversation className="pk-scroll">
       <ConversationContent className="pk-thread-body">
-        {messages.length === 0 && <div className="pk-hero">
+        {block && (
+          <BlockScreen
+            message={block.message}
+            bufferCents={block.bufferCents}
+            {...(block.planCatch ? { planCatch: block.planCatch } : {})}
+            rentPaidNote="Rent was already paid inside the plan."
+          />
+        )}
+        {receipts.length > 0 && <div className="pk-chip-row" aria-label="Activity">
+          {receipts.slice(0, 6).map((r, i) => (
+            <span key={i} className={`pk-chip ${r.kind === "blocked" ? "is-danger" : r.kind === "paid" ? "is-ok" : ""}`}>{r.plain_english}</span>
+          ))}
+        </div>}
+        {messages.length === 0 && !block && <div className="pk-hero">
           <span className="pk-hero-mark"><BrandMark size={52} /></span>
           <h1>What should your money do?</h1>
           <p>Say it out loud or type it. POCKET turns your goal into a plan with rules that can't overspend.</p>
           {showGoal
-            ? <GoalCard onComplete={send} onDismiss={() => setShowGoal(false)} />
-            : <div className="pk-suggest">{SUGGESTIONS.map((s) => <button key={s} onClick={() => send(s)}><CornerDownRight size={12} />{s}</button>)}</div>}
+            ? <GoalCard onComplete={(g) => void send(g)} onDismiss={() => setShowGoal(false)} />
+            : <div className="pk-suggest">{SUGGESTIONS.map((s) => <button key={s} onClick={() => void send(s)}><CornerDownRight size={12} />{s}</button>)}</div>}
         </div>}
         {messages.map((m) => <Message key={m.id} from={m.role} className="pk-msg">
           <MessageContent className={m.role === "user" ? "pk-user" : "pk-assistant"}>
@@ -97,13 +180,15 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             {m.role === "assistant" && !(busy && m.id === messages.at(-1)?.id) && <div className="pk-actions">
               <button aria-label="Copy plan" onClick={() => { navigator.clipboard.writeText(textOf(m)); setCopied(m.id); setTimeout(() => setCopied(null), 1400); }}>{copied === m.id ? <Check size={14} /> : <Copy size={14} />}</button>
               {m.id === lastAssistant?.id && <button aria-label="Regenerate" onClick={() => regenerate()}><RotateCcw size={14} /></button>}
+              {m.id === lastAssistant?.id && <button type="button" className="pk-chip" onClick={() => void approvePlan(textOf(m)).then(() => setErr(null)).catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"))}>Approve plan · Keep $200</button>}
             </div>}
           </MessageContent>
         </Message>)}
         {status === "submitted" && <div className="pk-msg"><LoadingState /></div>}
         {status === "ready" && lastAssistant && lastAssistant.id === messages.at(-1)?.id && <div className="pk-followups">
           <p>Follow-ups</p>
-          {FOLLOW_UPS.map((f, i) => <button key={f} style={{ animationDelay: `${i * 90}ms` }} onClick={() => send(f)}><CornerDownRight size={12} />{f}</button>)}
+          {FOLLOW_UPS.map((f, i) => <button key={f} style={{ animationDelay: `${i * 90}ms` }} onClick={() => void send(f)}><CornerDownRight size={12} />{f}</button>)}
+          <button style={{ animationDelay: "270ms" }} onClick={() => void send("Send the rest")}><CornerDownRight size={12} />Send the rest</button>
         </div>}
         {err && <p className="pk-error" role="alert">{err}</p>}
       </ConversationContent>
@@ -113,14 +198,14 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       {slash.length > 0 && <div className="pk-menu" role="listbox" aria-label="Plan templates">
         {slash.map((c) => <button key={c.cmd} role="option" aria-selected="false" onClick={() => { setText(c.text); taRef.current?.focus(); }}><code>{c.cmd}</code><span>{c.text.replace(/\$/g, "$…")}</span></button>)}
       </div>}
-      <PromptInput onSubmit={(msg) => send(msg.text)} className="pk-prompt">
+      <PromptInput onSubmit={(msg) => void send(msg.text)} className="pk-prompt">
         <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Describe a money goal, or type / for templates" autoFocus />
         <PromptInputFooter className="justify-between">
-          <PromptInputTools><VoiceButton onText={(t) => { setText((cur) => (cur ? cur + " " : "") + t); taRef.current?.focus(); }} onError={setErr} /></PromptInputTools>
+          <PromptInputTools><VoiceButton onText={(t) => { void send(t, "spoken"); }} onError={setErr} /></PromptInputTools>
           <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} className="pk-send" />
         </PromptInputFooter>
       </PromptInput>
-      <p className="pk-disclaimer">Guidance, not regulated financial advice. No real money moves in this demo.</p>
+      <p className="pk-disclaimer">Monad testnet. Approved plan is the only permission. Crypto stays under the hood.</p>
     </div>
   </div>;
 }

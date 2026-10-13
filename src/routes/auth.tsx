@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { BrandLogo } from "@/components/BrandLogo";
+import { usePrivyLink } from "@/hooks/usePrivyLink";
+import { PrivyLoginButton } from "@/components/privy/PrivyLoginButton";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
@@ -19,13 +21,16 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { session } = useAuth();
+  const { privyEnabled, authenticated: privyAuthed, link } = usePrivyLink();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (session) navigate({ to: "/app" }); }, [session, navigate]);
+  useEffect(() => {
+    if (session || (privyAuthed && link?.userId)) navigate({ to: "/app" });
+  }, [session, privyAuthed, link?.userId, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setMsg(null);
@@ -46,6 +51,9 @@ function AuthPage() {
       <BrandLogo compact />
       <h1>{mode === "in" ? "Welcome back." : "Meet your money assistant."}</h1>
       <p>Tell POCKET a goal. Get a plan that can't overspend.</p>
+      {privyEnabled
+        ? <PrivyLoginButton onError={setMsg} />
+        : <button type="button" className="auth-privy" disabled onClick={() => setMsg("Set VITE_PRIVY_APP_ID + PRIVY_APP_SECRET for invisible wallet login.")}>Continue — invisible wallet</button>}
       <button type="button" className="auth-google" onClick={google}>Continue with Google</button>
       <div className="auth-or"><span>or</span></div>
       <form onSubmit={submit}>

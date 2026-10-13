@@ -2,6 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
+import { cookieAuthStorage } from './cookieAuthStorage';
+
+function resolveAuthStorage() {
+  if (typeof window === 'undefined') return undefined;
+  const host = location.hostname;
+  const PREVIEW_ZONES = ['lovableproject.com', 'lovableproject-dev.com', 'lovable.app', 'gpt-eng.com', 'gptengineer.run'];
+  const onPreviewZone = PREVIEW_ZONES.some((z) => host === z || host.endsWith('.' + z));
+  const framed = window.parent && window.parent !== window;
+  // Lovable preview iframes keep the broker; production uses httpOnly cookie sessions.
+  if (onPreviewZone && framed) return brokeredPreviewStorage();
+  return cookieAuthStorage();
+}
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
@@ -49,7 +61,7 @@ function createSupabaseClient() {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      storage: brokeredPreviewStorage(),
+      storage: resolveAuthStorage(),
       persistSession: true,
       autoRefreshToken: true,
     },

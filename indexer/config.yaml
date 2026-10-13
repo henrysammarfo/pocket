@@ -1,0 +1,14 @@
+# Envio HyperIndex — Monad testnet (10143)
+# Deploy with Envio Cloud after `ENVIO_API_TOKEN` is set.
+name: pocket-settlement
+description: Indexes Agora Instant Settlement swaps + POCKET settlement semantics on Monad testnet
+networks:
+  - id: 10143
+    start_block: 0
+    contracts:
+      - name: AgoraPair
+        address:
+          - "0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae"
+        handler: src/EventHandlers.ts
+        events:
+          - event: Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)

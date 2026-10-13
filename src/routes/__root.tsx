@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PrivyAppProvider } from "@/components/privy/PrivyAppProvider";
 import appCss from "../styles.css?url";
 
 export const Route=createRootRouteWithContext<{queryClient:QueryClient}>()({
@@ -9,4 +10,4 @@ export const Route=createRootRouteWithContext<{queryClient:QueryClient}>()({
  notFoundComponent:()=> <main className="not-found"><span className="eyebrow">404</span><h1>That plan went elsewhere.</h1><a href="/">Back to POCKET</a></main>
 });
 function RootShell({children}:{children:ReactNode}){return <html lang="en"><head><HeadContent/></head><body>{children}<Scripts/></body></html>}
-function RootComponent(){const {queryClient}=Route.useRouteContext();return <QueryClientProvider client={queryClient}><SiteHeader/><Outlet/></QueryClientProvider>}
+function RootComponent(){const {queryClient}=Route.useRouteContext();return <QueryClientProvider client={queryClient}><PrivyAppProvider><SiteHeader/><Outlet/></PrivyAppProvider></QueryClientProvider>}

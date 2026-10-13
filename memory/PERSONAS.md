@@ -18,4 +18,9 @@
 | Visitor | `/` → Product → Auth | Brand clear; job clear |
 | Skeptic | Typed overspend | Block screen; nothing moved |
 
-Findings will be appended as builds land.
+## Findings (2026-10-13)
+
+- Harness 3/3: typed / spoken / next-day “send the rest” blocked by PolicyEngine with Keep $200 pinned.
+- BlockScreen component ready for demo-open-on-block beat.
+- Remaining UX risk until Privy keys: auth still offers email/password + Google; invisible wallet button disabled without `VITE_PRIVY_APP_ID`.
+
