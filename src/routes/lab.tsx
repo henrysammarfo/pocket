@@ -1,7 +1,28 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Braces, Combine, FileCheck2, ShieldCheck } from "lucide-react";
-import { PageIntro } from "@/components/PageIntro";
+import { createFileRoute } from "@tanstack/react-router";
+import { Braces, Combine, FileCheck2, FlaskConical, ShieldCheck } from "lucide-react";
+import { CtaBand, FeatureGrid, LoaderMock, PageHero, SectionHead } from "@/components/marketing/Kit";
 import { StudioFooter } from "@/components/StudioFooter";
 
-export const Route=createFileRoute("/lab")({head:()=>({meta:[{title:"Development — POCKET in the lab"},{name:"description",content:"Explore the policy, composition, settlement, and receipt work behind the POCKET testnet demo."},{property:"og:title",content:"Inside the POCKET lab"},{property:"og:description",content:"The working ideas behind a money plan that cannot overspend."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:Lab});
-function Lab(){return <><main><PageIntro eyebrow="Development · Monad testnet" title="The hard work sits behind one sentence." copy="These are the systems being proved in the POCKET demo. Each is essential; remove the composer or the policy engine and the product no longer works."/><section className="lab-board"><article><Braces/><span>Parsing</span><h2>Human intent, exact fields.</h2><p>Recipients, dates, floors, caps, and market instructions emerge from one plain-language plan.</p></article><article><ShieldCheck/><span>Policy</span><h2>Fail closed by default.</h2><p>Insufficient balance, an unknown recipient, an expired approval, or a breached cap stops the whole plan.</p></article><article><Combine/><span>Composition</span><h2>Many legs, one decision.</h2><p>Agora payment and Kuru market actions are prepared as a coordinated Monad settlement.</p></article><article><FileCheck2/><span>Proof</span><h2>Readable after the fact.</h2><p>Envio-indexed receipts are designed to explain both settled actions and blocked attempts.</p></article></section><section className="lab-note"><strong>Current state</strong><p>This site demonstrates the complete interaction with local sample data. It does not claim real settlement or connected wallet infrastructure.</p><Link to="/app">Run the clickable demo <ArrowRight/></Link></section></main><StudioFooter/></>}
+export const Route = createFileRoute("/lab")({ head: () => ({ meta: [{title:"Development — POCKET in the lab"},{name:"description",content:"Explore the policy, composition, settlement, and receipt work behind the POCKET testnet demo."},{property:"og:title",content:"Inside the POCKET lab"},{property:"og:description",content:"The working ideas behind a money plan that cannot overspend."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}] }), component: Lab });
+
+function Lab() {
+  return (
+    <>
+      <main className="mk-page">
+        <PageHero eyebrow="Development · Monad testnet" title={<>The hard work sits behind <em>one</em> sentence.</>} copy="These are the systems being proven in the POCKET demo. Remove the composer or the rules engine and the product stops working." aside={<div className="mk-stage"><LoaderMock label="Composing settlement" /><LoaderMock label="Indexing receipt" /></div>} />
+        <section>
+          <SectionHead eyebrow="Work in progress" title="Four systems, one promise." />
+          <FeatureGrid cols={2} items={[
+            { icon: Braces, kicker: "Parsing", title: "Human intent, exact fields", copy: "Recipients, dates, floors, caps and market instructions from one plan." },
+            { icon: ShieldCheck, kicker: "Policy", title: "Fail closed by default", copy: "Low balance, unknown recipient, expired approval or a broken cap stops everything." },
+            { icon: Combine, kicker: "Composition", title: "Many legs, one decision", copy: "Agora payments and Kuru market actions prepared as one Monad settlement." },
+            { icon: FileCheck2, kicker: "Proof", title: "Readable after the fact", copy: "Indexed receipts explain both settled actions and blocked attempts." },
+          ]} />
+        </section>
+        <div className="mk-note"><FlaskConical aria-hidden /><p><strong>Current state.</strong> This site shows the full interaction with sample data. It does not claim real settlement or a connected wallet yet.</p></div>
+        <CtaBand title="Run the clickable demo." copy="Describe a goal and watch the plan take shape." to="/app" label="Open POCKET" />
+      </main>
+      <StudioFooter />
+    </>
+  );
+}

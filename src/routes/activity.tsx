@@ -1,7 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, CircleSlash2, ExternalLink } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Info } from "lucide-react";
+import { CtaBand, PageHero, ReceiptMock } from "@/components/marketing/Kit";
 import { receipts } from "@/data/site";
-import { PageIntro } from "@/components/PageIntro";
 import { StudioFooter } from "@/components/StudioFooter";
-export const Route=createFileRoute("/activity")({head:()=>({meta:[{title:"Activity — POCKET testnet receipts"},{name:"description",content:"Explore clearly labeled sample POCKET receipts and blocked plan records."},{property:"og:title",content:"POCKET activity and receipts"},{property:"og:description",content:"Readable proof for every plan result."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:ActivityPage});
-function ActivityPage(){return <><main><PageIntro eyebrow="Sample activity · Testnet demo" title="Every outcome leaves a receipt." copy="Confirmed settlement or blocked intent, POCKET gives you one readable record of what happened—and why."/><section className="public-ledger"><div className="ledger-head"><span>Reference</span><span>Action</span><span>Rail</span><span>Amount</span><span>Result</span></div>{receipts.map(r=><div className="ledger-row" key={r.id}><code>{r.id}</code><strong>{r.action}</strong><span>{r.rail}</span><span>{r.amount}</span><span className={r.status==="Blocked"?"result blocked":"result"}>{r.status==="Blocked"?<CircleSlash2/>:<CheckCircle2/>}{r.status}</span></div>)}<p className="demo-disclaimer">Sample records only. Explorer links activate when live Monad testnet execution is connected.</p></section><section className="product-cta"><h2>Clear enough to read.<br/>Exact enough to verify.</h2><Link to="/app">Open activity <ExternalLink/></Link></section></main><StudioFooter/></>}
+
+export const Route = createFileRoute("/activity")({ head: () => ({ meta: [{title:"Activity — POCKET testnet receipts"},{name:"description",content:"Explore clearly labeled sample POCKET receipts and blocked plan records."},{property:"og:title",content:"POCKET activity and receipts"},{property:"og:description",content:"Readable proof for every plan result."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}] }), component: ActivityPage });
+
+function ActivityPage() {
+  return (
+    <>
+      <main className="mk-page">
+        <PageHero eyebrow="Sample activity · Testnet demo" title={<>Every outcome leaves a <em>receipt</em>.</>} copy="Settled or blocked, POCKET gives you one readable record of what happened and why." aside={<div className="mk-stage"><ReceiptMock rows={[...receipts]} /></div>} />
+        <div className="mk-note"><Info aria-hidden /><p><strong>Sample records only.</strong> Explorer links turn on when live Monad testnet execution is connected.</p></div>
+        <CtaBand title="Clear enough to read. Exact enough to verify." copy="Make a plan and get your own receipt." to="/app" label="Open POCKET" />
+      </main>
+      <StudioFooter />
+    </>
+  );
+}
