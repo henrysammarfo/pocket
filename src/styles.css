@@ -293,7 +293,93 @@
 .bb-reading p{font-size:13px;color:var(--ink-2);margin:0}
 
 /* Money routes */
+.bb-desk-title{display:none;align-items:center;justify-content:space-between;padding:28px 48px 0;flex:none}
+.bb-desk-title h1{font-size:22px;font-weight:700;color:var(--pk-primary);margin:0;letter-spacing:-.01em}
 .bb-money{flex:1;overflow:auto;padding:20px 24px 40px;max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.bb-money-h{font-size:18px;font-weight:500;color:var(--ink);margin:0}
+.bb-search{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:0.5px solid var(--ink-2);border-radius:15px;background:transparent}
+.bb-search input{flex:1;border:0;background:transparent;outline:0;font-size:14px;color:var(--ink);min-width:0}
+.bb-asset-stack{display:flex;flex-direction:column;gap:12px}
+.bb-asset-tile{display:flex;align-items:center;gap:12px;min-height:71px;padding:12px 16px;border:0;border-radius:15px;background:rgba(18,60,50,.05);font-size:16px;font-weight:500;color:var(--ink);text-align:left;width:100%}
+.bb-asset-tile span{flex:1;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+.bb-asset-bal{font-size:12px;font-weight:400;color:var(--ink-2)}
+.bb-asset-tile.is-active{box-shadow:inset 0 0 0 1.5px var(--pk-primary)}
+.bb-asset-chevron{opacity:.55;transform:scaleY(-1) rotate(180deg);flex:none}
+.bb-asset-row-left{display:flex;align-items:center;gap:12px;min-width:0}
+.bb-asset-row-left img{flex:none;border-radius:50%}
+
+/* Wallet Figma card */
+.bb-wallet{max-width:430px;gap:20px}
+.bb-wal-side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.bb-wal-card{border-radius:15px;overflow:hidden;background:var(--pk-primary);color:var(--pk-primary-fg);display:flex;flex-direction:column;min-height:210px}
+.bb-wal-card-top{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 24px 16px;gap:12px}
+.bb-wal-card-meta{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bb-wal-pill{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:30px;background:rgba(247,247,243,.05);font-size:14px;width:fit-content}
+.bb-wal-pill img{opacity:.95}
+.bb-wal-amount{font-size:30px;font-weight:700;line-height:1;margin:0;color:#fff}
+.bb-wal-frac{color:var(--line)}
+.bb-wal-sub{font-size:12px;color:rgba(247,247,243,.7);margin:0;line-height:1.35}
+.bb-wal-eye{width:34px;height:34px;border:0;border-radius:50px;background:rgba(247,247,243,.05);display:grid;place-items:center;flex:none}
+.bb-wal-eye img{filter:brightness(0) invert(1);opacity:.85}
+.bb-wal-card-actions{position:relative;display:flex;gap:6px;justify-content:center;align-items:center;padding:19px 16px;background:var(--canvas);border-radius:13px 15px 0 0;margin-top:auto;border:1px solid var(--line);border-bottom:0}
+.bb-wal-wave{position:absolute;inset:-50% -8%;width:116%;height:auto;opacity:.35;pointer-events:none}
+.bb-wal-act{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:55px;width:114px;border-radius:30px;background:var(--surface);color:var(--ink-2);font-size:14px;font-weight:500}
+.bb-wal-act.is-primary{background:var(--pk-primary);color:#fff}
+.bb-top-coins{display:flex;flex-direction:column;gap:16px}
+.bb-coin-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bb-coin-head h2{font-size:20px;font-weight:500;margin:0;color:var(--ink)}
+.bb-see-all{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;font-size:10px;font-weight:500;color:var(--ink-2);padding:0}
+.bb-see-all img{transform:scaleY(-1) rotate(180deg);opacity:.7}
+.bb-coin-stack{display:flex;flex-direction:column;gap:12px}
+.bb-coin-tile{display:flex;align-items:center;gap:12px;height:71px;padding:0 16px;border-radius:15px;background:rgba(18,60,50,.05)}
+.bb-coin-icon{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none;background:#fff}
+.bb-coin-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.bb-coin-line{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:16px}
+.bb-coin-line strong,.bb-coin-line b{font-weight:500;color:var(--ink)}
+.bb-coin-line span{font-size:12px;color:var(--ink-2)}
+.bb-coin-line small{font-size:12px}
+.bb-coin-line small.is-up{color:#1f7a5a}
+.bb-coin-line small.is-down{color:#ef3434}
+.bb-coin-line small.is-flat{color:var(--pk-primary);font-weight:500}
+
+/* Receive */
+.bb-receive{align-items:center;text-align:center;max-width:430px;padding-top:28px;gap:0}
+.bb-receive-lead{font-size:14px;color:var(--ink-2);max-width:245px;margin:0 auto 8px;line-height:1.4}
+.bb-addr-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:15px;border:1px solid var(--line);background:rgba(18,60,50,.05);font-size:12px;color:var(--ink);margin:16px 0 24px}
+.bb-qr-frame{position:relative;width:min(245px,80%);aspect-ratio:1;border:6px solid var(--pk-primary);border-radius:15px;overflow:hidden;background:var(--surface)}
+.bb-qr-frame>img{display:block;width:100%;height:100%;object-fit:cover}
+.bb-qr-loading{display:grid;place-items:center}
+.bb-qr-mark{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.bb-qr-mark img{width:44px;height:44px;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 4px #fff}
+.bb-mono-addr{font-family:ui-monospace,monospace;font-size:11px;word-break:break-all;color:var(--ink-2)}
+.bb-receive-foot{width:100%;max-width:400px;margin-top:auto;padding-top:40px}
+
+/* Swap Figma */
+.bb-swap{max-width:430px;position:relative}
+.bb-swap-stack{display:flex;flex-direction:column;gap:12px;position:relative}
+.bb-swap-pane{background:var(--surface);border-radius:20px;padding:14px 16px 18px;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.bb-swap-token{display:inline-flex;align-items:center;gap:4px;height:40px;padding:0 8px 0 4px;border-radius:20px;background:var(--canvas);border:.2px solid var(--line);width:fit-content}
+.bb-swap-token strong{display:block;font-size:12px;font-weight:500}
+.bb-swap-token span{display:block;font-size:10px;color:var(--ink)}
+.bb-swap-amt{border:0;background:transparent;font-size:30px;font-weight:600;color:var(--ink);outline:0;width:100%;text-align:center}
+.bb-swap-usd{text-align:center;font-size:12px;color:var(--ink-2);margin:0}
+.bb-swap-flip{position:absolute;right:28px;top:50%;transform:translateY(-50%);z-index:2;width:60px;height:60px;border-radius:60px;border:7px solid var(--canvas);background:var(--pk-primary);display:grid;place-items:center;padding:0}
+.bb-swap-flip img{filter:brightness(0) invert(1)}
+
+/* Settings Figma */
+.bb-settings{max-width:430px;gap:24px}
+.bb-set-label{font-size:14px;color:var(--ink-2);margin:0}
+.bb-set-card{background:var(--surface);border-radius:15px;min-height:60px;padding:12px 16px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.bb-set-card strong{font-size:14px;font-weight:500;color:var(--ink)}
+.bb-set-card span{font-size:12px;color:var(--ink-2);line-height:1.35}
+.bb-set-account{flex-direction:row;align-items:center;gap:12px}
+.bb-set-account-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:left}
+.bb-set-signin{border:1px solid var(--line);background:transparent;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--pk-primary);flex:none;white-space:nowrap}
+.bb-mail-ico{width:40px;height:40px;border-radius:50px;background:rgba(18,60,50,.05);display:grid;place-items:center;flex:none}
+.bb-set-rows{display:flex;flex-direction:column;gap:14px}
+.bb-set-row{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 16px;border:0;border-radius:15px;background:var(--surface);width:100%;color:inherit;text-align:left;cursor:pointer}
+.bb-set-row:hover{background:var(--hover)}
+.bb-set-chevron{flex:none;opacity:.55;transform:scaleY(-1) rotate(180deg)}
 .bb-field{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:20px;height:54px;padding:0 16px}
 .bb-field-prefix{font-size:14px;font-weight:500;color:var(--ink);flex:none}
 .bb-field input{flex:1;border:0;background:transparent;outline:0;font-size:14px;color:var(--ink);min-width:0}
@@ -324,46 +410,20 @@
 .bb-asset-item strong{display:block;font-size:14px}
 .bb-asset-item span{font-size:12px;color:var(--ink-2)}
 
-/* Receive / Swap / Wallet / Settings */
-.bb-receive{align-items:center;text-align:center;max-width:430px}
-.bb-qr-card{width:100%;background:var(--surface);border-radius:20px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
-.bb-qr-placeholder{width:220px;height:220px;border-radius:16px;background:var(--field);display:grid;place-items:center;border:1px solid var(--line)}
-.bb-qr-card code{font-size:14px;background:var(--field);padding:10px 14px;border-radius:12px;color:var(--ink)}
-.bb-swap-card{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:10px}
-.bb-swap-card label>span{display:block;font-size:12px;color:var(--ink-2);margin-bottom:6px}
-.bb-swap-row{display:flex;align-items:center;gap:10px;background:var(--field);border-radius:16px;padding:14px}
-.bb-swap-row input{flex:1;border:0;background:transparent;outline:0;font-size:22px;font-weight:600;min-width:0}
-.bb-swap-mid{display:grid;place-items:center;padding:4px}
-.bb-swap-meta{display:grid;gap:8px;background:var(--surface);border-radius:16px;padding:14px 16px;font-size:13px;color:var(--ink-2)}
-.bb-swap-meta div{display:flex;justify-content:space-between}
+.bb-swap-meta{display:grid;gap:20px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 22px;font-size:14px;color:var(--ink-2)}
+.bb-swap-meta div{display:flex;justify-content:space-between;align-items:center}
 .bb-swap-meta strong{color:var(--ink);font-weight:600}
-.bb-wallet-hero{background:var(--surface);border-radius:20px;padding:22px 18px;display:flex;flex-direction:column;gap:8px}
-.bb-wallet-hero .bb-bal-label{font-size:13px;color:var(--ink-2)}
-.bb-wallet-hero .bb-bal{font-family:var(--pk-display);font-size:36px;font-weight:700;color:var(--ink);line-height:1.1}
-.bb-wallet-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.bb-wallet-actions a,.bb-wallet-actions button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border:0;border-radius:16px;background:var(--surface);font-size:12px;font-weight:500;color:var(--ink)}
-.bb-wallet-actions img{width:22px;height:22px}
-.bb-coin-list{background:var(--surface);border-radius:20px;padding:8px 6px}
-.bb-coin-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px 6px;font-size:14px;font-weight:600}
-.bb-coin-head a{font-size:12px;font-weight:500;color:var(--pk-primary)}
-.bb-coin-row{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:14px}
-.bb-coin-row:hover{background:var(--hover)}
-.bb-coin-row strong{display:block;font-size:14px}
-.bb-coin-row span{font-size:12px;color:var(--ink-2)}
-.bb-coin-row b{font-size:14px;font-weight:600;text-align:right}
-.bb-coin-row small{display:block;font-size:11px;color:var(--pk-primary);text-align:right}
-.bb-settings-block{display:flex;flex-direction:column;gap:10px}
-.bb-settings-card{background:var(--surface);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px}
-.bb-settings-card strong{font-size:15px;font-weight:600}
-.bb-settings-card span{font-size:13px;color:var(--ink-2);line-height:1.45}
-.bb-settings-account-row{display:flex;align-items:center;gap:12px}
-.bb-settings-account-row>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.bb-mail-ico{width:40px;height:40px;border-radius:12px;background:var(--field);display:grid;place-items:center;flex:none}
-.bb-text-link{font-size:13px;font-weight:600;color:var(--pk-primary);text-decoration:underline;width:fit-content}
+.bb-settings-block{display:flex;flex-direction:column;gap:14px}
+.bb-settings-card{background:var(--surface);border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.bb-settings-card strong{font-size:14px;font-weight:500}
+.bb-settings-card span{font-size:12px;color:var(--ink-2);line-height:1.35}
+.bb-text-link{font-size:13px;font-weight:600;color:var(--pk-primary);text-decoration:underline;width:fit-content;border:0;background:transparent;padding:0;cursor:pointer}
 .bb-inline-actions{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-.bb-tx-list{background:var(--surface);border-radius:18px;padding:8px}
-.bb-tx-row{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:12px}
-.bb-tx-ico{width:40px;height:40px;border-radius:50%;background:var(--field);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--pk-primary)}
+.bb-tx-list{display:flex;flex-direction:column;gap:8px}
+.bb-tx-row{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;padding:12px 14px;border-radius:15px;background:rgba(18,60,50,.05)}
+.bb-tx-row strong{display:block;font-size:14px;font-weight:500}
+.bb-tx-row span{font-size:12px;color:var(--ink-2)}
+.bb-tx-ico{width:40px;height:40px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--pk-primary)}
 
 /* Auth frames (mobile-first 430, centered on desktop) */
 .bb-auth{min-height:100svh;background:var(--canvas);color:var(--ink);font-family:var(--pk-sans);display:flex;flex-direction:column;padding:24px 35px max(40px,env(safe-area-inset-bottom));max-width:430px;margin:0 auto;width:100%}
@@ -457,5 +517,17 @@
 @media(min-width:961px){
   .bb-auth{max-width:480px;padding:40px 48px 56px;min-height:100svh;justify-content:center}
   .bb-plan-card{max-width:360px}
-  .bb-money{padding:32px 40px 48px}
+  .bb-desk-title{display:flex!important}
+  .bb-money{padding:28px 64px 64px;max-width:720px}
+  .bb-main{align-items:stretch}
+  .bb-wallet{max-width:920px;display:grid;grid-template-columns:minmax(360px,420px) minmax(320px,1fr);gap:28px 36px;align-items:start}
+  .bb-wal-card{grid-column:1;grid-row:1/span 2;min-height:210px}
+  .bb-wal-side{grid-column:2;grid-row:1/span 2}
+  .bb-receive,.bb-swap,.bb-send-assets,.bb-send-amount,.bb-settings{max-width:480px;margin:0 auto;width:100%}
+  .bb-receive{padding-top:12px;min-height:calc(100svh - 120px)}
+  .bb-swap{padding-top:8px}
+  .bb-settings{max-width:560px}
+  .bb-set-rows{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .bb-settings-block .bb-set-card{grid-column:1/-1}
+  .bb-settings-block .bb-set-rows .bb-set-row:last-child:nth-child(odd){grid-column:1/-1}
 }

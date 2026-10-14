@@ -45,7 +45,7 @@ function activeFromPath(path: string): "chat" | "wallet" | "receive" | "send" | 
 
 function titleFromPath(path: string): string | null {
   if (path.includes("/send")) return "Send money";
-  if (path.includes("/receive")) return "Receive";
+  if (path.includes("/receive")) return "Receive money";
   if (path.includes("/swap")) return "Swap money";
   if (path.includes("/wallet")) return "Wallet";
   if (path.includes("/settings")) return "Settings";
@@ -60,12 +60,16 @@ function AppLayout() {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
+  const previewUi =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("ui") === "1";
+
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth" });
-  }, [loading, session, navigate]);
+    if (!previewUi && !loading && !session) navigate({ to: "/auth" });
+  }, [loading, session, navigate, previewUi]);
   useEffect(() => setOpen(false), [path]);
 
-  if (loading || !session) {
+  if (!previewUi && (loading || !session)) {
     return (
       <div className="pk-app pk-center">
         <LoadingState label="Opening Pocket" />
@@ -86,7 +90,8 @@ function AppLayout() {
       <AppSidebar
         collapsed={collapsed}
         open={open}
-        email={session.user.email ?? null}
+        email={session?.user.email ?? (previewUi ? "davidlloyd@gmail.com" : null)}
+        displayName={previewUi ? "davidlloyd" : session?.user.email?.split("@")[0] || "Member"}
         active={activeFromPath(path)}
         onCollapse={() => setCollapsed((c) => !c)}
         onCloseMobile={() => setOpen(false)}
@@ -106,6 +111,12 @@ function AppLayout() {
             <HealthDot />
           </span>
         </header>
+        {mobileTitle && (
+          <header className="bb-desk-title bb-only-desktop">
+            <h1>{mobileTitle}</h1>
+            <HealthDot />
+          </header>
+        )}
         <Outlet />
       </main>
     </div>

@@ -28,6 +28,7 @@ import { Route as ApiSettleRouteImport } from './routes/api/settle'
 import { Route as ApiSpeakRouteImport } from './routes/api/speak'
 import { Route as ApiThreadsRouteImport } from './routes/api/threads'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as ApiWalletRouteImport } from './routes/api/wallet'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppThreadIdRouteImport } from './routes/app.$threadId'
 import { Route as AppReceiveRouteImport } from './routes/app.receive'
@@ -135,6 +136,11 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWalletRoute = ApiWalletRouteImport.update({
+  id: '/api/wallet',
+  path: '/api/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/api/speak': typeof ApiSpeakRoute
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app/receive': typeof AppReceiveRoute
   '/app/send': typeof AppSendRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/api/speak': typeof ApiSpeakRoute
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app/receive': typeof AppReceiveRoute
   '/app/send': typeof AppSendRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/api/speak': typeof ApiSpeakRoute
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
   '/app/receive': typeof AppReceiveRoute
   '/app/send': typeof AppSendRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/speak'
     | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
     | '/app/receive'
     | '/app/send'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/speak'
     | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
     | '/app/receive'
     | '/app/send'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/api/speak'
     | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
     | '/app/receive'
     | '/app/send'
@@ -405,6 +417,7 @@ export interface RootRouteChildren {
   ApiSpeakRoute: typeof ApiSpeakRoute
   ApiThreadsRoute: typeof ApiThreadsRouteWithChildren
   ApiTranscribeRoute: typeof ApiTranscribeRoute
+  ApiWalletRoute: typeof ApiWalletRoute
   ApiAuthPrivyLinkRoute: typeof ApiAuthPrivyLinkRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiPlansApproveRoute: typeof ApiPlansApproveRoute
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/wallet': {
+      id: '/api/wallet'
+      path: '/api/wallet'
+      fullPath: '/api/wallet'
+      preLoaderRoute: typeof ApiWalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSpeakRoute: ApiSpeakRoute,
   ApiThreadsRoute: ApiThreadsRouteWithChildren,
   ApiTranscribeRoute: ApiTranscribeRoute,
+  ApiWalletRoute: ApiWalletRoute,
   ApiAuthPrivyLinkRoute: ApiAuthPrivyLinkRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiPlansApproveRoute: ApiPlansApproveRoute,
