@@ -215,8 +215,8 @@
 .bb-app{display:grid;grid-template-columns:330px 1fr;height:100svh;background:var(--canvas);color:var(--ink);font-family:var(--pk-sans);overflow:hidden}
 .bb-app.is-collapsed{grid-template-columns:88px 1fr}
 .bb-main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
-.bb-only-mobile{display:none}
-.bb-only-desktop{display:flex}
+.bb-only-mobile{display:none!important}
+.bb-only-desktop{display:flex!important}
 .bb-scrim{display:none}
 .bb-round-btn{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:40px;background:var(--surface);color:var(--ink);flex:none}
 .bb-round-btn img{display:block}
@@ -435,7 +435,7 @@
   .bb-app,.bb-app.is-collapsed{grid-template-columns:1fr}
   .bb-side{position:fixed;inset:0 auto 0 0;width:min(330px,88vw);z-index:40;transform:translateX(-100%);transition:transform .28s var(--ease);box-shadow:0 20px 60px rgba(17,21,19,.18)}
   .bb-side.is-open{transform:none}
-  .bb-only-mobile{display:flex}
+  .bb-only-mobile{display:flex!important}
   .bb-only-desktop{display:none!important}
   .bb-scrim{display:block;position:fixed;inset:0;z-index:30;border:0;background:rgba(17,21,19,.35)}
   .bb-thread-body{padding:12px 15px 20px}
