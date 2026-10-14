@@ -29,6 +29,7 @@ Updated: 2026-10-14
 - Server-side Privy wallet resolve for `/api/settle` (no client walletId required)
 - Speak-back button on assistant messages → `/api/speak`
 - `/api/health` readiness (no secret values)
+- Approve→block demo path: planId session persistence, same-tick approve→settle, BlockScreen auto-speak, quiet Ready/Setup health dot
 
 ## Envio
 

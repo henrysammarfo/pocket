@@ -16,6 +16,7 @@ import { GoalCard } from "@/components/pocket-ui/GoalCard";
 import { BlockScreen } from "@/components/pocket-ui/BlockScreen";
 import { threadsKey } from "./app";
 import { parseSpendIntent } from "@/lib/policy/plan-parser";
+import { readStoredPlanId, writeStoredPlanId } from "@/lib/pocket/plan-session";
 
 export const Route = createFileRoute("/app/$threadId")({ component: ThreadPage });
 
@@ -64,7 +65,8 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const [err, setErr] = useState<string | null>(null);
   const [showGoal, setShowGoal] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
-  const [planId, setPlanId] = useState<string | null>(null);
+  const [planId, setPlanId] = useState<string | null>(() => readStoredPlanId(threadId));
+  const [planReady, setPlanReady] = useState(() => Boolean(readStoredPlanId(threadId)));
   const [block, setBlock] = useState<{ message: string; bufferCents: number; planCatch?: string } | null>(null);
   const [receipts, setReceipts] = useState<{ plain_english: string; kind: string }[]>([]);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -78,6 +80,12 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => { if (!busy) taRef.current?.focus(); }, [busy]);
   useEffect(() => {
+    const stored = readStoredPlanId(threadId);
+    setPlanId(stored);
+    setPlanReady(Boolean(stored));
+    setBlock(null);
+  }, [threadId]);
+  useEffect(() => {
     void (async () => {
       const res = await fetch("/api/receipts", { headers: await authHeader() });
       if (!res.ok) return;
@@ -86,7 +94,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     })();
   }, [block, planId]);
 
-  const approvePlan = async (goalText: string) => {
+  const rememberPlan = (id: string | null) => {
+    setPlanId(id);
+    setPlanReady(Boolean(id));
+    writeStoredPlanId(threadId, id);
+  };
+
+  const approvePlan = async (goalText: string): Promise<string | null> => {
     const res = await fetch("/api/plans/approve", {
       method: "POST",
       headers: { "content-type": "application/json", ...(await authHeader()) },
@@ -94,17 +108,22 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     });
     const body = (await res.json()) as { planId?: string; error?: string };
     if (!res.ok) throw new Error(body.error ?? "Could not approve plan");
-    setPlanId(body.planId ?? null);
+    const id = body.planId ?? null;
+    rememberPlan(id);
+    return id;
   };
 
-  const trySettle = async (value: string, source: "typed" | "spoken" = "typed") => {
+  const trySettle = async (
+    value: string,
+    source: "typed" | "spoken" = "typed",
+    activePlanId: string | null = planId,
+  ) => {
     const intent = parseSpendIntent(value, source);
-    if (intent.kind === "unknown" && !planId) return false;
     if (intent.kind === "unknown") return false;
     const res = await fetch("/api/settle", {
       method: "POST",
       headers: { "content-type": "application/json", ...(await authHeader()) },
-      body: JSON.stringify({ text: value, source, planId }),
+      body: JSON.stringify({ text: value, source, planId: activePlanId }),
     });
     const body = (await res.json()) as {
       blocked?: boolean;
@@ -119,10 +138,10 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       };
       if (body.screen.planCatch) screen.planCatch = body.screen.planCatch;
       setBlock(screen);
+      setErr(null);
       return true;
     }
     if (!res.ok && body.error) {
-      // Missing wallet keys is expected until Privy is wired — still surface honestly.
       setErr(body.error);
       return true;
     }
@@ -138,9 +157,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     if (!v || busy) return;
     setErr(null);
     try {
-      if (!planId && /keep\s*\$?\s*\d+/i.test(v)) await approvePlan(v);
-      const settled = await trySettle(v, source);
-      if (settled && parseSpendIntent(v).kind === "send_rest") {
+      let activePlanId = planId;
+      if (!activePlanId && /keep\s*\$?\s*\d+/i.test(v)) {
+        activePlanId = await approvePlan(v);
+      }
+      const settled = await trySettle(v, source, activePlanId);
+      // Money intents (esp. Send the rest) stay on the block/settle path — no chat echo.
+      if (settled && parseSpendIntent(v, source).kind !== "unknown") {
         setText("");
         return;
       }
@@ -163,6 +186,11 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             {...(block.planCatch ? { planCatch: block.planCatch } : {})}
             rentPaidNote="Rent was already paid inside the plan."
           />
+        )}
+        {planReady && !block && (
+          <div className="pk-chip-row" aria-label="Plan status">
+            <span className="pk-chip is-ok">Plan approved · Keep $200 · Send the rest to demo the block</span>
+          </div>
         )}
         {receipts.length > 0 && <div className="pk-chip-row" aria-label="Activity">
           {receipts.slice(0, 6).map((r, i) => (
@@ -188,7 +216,19 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
               <button aria-label="Copy plan" onClick={() => { navigator.clipboard.writeText(textOf(m)); setCopied(m.id); setTimeout(() => setCopied(null), 1400); }}>{copied === m.id ? <Check size={14} /> : <Copy size={14} />}</button>
               <SpeakButton text={textOf(m)} onError={setErr} />
               {m.id === lastAssistant?.id && <button aria-label="Regenerate" onClick={() => regenerate()}><RotateCcw size={14} /></button>}
-              {m.id === lastAssistant?.id && <button type="button" className="pk-chip" onClick={() => void approvePlan(textOf(m)).then(() => setErr(null)).catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"))}>Approve plan · Keep $200</button>}
+              {m.id === lastAssistant?.id && (
+                <button
+                  type="button"
+                  className="pk-chip"
+                  onClick={() =>
+                    void approvePlan(textOf(m) || "Keep $200")
+                      .then(() => setErr(null))
+                      .catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"))
+                  }
+                >
+                  Approve plan · Keep $200
+                </button>
+              )}
             </div>}
           </MessageContent>
         </Message>)}

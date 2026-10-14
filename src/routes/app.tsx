@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { authHeader, useAuth } from "@/hooks/useAuth";
 import { BrandLogo, BrandMark } from "@/components/BrandLogo";
 import { LoadingState } from "@/components/pocket-ui/LoadingState";
+import { HealthDot } from "@/components/pocket-ui/HealthDot";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -145,6 +146,7 @@ function AppLayout() {
             <span className="pk-dot" />
             Testnet demo · Guidance only
           </span>
+          <HealthDot />
           <button className="pk-icon-btn" aria-label="New plan" onClick={newThread}>
             <SquarePen size={17} />
           </button>
