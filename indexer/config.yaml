@@ -1,9 +1,17 @@
 # Envio HyperIndex V3 — Monad testnet
+# Development plan cannot set ENVIO_API_TOKEN (env vars = Production feature),
+# so we use public/HyperRPC endpoints for sync instead of hosted HyperSync auth.
 name: pocket-settlement
 description: Indexes Agora Instant Settlement Swap events on Monad testnet for POCKET receipts
 chains:
   - id: 10143
-    start_block: 0  # HyperSync auto-detects deploy block when ENVIO_API_TOKEN is set
+    # Near-head start keeps Development RPC sync feasible (no HyperSync token).
+    start_block: 70800000
+    rpc:
+      - url: https://testnet-rpc.monad.xyz
+        for: sync
+      - url: https://monad-testnet.rpc.hypersync.xyz
+        for: fallback
     contracts:
       - name: AgoraPair
         address:
