@@ -3,7 +3,7 @@ name: pocket-settlement
 description: Indexes Agora Instant Settlement Swap events on Monad testnet for POCKET receipts
 chains:
   - id: 10143
-    start_block: 70000000
+    start_block: 0  # HyperSync auto-detects deploy block when ENVIO_API_TOKEN is set
     contracts:
       - name: AgoraPair
         address:

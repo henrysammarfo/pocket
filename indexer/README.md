@@ -13,13 +13,20 @@ Settings that must match (you already have these):
 | Root directory | `indexer` |
 | Plan | Development |
 
-**Trigger a deploy:** any push to `envio` redeploys. After it goes green:
+**HyperSync token (required on Envio Cloud for V3):**
 
-1. Open the deployment → copy **GraphQL** URL → `ENVIO_GRAPHQL_URL`
-2. Organisation → **Tokens & Packages** → create token → `ENVIO_API_TOKEN`
-3. Paste both into chat (or Vercel env)
+1. Organisation → **Tokens & Packages** → **HyperSync Tokens** → create/copy token  
+2. Envio Cloud → **Projects** → **pocket** → **Settings** (or Environment Variables)  
+3. Add: `ENVIO_API_TOKEN` = that HyperSync token  
+4. Redeploy / wait for next Active deployment — **Source** should show **HyperSync**, not RPC  
 
-V3 notes: `config.yaml` uses `chains` (not `networks`); `envio` is pinned to `3.14.0`.
+**After sync is healthy:**
+
+1. Open deployment → copy **Deployment Endpoint** (GraphQL) → `ENVIO_GRAPHQL_URL`  
+2. Click **Promote** so production endpoint stays stable  
+3. Paste GraphQL URL into chat (also keep HyperSync token in Vercel for the app)
+
+V3 notes: `config.yaml` uses `chains`; `envio` is pinned to `3.14.0`.
 
 ## Local
 
