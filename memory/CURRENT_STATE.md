@@ -1,44 +1,39 @@
 # POCKET — Current State
 
-Updated: 2026-10-13
+Updated: 2026-10-14
 
 ## Product truth
 
 - **Job:** Money plan that cannot overspend. Approved plan = only permission.
 - **Surface:** ChatGPT-like consumer chat at `/app/$threadId`. Crypto under the hood.
-- **Account:** Privy-primary — App ID wired locally + Vercel (finish dashboard Monad/domain settings).
+- **Account:** Privy-primary — keys + domains + Monad gas sponsorship done.
 - **Data plane:** Neon `pocket-db` — schema live.
-- **AI:** AgentRouter key wired (HTTP 200 to `/v1/models`).
-- **Voice:** ElevenLabs key wired (needs voice ID optional).
-- **Network:** Monad testnet RPC `https://testnet-rpc.monad.xyz`.
+- **AI:** AgentRouter wired.
+- **Voice:** ElevenLabs TTS speak-back in chat + mic STT.
+- **Network:** Monad testnet (server HyperRPC / public client RPC).
 
-## Wired secrets (names only — never in git)
+## Wired secrets (names only)
 
 | Secret | Status |
 |---|---|
-| `DATABASE_URL` | Live (Neon) |
-| `VITE_PRIVY_APP_ID` / `PRIVY_APP_ID` / `PRIVY_APP_SECRET` | Live local + Vercel |
-| `AGENTROUTER_API_KEY` | Live local + Vercel |
-| `ELEVENLABS_API_KEY` | Live local + Vercel |
-| `MONAD_RPC_URL` | Live (`testnet-rpc.monad.xyz`) |
-| `ENVIO_API_TOKEN` (HyperSync) | Live |
-| `ENVIO_HYPERRPC_URL` | Live (server Monad RPC) |
-| `ENVIO_GRAPHQL_URL` | Still need from Envio Cloud **Projects → pocket** deploy |
+| `DATABASE_URL` | Live |
+| Privy App ID/Secret | Live + dashboard configured |
+| `AGENTROUTER_API_KEY` | Live |
+| `ELEVENLABS_API_KEY` | Live |
+| `MONAD_RPC_URL` / HyperRPC | Live |
+| `ENVIO_API_TOKEN` | Live (app) |
+| `ENVIO_GRAPHQL_URL` | Waiting — Envio deploy building on Development RPC |
 
-## Envio Connect form (exact)
+## Just shipped (while Envio builds)
 
-- Indexer Directory: `indexer`
-- Config File: `config.yaml`
-- Git Release Branch: `envio` (branch pushed)
-- Plan: Development (Free)
+- Server-side Privy wallet resolve for `/api/settle` (no client walletId required)
+- Speak-back button on assistant messages → `/api/speak`
+- `/api/health` readiness (no secret values)
 
-## Privy dashboard still needed
+## Envio
 
-1. Login methods: Email + Google
-2. Embedded wallets on login
-3. Add Monad Testnet chain id `10143`, RPC `https://testnet-rpc.monad.xyz`
-4. Enable gas sponsorship for Monad testnet
-5. Allowed domains: Vercel preview/production URLs + `http://localhost:3000`
+- Branch `envio`, Development plan, RPC sync (Cloud env vars need Production)
+- When Active + synced: copy Deployment Endpoint GraphQL → paste for `ENVIO_GRAPHQL_URL` + Promote
 
 ## Do not
 

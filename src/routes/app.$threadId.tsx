@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { Check, Copy, CornerDownRight, Mic, RotateCcw, Square } from "lucide-react";
+import { Check, Copy, CornerDownRight, Mic, RotateCcw, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createParser } from "eventsource-parser";
 import { authHeader } from "@/hooks/useAuth";
@@ -186,6 +186,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             })}
             {m.role === "assistant" && !(busy && m.id === messages.at(-1)?.id) && <div className="pk-actions">
               <button aria-label="Copy plan" onClick={() => { navigator.clipboard.writeText(textOf(m)); setCopied(m.id); setTimeout(() => setCopied(null), 1400); }}>{copied === m.id ? <Check size={14} /> : <Copy size={14} />}</button>
+              <SpeakButton text={textOf(m)} onError={setErr} />
               {m.id === lastAssistant?.id && <button aria-label="Regenerate" onClick={() => regenerate()}><RotateCcw size={14} /></button>}
               {m.id === lastAssistant?.id && <button type="button" className="pk-chip" onClick={() => void approvePlan(textOf(m)).then(() => setErr(null)).catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"))}>Approve plan · Keep $200</button>}
             </div>}
@@ -215,6 +216,45 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       <p className="pk-disclaimer">Monad testnet. Approved plan is the only permission. Crypto stays under the hood.</p>
     </div>
   </div>;
+}
+
+function SpeakButton({ text, onError }: { text: string; onError: (m: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label="Hear this plan"
+      disabled={busy || !text.trim()}
+      onClick={() => {
+        void (async () => {
+          setBusy(true);
+          try {
+            const res = await fetch("/api/speak", {
+              method: "POST",
+              headers: { "content-type": "application/json", ...(await authHeader()) },
+              body: JSON.stringify({ text: text.slice(0, 500) }),
+            });
+            if (!res.ok) {
+              const body = (await res.json().catch(() => null)) as { error?: string } | null;
+              throw new Error(body?.error ?? "Could not speak that plan");
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.onended = () => URL.revokeObjectURL(url);
+            await audio.play();
+          } catch (e) {
+            onError(e instanceof Error ? e.message : "Speak failed");
+          } finally {
+            setBusy(false);
+          }
+        })();
+      }}
+    >
+      <Volume2 size={14} />
+      <span className="sr-only">{busy ? "Speaking…" : "Hear plan"}</span>
+    </button>
+  );
 }
 
 function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError: (m: string) => void }) {

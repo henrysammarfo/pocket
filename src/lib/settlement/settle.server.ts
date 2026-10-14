@@ -6,6 +6,7 @@ import { parseSpendIntent, assertMoneyPlan } from "@/lib/policy/plan-parser";
 import { evaluatePolicy } from "@/lib/policy/policy-engine";
 import { composeIntent } from "@/lib/policy/intent-composer";
 import type { MoneyPlan } from "@/lib/policy/types";
+import { resolvePrivyWallet } from "@/lib/auth/privy-wallet.server";
 import { executeAgoraPay, readAusdBalanceCents } from "./agora";
 import { executeKuruAllocate } from "./kuru";
 
@@ -82,10 +83,19 @@ export async function handleSettle(request: Request): Promise<Response> {
     }
   }
 
-  const walletAddress =
+  let walletId = body.walletId;
+  let walletAddress =
     body.walletAddress ??
     (auth.member.walletAddress as `0x${string}` | null) ??
     undefined;
+  if (!walletId || !walletAddress) {
+    const resolved = await resolvePrivyWallet(auth.privyUserId);
+    if (resolved) {
+      walletId = walletId ?? resolved.walletId;
+      walletAddress = walletAddress ?? resolved.address;
+    }
+  }
+
   let balanceCents = plan?.reserveFloorCents ?? 0;
   if (walletAddress) {
     try {
@@ -154,11 +164,11 @@ export async function handleSettle(request: Request): Promise<Response> {
     });
   }
 
-  if (!body.walletId || !walletAddress) {
+  if (!walletId || !walletAddress) {
     return json(
       {
         error: "Privy wallet required for live settlement",
-        needsKey: "walletId + walletAddress from Privy embedded wallet",
+        needsKey: "embedded wallet (auto-create on login) + gas sponsorship on Monad testnet",
       },
       503,
     );
@@ -170,12 +180,12 @@ export async function handleSettle(request: Request): Promise<Response> {
     const exec =
       leg.rail === "kuru"
         ? await executeKuruAllocate({
-            walletId: body.walletId,
+            walletId,
             amountCents: leg.amountCents,
             fromAddress: walletAddress,
           })
         : await executeAgoraPay({
-            walletId: body.walletId,
+            walletId,
             fromAddress: walletAddress,
             amountCents: leg.amountCents,
             to: (leg.to ?? walletAddress) as `0x${string}`,

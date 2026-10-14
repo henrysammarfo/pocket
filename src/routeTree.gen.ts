@@ -22,6 +22,7 @@ import { Route as ProductRouteImport } from './routes/product'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StoryRouteImport } from './routes/story'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiReceiptsRouteImport } from './routes/api/receipts'
 import { Route as ApiSettleRouteImport } from './routes/api/settle'
 import { Route as ApiSpeakRouteImport } from './routes/api/speak'
@@ -99,6 +100,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiReceiptsRoute = ApiReceiptsRouteImport.update({
   id: '/api/receipts',
   path: '/api/receipts',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   StoryRoute: typeof StoryRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiReceiptsRoute: typeof ApiReceiptsRoute
   ApiSettleRoute: typeof ApiSettleRoute
   ApiSpeakRoute: typeof ApiSpeakRoute
@@ -428,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/receipts': {
@@ -548,6 +568,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   StoryRoute: StoryRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiReceiptsRoute: ApiReceiptsRoute,
   ApiSettleRoute: ApiSettleRoute,
   ApiSpeakRoute: ApiSpeakRoute,
@@ -560,13 +581,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
