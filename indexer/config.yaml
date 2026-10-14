@@ -1,9 +1,9 @@
-# Envio HyperIndex V3 — Monad testnet (10143)
+# Envio HyperIndex V3 — Monad testnet
 name: pocket-settlement
 description: Indexes Agora Instant Settlement Swap events on Monad testnet for POCKET receipts
 chains:
   - id: 10143
-    start_block: 0
+    start_block: 70000000
     contracts:
       - name: AgoraPair
         address:
@@ -11,3 +11,6 @@ chains:
         handler: src/EventHandlers.ts
         events:
           - event: Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)
+            field_selection:
+              transaction_fields:
+                - hash
