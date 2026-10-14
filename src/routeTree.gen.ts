@@ -30,6 +30,11 @@ import { Route as ApiThreadsRouteImport } from './routes/api/threads'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppThreadIdRouteImport } from './routes/app.$threadId'
+import { Route as AppReceiveRouteImport } from './routes/app.receive'
+import { Route as AppSendRouteImport } from './routes/app.send'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSwapRouteImport } from './routes/app.swap'
+import { Route as AppWalletRouteImport } from './routes/app.wallet'
 import { Route as ApiAuthPrivyLinkRouteImport } from './routes/api/auth/privy-link'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiPlansApproveRouteImport } from './routes/api/plans/approve'
@@ -140,6 +145,31 @@ const AppThreadIdRoute = AppThreadIdRouteImport.update({
   path: '/$threadId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReceiveRoute = AppReceiveRouteImport.update({
+  id: '/receive',
+  path: '/receive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSendRoute = AppSendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSwapRoute = AppSwapRouteImport.update({
+  id: '/swap',
+  path: '/swap',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWalletRoute = AppWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiAuthPrivyLinkRoute = ApiAuthPrivyLinkRouteImport.update({
   id: '/api/auth/privy-link',
   path: '/api/auth/privy-link',
@@ -182,6 +212,11 @@ export interface FileRoutesByFullPath {
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -208,6 +243,11 @@ export interface FileRoutesByTo {
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -236,6 +276,11 @@ export interface FileRoutesById {
   '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -265,6 +310,11 @@ export interface FileRouteTypes {
     | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app/'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -291,6 +341,11 @@ export interface FileRouteTypes {
     | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -318,6 +373,11 @@ export interface FileRouteTypes {
     | '/api/threads'
     | '/api/transcribe'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app/'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -499,6 +559,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppThreadIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/receive': {
+      id: '/app/receive'
+      path: '/receive'
+      fullPath: '/app/receive'
+      preLoaderRoute: typeof AppReceiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/send': {
+      id: '/app/send'
+      path: '/send'
+      fullPath: '/app/send'
+      preLoaderRoute: typeof AppSendRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/swap': {
+      id: '/app/swap'
+      path: '/swap'
+      fullPath: '/app/swap'
+      preLoaderRoute: typeof AppSwapRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/wallet': {
+      id: '/app/wallet'
+      path: '/wallet'
+      fullPath: '/app/wallet'
+      preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/auth/privy-link': {
       id: '/api/auth/privy-link'
       path: '/api/auth/privy-link'
@@ -532,11 +627,21 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppThreadIdRoute: typeof AppThreadIdRoute
+  AppReceiveRoute: typeof AppReceiveRoute
+  AppSendRoute: typeof AppSendRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppSwapRoute: typeof AppSwapRoute
+  AppWalletRoute: typeof AppWalletRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppThreadIdRoute: AppThreadIdRoute,
+  AppReceiveRoute: AppReceiveRoute,
+  AppSendRoute: AppSendRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppSwapRoute: AppSwapRoute,
+  AppWalletRoute: AppWalletRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -581,3 +686,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

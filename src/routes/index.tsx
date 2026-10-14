@@ -1,47 +1,124 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Ban, Braces, Combine, FileCheck2, ShieldCheck, WalletCards } from "lucide-react";
-import { ApprovalMock, BlockedMock, CtaBand, FeatureGrid, GhostLink, LoaderMock, PageHero, PrimaryLink, PromptMock, ReceiptMock, SectionHead } from "@/components/marketing/Kit";
-import { receipts } from "@/data/site";
-import { StudioFooter } from "@/components/StudioFooter";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BrandLogo } from "@/components/BrandLogo";
 
-export const Route = createFileRoute("/")({ head: () => ({ meta: [{title:"POCKET — Money plans that cannot overspend"},{name:"description",content:"Plan your money in plain English. POCKET pays and buys on Monad inside rules that refuse to break."},{property:"og:title",content:"POCKET — Money plans that cannot overspend"},{property:"og:description",content:"One plan. One approval. Rules that refuse to break."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}] }), component: Home });
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "POCKET — Your money. Your rules." },
+      {
+        name: "description",
+        content:
+          "Create a money plan, review every movement, and approve it before POCKET acts. Your approved plan sets the limits.",
+      },
+      { property: "og:title", content: "POCKET — Your money. Your rules." },
+      {
+        property: "og:description",
+        content: "Smart way to manage your money. Review first. Approve before anything moves.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Home,
+});
 
 function Home() {
   return (
-    <>
-      <main className="mk-page">
-        <PageHero eyebrow="Monad testnet · Demo" title={<>Money plans that <em>cannot</em> overspend.</>} copy="Tell POCKET what your money should do. It pays, buys, and keeps every move inside your rules." aside={<div className="mk-stage"><PromptMock /><LoaderMock /><ApprovalMock /></div>}>
-          <PrimaryLink to="/app">Start a plan</PrimaryLink>
-          <GhostLink to="/product">How it works</GhostLink>
-        </PageHero>
-        <section>
-          <SectionHead eyebrow="One invisible flow" title={<>Say the plan.<br />POCKET does the math.</>} copy="Five systems run behind one sentence, so you only make one decision." />
-          <FeatureGrid items={[
-            { icon: WalletCards, kicker: "01 · Tell", title: "Plain English in", copy: "Describe the plan by typing or speaking. No seed phrase, no app-hopping." },
-            { icon: ShieldCheck, kicker: "02 · Check", title: "Rules check first", copy: "Caps, recipients, reserves and expiry are checked before anything can move." },
-            { icon: FileCheck2, kicker: "03 · Approve", title: "Approve once", copy: "Every leg settles together, then leaves a receipt you can actually read." },
-          ]} />
-        </section>
-        <section className="mk-split">
-          <div><SectionHead eyebrow="Built to refuse" title={<>Overspend is not a warning. It is a stop.</>} copy="If one leg breaks a rule, the whole plan is refused. No partial payment, no stray buy." /><GhostLink to="/security">See the safety rules</GhostLink></div>
-          <div className="mk-stage"><PromptMock text="Buy the $145 sneakers this weekend." /><BlockedMock /></div>
-        </section>
-        <section className="mk-split">
-          <div className="mk-stage"><ReceiptMock rows={[...receipts]} /></div>
-          <div><SectionHead eyebrow="Readable proof" title="Every outcome leaves a receipt." copy="Settled or blocked, you see what happened and why. Sample records shown." /><GhostLink to="/activity">View sample activity</GhostLink></div>
-        </section>
-        <section>
-          <SectionHead eyebrow="Under the hood" title="Serious systems. Simple surface." />
-          <FeatureGrid cols={4} items={[
-            { icon: Braces, kicker: "Parser", title: "Exact fields", copy: "Amounts, dates and recipients from one sentence." },
-            { icon: ShieldCheck, kicker: "Policy", title: "Fail closed", copy: "Anything outside your rules never runs." },
-            { icon: Combine, kicker: "Composer", title: "One settlement", copy: "Payment and market legs move together." },
-            { icon: Ban, kicker: "Honest", title: "Testnet only", copy: "A demo today. No real funds move.", tone: "danger" },
-          ]} />
-        </section>
-        <CtaBand title={<>Your intent is the brief.<br />Your rules are the boundary.</>} copy="Open POCKET and describe your first money goal." to="/app" label="Open POCKET" />
-      </main>
-      <StudioFooter />
-    </>
+    <div className="bb-land">
+      <header className="bb-land-nav">
+        <BrandLogo />
+        <nav aria-label="Marketing">
+          <a href="#how">How it works</a>
+          <a href="#control">Control</a>
+          <a href="#faq">Faq</a>
+          <Link to="/product">Features</Link>
+        </nav>
+        <Link to="/app" className="bb-land-cta">
+          Get started
+        </Link>
+      </header>
+
+      <section className="bb-land-hero">
+        <div className="bb-land-hero-copy">
+          <p className="bb-land-kicker">Your money. Your rules.</p>
+          <h1>Smart way to manage your money</h1>
+          <p>
+            Create a money plan, review every movement, and approve it before POCKET acts. Your approved plan sets the
+            limits.
+          </p>
+          <div className="bb-land-actions">
+            <Link to="/app" className="pk-btn-primary">
+              Start a plan
+            </Link>
+            <a href="#how" className="bb-btn-ghost">
+              How it works
+            </a>
+          </div>
+        </div>
+        <div className="bb-land-art" aria-hidden>
+          <img src="/brand/hero-coins.png" alt="" width={420} height={256} />
+        </div>
+      </section>
+
+      <section className="bb-land-section" id="how">
+        <p className="bb-land-kicker">How it works</p>
+        <h2>One plan. Three clear steps.</h2>
+        <p>From your own words to a plan you understand, POCKET keeps approval at the center.</p>
+        <div className="bb-land-steps">
+          <article className="bb-land-step">
+            <b>01</b>
+            <h3>Start with what you want to do.</h3>
+            <p>Write your intended payments, the amount you want to keep, and what should happen with the rest.</p>
+          </article>
+          <article className="bb-land-step">
+            <b>02</b>
+            <h3>See the plan before anything moves.</h3>
+            <p>POCKET turns your instructions into clear actions, amounts, and conditions. Review the details always.</p>
+          </article>
+          <article className="bb-land-step">
+            <b>03</b>
+            <h3>Know what happens next.</h3>
+            <p>Follow the status of your plan. Understand why an action may be blocked.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="bb-land-section" id="control">
+        <p className="bb-land-kicker">Control that stays clear</p>
+        <h2>An approved plan has boundaries.</h2>
+        <p>
+          Once you approve a plan, later instructions cannot raise its limit or add a payee outside the permission you
+          gave. Overspend is not a warning — it is a stop.
+        </p>
+        <div className="bb-land-band">
+          <h2>Review first. Approve before anything moves.</h2>
+          <Link to="/app">Open POCKET</Link>
+        </div>
+      </section>
+
+      <section className="bb-land-section" id="faq">
+        <p className="bb-land-kicker">Faq</p>
+        <h2>Built for everyday money decisions.</h2>
+        <div className="bb-land-steps">
+          <article className="bb-land-step">
+            <h3>Is this crypto?</h3>
+            <p>POCKET is a plain-English money assistant. Settlement runs under the hood on Monad testnet.</p>
+          </article>
+          <article className="bb-land-step">
+            <h3>What does Keep mean?</h3>
+            <p>Keep is your reserve floor. “Send the rest” cannot spend past it — the plan fails closed.</p>
+          </article>
+          <article className="bb-land-step">
+            <h3>Can I change a plan later?</h3>
+            <p>Edit before you approve. After approval, new messages cannot widen permissions.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer className="bb-land-foot">
+        <BrandLogo compact />
+        <span>Monad testnet · Demo · Approved plan is the only permission</span>
+      </footer>
+    </div>
   );
 }

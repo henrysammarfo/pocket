@@ -1,6 +1,14 @@
 import { usePrivy } from "@privy-io/react-auth";
 
-export function PrivyLoginButton({ onError }: { onError: (msg: string) => void }) {
+export function PrivyLoginButton({
+  onError,
+  label = "Continue",
+  className = "pk-btn-primary auth-beebah-continue",
+}: {
+  onError: (msg: string) => void;
+  label?: string;
+  className?: string;
+}) {
   const { ready, authenticated, login } = usePrivy();
 
   if (authenticated) return null;
@@ -8,7 +16,7 @@ export function PrivyLoginButton({ onError }: { onError: (msg: string) => void }
   return (
     <button
       type="button"
-      className="pk-btn-primary auth-beebah-continue"
+      className={className}
       disabled={!ready}
       onClick={() => {
         try {
@@ -20,7 +28,7 @@ export function PrivyLoginButton({ onError }: { onError: (msg: string) => void }
         }
       }}
     >
-      Continue
+      {label}
     </button>
   );
 }

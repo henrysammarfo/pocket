@@ -11,11 +11,11 @@ import { Message, MessageContent, MessageResponse } from "@/components/ai-elemen
 import { PromptInput, PromptInputButton, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, PromptInputTools } from "@/components/ai-elements/prompt-input";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { LoadingState } from "@/components/pocket-ui/LoadingState";
-import { GoalCard } from "@/components/pocket-ui/GoalCard";
 import { BlockScreen } from "@/components/pocket-ui/BlockScreen";
+import { PlanCard, ReadingPlan } from "@/components/pocket-ui/PlanCard";
 import { threadsKey } from "./app";
-import { parseSpendIntent } from "@/lib/policy/plan-parser";
-import { readStoredPlanId, writeStoredPlanId } from "@/lib/pocket/plan-session";
+import { parseSpendIntent, parseMoneyPlanFromGoal } from "@/lib/policy/plan-parser";
+import { readStoredPlanId, rememberThread, writeStoredPlanId } from "@/lib/pocket/plan-session";
 
 export const Route = createFileRoute("/app/$threadId")({ component: ThreadPage });
 
@@ -44,11 +44,11 @@ function ThreadPage() {
 }
 
 const SUGGESTIONS = [
+  "Pay my rent on Friday, keep $500",
   "Save $3,000 for a trip by June",
-  "Pay off $2,400 of card debt without missing rent",
   "Build a 3-month emergency fund on $2,800/month",
 ];
-const FOLLOW_UPS = ["Make it more aggressive", "What if my income drops 20%?", "Turn this into weekly steps"];
+const FOLLOW_UPS = ["Make it more aggressive", "What if my income drops 20%?", "Send the rest"];
 const COMMANDS = [
   { cmd: "/save", text: "Help me save $ for " },
   { cmd: "/debt", text: "Help me pay off $ of debt. My minimum payment is $" },
@@ -58,32 +58,48 @@ const COMMANDS = [
 
 const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 
+function stepsFromGoal(goal: string) {
+  const plan = parseMoneyPlanFromGoal(goal, { reserveFloorCents: 50_000 });
+  return plan.steps.map((s) => ({
+    when: s.when === "always" ? "Always" : s.when ?? "Soon",
+    label: s.label.replace(/^Pay /i, "Pay ").replace(/^Keep /i, "Keep"),
+    amountLabel: `$${((s.amountCents ?? 0) / 100).toFixed(2)}`,
+  }));
+}
+
 function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessage[] }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const [showGoal, setShowGoal] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(() => readStoredPlanId(threadId));
   const [planReady, setPlanReady] = useState(() => Boolean(readStoredPlanId(threadId)));
   const [block, setBlock] = useState<{ message: string; bufferCents: number; planCatch?: string } | null>(null);
   const [receipts, setReceipts] = useState<{ plain_english: string; kind: string }[]>([]);
+  const [showPlanCard, setShowPlanCard] = useState(false);
+  const [planGoal, setPlanGoal] = useState("Pay my rent on Friday, keep $500");
   const taRef = useRef<HTMLTextAreaElement>(null);
   const { messages, sendMessage, status, stop, regenerate } = useChat({
     id: threadId,
     messages: initial,
     transport: new DefaultChatTransport({ api: "/api/chat", headers: authHeader, body: { threadId } }),
     onError: (e) => setErr(e.message || "Something went wrong."),
-    onFinish: () => { qc.invalidateQueries({ queryKey: threadsKey }); qc.invalidateQueries({ queryKey: ["thread-messages", threadId] }); },
+    onFinish: () => {
+      qc.invalidateQueries({ queryKey: threadsKey });
+      qc.invalidateQueries({ queryKey: ["thread-messages", threadId] });
+      setShowPlanCard(true);
+    },
   });
   const busy = status === "submitted" || status === "streaming";
   useEffect(() => { if (!busy) taRef.current?.focus(); }, [busy]);
   useEffect(() => {
+    rememberThread(threadId);
     const stored = readStoredPlanId(threadId);
     setPlanId(stored);
     setPlanReady(Boolean(stored));
     setBlock(null);
-  }, [threadId]);
+    setShowPlanCard(Boolean(stored) ? false : initial.some((m) => m.role === "assistant"));
+  }, [threadId, initial]);
   useEffect(() => {
     void (async () => {
       const res = await fetch("/api/receipts", { headers: await authHeader() });
@@ -103,12 +119,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     const res = await fetch("/api/plans/approve", {
       method: "POST",
       headers: { "content-type": "application/json", ...(await authHeader()) },
-      body: JSON.stringify({ goalText, threadId, reserveFloorCents: 20_000 }),
+      body: JSON.stringify({ goalText, threadId, reserveFloorCents: 50_000 }),
     });
     const body = (await res.json()) as { planId?: string; error?: string };
     if (!res.ok) throw new Error(body.error ?? "Could not approve plan");
     const id = body.planId ?? null;
     rememberPlan(id);
+    setShowPlanCard(false);
     return id;
   };
 
@@ -131,12 +148,11 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       settlement?: { explorerUrl: string };
     };
     if (body.blocked && body.screen) {
-      const screen: { message: string; bufferCents: number; planCatch?: string } = {
+      setBlock({
         message: body.screen.message,
         bufferCents: body.screen.bufferCents,
-      };
-      if (body.screen.planCatch) screen.planCatch = body.screen.planCatch;
-      setBlock(screen);
+        ...(body.screen.planCatch ? { planCatch: body.screen.planCatch } : {}),
+      });
       setErr(null);
       return true;
     }
@@ -155,13 +171,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     const v = value.trim();
     if (!v || busy) return;
     setErr(null);
+    setPlanGoal(v);
     try {
       let activePlanId = planId;
       if (!activePlanId && /keep\s*\$?\s*\d+/i.test(v)) {
         activePlanId = await approvePlan(v);
       }
       const settled = await trySettle(v, source, activePlanId);
-      // Money intents (esp. Send the rest) stay on the block/settle path — no chat echo.
       if (settled && parseSpendIntent(v, source).kind !== "unknown") {
         setText("");
         return;
@@ -172,95 +188,170 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     sendMessage({ text: v });
     setText("");
   };
+
   const slash = /^\/\w*$/.test(text) ? COMMANDS.filter((c) => c.cmd.startsWith(text)) : [];
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  const empty = messages.length === 0 && !block;
 
-  return <div className="pk-chat">
-    <Conversation className="pk-scroll">
-      <ConversationContent className="pk-thread-body">
-        {block && (
-          <BlockScreen
-            message={block.message}
-            bufferCents={block.bufferCents}
-            {...(block.planCatch ? { planCatch: block.planCatch } : {})}
-            rentPaidNote="Rent was already paid inside the plan."
-            onDismiss={() => setBlock(null)}
-          />
-        )}
-        {planReady && !block && (
-          <div className="pk-chip-row" aria-label="Plan status">
-            <span className="pk-chip is-ok">Plan approved · Keep $200 · Send the rest to demo the block</span>
+  return (
+    <div className="bb-chat">
+      {block && (
+        <BlockScreen
+          message={block.message}
+          bufferCents={block.bufferCents}
+          {...(block.planCatch ? { planCatch: block.planCatch } : {})}
+          rentPaidNote="Rent was already paid inside the plan."
+          onDismiss={() => setBlock(null)}
+        />
+      )}
+      <Conversation className="bb-scroll">
+        <ConversationContent className="bb-thread-body">
+          {planReady && !block && (
+            <div className="pk-chip-row" aria-label="Plan status">
+              <span className="pk-chip is-ok">Plan approved · Keep live · Try Send the rest</span>
+            </div>
+          )}
+          {receipts.length > 0 && (
+            <div className="pk-chip-row" aria-label="Activity">
+              {receipts.slice(0, 6).map((r, i) => (
+                <span key={i} className={`pk-chip ${r.kind === "blocked" ? "is-danger" : r.kind === "paid" ? "is-ok" : ""}`}>
+                  {r.plain_english}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {empty && (
+            <div className="bb-hero">
+              <p className="pk-hero-kicker"><i aria-hidden />One plan. Your rules.</p>
+              <h1>
+                Your <span>money</span> on <span>your</span> terms
+              </h1>
+              <p>Tell pocket what you want your money to do</p>
+              <img className="pk-hero-art" src="/brand/hero-coins.png" alt="" width={550} height={335} />
+              <div className="pk-suggest bb-only-mobile">
+                {SUGGESTIONS.map((s) => (
+                  <button key={s} type="button" onClick={() => void send(s)}>
+                    <CornerDownRight size={12} />
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {messages.map((m) => (
+            <Message key={m.id} from={m.role} className="pk-msg">
+              <MessageContent className={m.role === "user" ? "pk-user" : "pk-assistant"}>
+                {m.parts.map((p, i) => {
+                  if (p.type === "text") {
+                    return m.role === "user" ? <p key={i}>{p.text}</p> : <MessageResponse key={i}>{p.text}</MessageResponse>;
+                  }
+                  if (p.type === "reasoning" && p.text) {
+                    return (
+                      <Reasoning key={i} isStreaming={status === "streaming" && m.id === messages.at(-1)?.id}>
+                        <ReasoningTrigger />
+                        <ReasoningContent>{p.text}</ReasoningContent>
+                      </Reasoning>
+                    );
+                  }
+                  return null;
+                })}
+                {m.role === "assistant" && !(busy && m.id === messages.at(-1)?.id) && (
+                  <div className="pk-actions">
+                    <button
+                      aria-label="Copy plan"
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(textOf(m));
+                        setCopied(m.id);
+                        setTimeout(() => setCopied(null), 1400);
+                      }}
+                    >
+                      {copied === m.id ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                    <SpeakButton text={textOf(m)} onError={setErr} />
+                    {m.id === lastAssistant?.id && (
+                      <button aria-label="Regenerate" type="button" onClick={() => regenerate()}>
+                        <RotateCcw size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </MessageContent>
+            </Message>
+          ))}
+
+          {busy && <ReadingPlan />}
+
+          {!planReady && showPlanCard && lastAssistant && !busy && (
+            <PlanCard
+              steps={stepsFromGoal(textOf(lastUser!) || planGoal)}
+              onApprove={() => {
+                void approvePlan(textOf(lastUser!) || planGoal)
+                  .then(() => setErr(null))
+                  .catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"));
+              }}
+              onEdit={() => taRef.current?.focus()}
+            />
+          )}
+
+          {status === "ready" && lastAssistant && lastAssistant.id === messages.at(-1)?.id && planReady && (
+            <div className="pk-followups">
+              <p>Follow-ups</p>
+              {FOLLOW_UPS.map((f, i) => (
+                <button key={f} type="button" style={{ animationDelay: `${i * 90}ms` }} onClick={() => void send(f)}>
+                  <CornerDownRight size={12} />
+                  {f}
+                </button>
+              ))}
+            </div>
+          )}
+          {err && <p className="pk-error" role="alert">{err}</p>}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+
+      <div className="bb-composer">
+        {slash.length > 0 && (
+          <div className="pk-menu" role="listbox" aria-label="Plan templates">
+            {slash.map((c) => (
+              <button
+                key={c.cmd}
+                type="button"
+                role="option"
+                aria-selected="false"
+                onClick={() => {
+                  setText(c.text);
+                  taRef.current?.focus();
+                }}
+              >
+                <code>{c.cmd}</code>
+                <span>{c.text.replace(/\$/g, "$…")}</span>
+              </button>
+            ))}
           </div>
         )}
-        {receipts.length > 0 && <div className="pk-chip-row" aria-label="Activity">
-          {receipts.slice(0, 6).map((r, i) => (
-            <span key={i} className={`pk-chip ${r.kind === "blocked" ? "is-danger" : r.kind === "paid" ? "is-ok" : ""}`}>{r.plain_english}</span>
-          ))}
-        </div>}
-        {messages.length === 0 && !block && <div className="pk-hero">
-          <p className="pk-hero-kicker"><i aria-hidden />One plan. Your rules.</p>
-          <h1>
-            Your <span>money</span>
-            <br />
-            on <span>your</span> terms
-          </h1>
-          <p>Tell pocket what you want your money to do</p>
-          <img className="pk-hero-art" src="/brand/hero-coins.png" alt="" width={297} height={181} />
-          {showGoal
-            ? <GoalCard onComplete={(g) => void send(g)} onDismiss={() => setShowGoal(false)} />
-            : <div className="pk-suggest">{SUGGESTIONS.map((s) => <button key={s} onClick={() => void send(s)}><CornerDownRight size={12} />{s}</button>)}</div>}
-        </div>}
-        {messages.map((m) => <Message key={m.id} from={m.role} className="pk-msg">
-          <MessageContent className={m.role === "user" ? "pk-user" : "pk-assistant"}>
-            {m.parts.map((p, i) => {
-              if (p.type === "text") return m.role === "user" ? <p key={i}>{p.text}</p> : <MessageResponse key={i}>{p.text}</MessageResponse>;
-              if (p.type === "reasoning" && p.text) return <Reasoning key={i} isStreaming={status === "streaming" && m.id === messages.at(-1)?.id}><ReasoningTrigger /><ReasoningContent>{p.text}</ReasoningContent></Reasoning>;
-              return null;
-            })}
-            {m.role === "assistant" && !(busy && m.id === messages.at(-1)?.id) && <div className="pk-actions">
-              <button aria-label="Copy plan" onClick={() => { navigator.clipboard.writeText(textOf(m)); setCopied(m.id); setTimeout(() => setCopied(null), 1400); }}>{copied === m.id ? <Check size={14} /> : <Copy size={14} />}</button>
-              <SpeakButton text={textOf(m)} onError={setErr} />
-              {m.id === lastAssistant?.id && <button aria-label="Regenerate" onClick={() => regenerate()}><RotateCcw size={14} /></button>}
-              {m.id === lastAssistant?.id && (
-                <button
-                  type="button"
-                  className="pk-chip"
-                  onClick={() =>
-                    void approvePlan(textOf(m) || "Keep $200")
-                      .then(() => setErr(null))
-                      .catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"))
-                  }
-                >
-                  Approve plan · Keep $200
-                </button>
-              )}
-            </div>}
-          </MessageContent>
-        </Message>)}
-        {status === "submitted" && <div className="pk-msg"><LoadingState /></div>}
-        {status === "ready" && lastAssistant && lastAssistant.id === messages.at(-1)?.id && <div className="pk-followups">
-          <p>Follow-ups</p>
-          {FOLLOW_UPS.map((f, i) => <button key={f} style={{ animationDelay: `${i * 90}ms` }} onClick={() => void send(f)}><CornerDownRight size={12} />{f}</button>)}
-          <button style={{ animationDelay: "270ms" }} onClick={() => void send("Send the rest")}><CornerDownRight size={12} />Send the rest</button>
-        </div>}
-        {err && <p className="pk-error" role="alert">{err}</p>}
-      </ConversationContent>
-      <ConversationScrollButton />
-    </Conversation>
-    <div className="pk-composer">
-      {slash.length > 0 && <div className="pk-menu" role="listbox" aria-label="Plan templates">
-        {slash.map((c) => <button key={c.cmd} role="option" aria-selected="false" onClick={() => { setText(c.text); taRef.current?.focus(); }}><code>{c.cmd}</code><span>{c.text.replace(/\$/g, "$…")}</span></button>)}
-      </div>}
-      <PromptInput onSubmit={(msg) => void send(msg.text)} className="pk-prompt">
-        <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tell pocket what you want your money to do" autoFocus />
-        <PromptInputFooter className="justify-between">
-          <PromptInputTools><VoiceButton onText={(t) => { void send(t, "spoken"); }} onError={setErr} /></PromptInputTools>
-          <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} className="pk-send" />
-        </PromptInputFooter>
-      </PromptInput>
-      <p className="pk-disclaimer">Monad testnet. Approved plan is the only permission. Crypto stays under the hood.</p>
+        <PromptInput onSubmit={(msg) => void send(msg.text)} className="bb-prompt">
+          <PromptInputTextarea
+            ref={taRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Tell pocket what you want your money to do"
+            autoFocus
+          />
+          <PromptInputFooter className="bb-prompt-foot">
+            <PromptInputTools>
+              <VoiceButton onText={(t) => { void send(t, "spoken"); }} onError={setErr} />
+            </PromptInputTools>
+            <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} className="bb-send" />
+          </PromptInputFooter>
+        </PromptInput>
+        <p className="pk-disclaimer">Monad testnet. Approved plan is the only permission.</p>
+      </div>
     </div>
-  </div>;
+  );
 }
 
 function SpeakButton({ text, onError }: { text: string; onError: (m: string) => void }) {
@@ -297,7 +388,6 @@ function SpeakButton({ text, onError }: { text: string; onError: (m: string) => 
       }}
     >
       <Volume2 size={14} />
-      <span className="sr-only">{busy ? "Speaking…" : "Hear plan"}</span>
     </button>
   );
 }
@@ -313,16 +403,24 @@ function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const ctx = new AudioContext();
-      const an = ctx.createAnalyser(); an.fftSize = 64;
+      const an = ctx.createAnalyser();
+      an.fftSize = 64;
       ctx.createMediaStreamSource(stream).connect(an);
       const buf = new Uint8Array(an.frequencyBinCount);
-      const tick = () => { an.getByteFrequencyData(buf); setLevel([2, 5, 8, 11, 14].map((i) => (buf[i] ?? 0) / 255)); raf.current = requestAnimationFrame(tick); };
+      const tick = () => {
+        an.getByteFrequencyData(buf);
+        setLevel([2, 5, 8, 11, 14].map((i) => (buf[i] ?? 0) / 255));
+        raf.current = requestAnimationFrame(tick);
+      };
       tick();
       const r = new MediaRecorder(stream);
       chunks.current = [];
-      r.ondataavailable = (e) => { if (e.data.size) chunks.current.push(e.data); };
+      r.ondataavailable = (e) => {
+        if (e.data.size) chunks.current.push(e.data);
+      };
       r.onstop = async () => {
-        cancelAnimationFrame(raf.current); ctx.close();
+        cancelAnimationFrame(raf.current);
+        void ctx.close();
         stream.getTracks().forEach((t) => t.stop());
         setState("busy");
         try {
@@ -336,34 +434,57 @@ function VoiceButton({ onText, onError }: { onText: (t: string) => void; onError
             const j = await res.json().catch(() => null);
             throw new Error(j?.error?.message ?? j?.error ?? "Could not understand that recording.");
           }
-          let final = ""; let partial = "";
-          const parser = createParser({ onEvent: (ev) => {
-            try {
-              const d = JSON.parse(ev.data);
-              if (d.type === "transcript.text.delta") partial += d.delta ?? "";
-              if (d.type === "transcript.text.done") final = d.text ?? "";
-            } catch { /* ignore */ }
-          } });
-          const reader = res.body.getReader(); const dec = new TextDecoder();
-          for (;;) { const { done, value } = await reader.read(); if (done) break; parser.feed(dec.decode(value, { stream: true })); }
+          let final = "";
+          let partial = "";
+          const parser = createParser({
+            onEvent: (ev) => {
+              try {
+                const d = JSON.parse(ev.data);
+                if (d.type === "transcript.text.delta") partial += d.delta ?? "";
+                if (d.type === "transcript.text.done") final = d.text ?? "";
+              } catch {
+                /* ignore */
+              }
+            },
+          });
+          const reader = res.body.getReader();
+          const dec = new TextDecoder();
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            parser.feed(dec.decode(value, { stream: true }));
+          }
           const t = (final || partial).trim();
           if (!t) throw new Error("I didn't catch that. Try again.");
           onText(t);
-        } catch (e) { onError(e instanceof Error ? e.message : "Voice input failed."); }
+        } catch (e) {
+          onError(e instanceof Error ? e.message : "Voice input failed.");
+        }
         setState("idle");
       };
-      rec.current = r; r.start(); setState("rec");
-    } catch { onError("Microphone access is needed for voice input."); }
+      rec.current = r;
+      r.start();
+      setState("rec");
+    } catch {
+      onError("Microphone access is needed for voice input.");
+    }
   };
 
-  return <PromptInputButton
-    aria-label={state === "rec" ? "Stop recording" : "Speak your money goal"}
-    className={`pk-mic ${state === "rec" ? "is-live" : ""}`}
-    disabled={state === "busy"}
-    onClick={() => (state === "rec" ? rec.current?.stop() : start())}
-  >
-    {state === "rec" ? <Square className="size-3.5" /> : <Mic className="size-4" />}
-    {state === "rec" && <span className="pk-wave" aria-hidden>{level.map((l, i) => <i key={i} style={{ transform: `scaleY(${0.25 + l * 1.4})` }} />)}</span>}
-    <span>{state === "rec" ? "Listening — tap to stop" : state === "busy" ? "Transcribing…" : "Speak"}</span>
-  </PromptInputButton>;
+  return (
+    <PromptInputButton
+      aria-label={state === "rec" ? "Stop recording" : "Speak your money goal"}
+      className={`bb-mic ${state === "rec" ? "is-live" : ""}`}
+      disabled={state === "busy"}
+      onClick={() => (state === "rec" ? rec.current?.stop() : void start())}
+    >
+      {state === "rec" ? <Square className="size-3.5" /> : <Mic className="size-4" />}
+      {state === "rec" && (
+        <span className="pk-wave" aria-hidden>
+          {level.map((l, i) => (
+            <i key={i} style={{ transform: `scaleY(${0.25 + l * 1.4})` }} />
+          ))}
+        </span>
+      )}
+    </PromptInputButton>
+  );
 }
