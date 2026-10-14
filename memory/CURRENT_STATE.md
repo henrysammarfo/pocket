@@ -30,6 +30,7 @@ Updated: 2026-10-14
 - Speak-back button on assistant messages → `/api/speak`
 - `/api/health` readiness (no secret values)
 - Approve→block demo path: planId session persistence, same-tick approve→settle, BlockScreen auto-speak, quiet Ready/Setup health dot
+- Beebah Figma (Titans Page 1) restyle: forest `#123C32` / canvas `#F7F7F3`, spiral logo, auth continue, chat hero + coins, blocked sheet
 
 ## Envio
 

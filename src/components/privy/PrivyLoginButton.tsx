@@ -8,7 +8,7 @@ export function PrivyLoginButton({ onError }: { onError: (msg: string) => void }
   return (
     <button
       type="button"
-      className="auth-privy"
+      className="pk-btn-primary auth-beebah-continue"
       disabled={!ready}
       onClick={() => {
         try {
@@ -20,7 +20,7 @@ export function PrivyLoginButton({ onError }: { onError: (msg: string) => void }
         }
       }}
     >
-      Continue — invisible wallet
+      Continue
     </button>
   );
 }

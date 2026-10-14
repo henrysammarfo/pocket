@@ -8,17 +8,23 @@ type BlockScreenProps = {
   rentPaidNote?: string;
   /** Auto-speak the demo tagline once when the block appears. Default true. */
   autoSpeak?: boolean;
+  onDismiss?: () => void;
 };
 
-/** Demo beat: open on the block — message, buffer, nothing moved. */
+/** Beebah blocked sheet — lock, reason, Keep rule, Go back. */
 export function BlockScreen({
   message,
   bufferCents,
   planCatch,
   rentPaidNote,
   autoSpeak = true,
+  onDismiss,
 }: BlockScreenProps) {
   const dollars = (bufferCents / 100).toFixed(0);
+  const reason =
+    bufferCents > 0
+      ? `Sending would leave you under $${dollars}.`
+      : "No approved plan can cover this.";
   const tagline = `A message said send the rest. Your $${dollars} stayed. Nothing moved.`;
   const spokenFor = useRef<string | null>(null);
 
@@ -62,20 +68,34 @@ export function BlockScreen({
   }, [autoSpeak, message, bufferCents, tagline]);
 
   return (
-    <section className="pk-block" aria-live="polite">
-      <p className="pk-block-eyebrow">POCKET blocked this</p>
-      <h2 className="pk-block-message">“{message}”</h2>
-      <p className="pk-block-buffer">
-        <strong>${dollars}</strong> still here
-      </p>
-      <p className="pk-block-status">Nothing moved.</p>
-      {planCatch && (
-        <p className="pk-block-catch">
-          Caught by plan rule: <span>{planCatch}</span>
+    <div className="pk-block-scrim" role="dialog" aria-modal="true" aria-labelledby="pk-block-title">
+      <section className="pk-block">
+        <div className="pk-block-icon" aria-hidden>
+          <span>
+            <span>
+              <img src="/brand/lock.svg" alt="" width={40} height={40} />
+            </span>
+          </span>
+        </div>
+        <p id="pk-block-title" className="pk-block-eyebrow">
+          Blocked
         </p>
-      )}
-      {rentPaidNote && <p className="pk-block-rent">{rentPaidNote}</p>}
-      <p className="pk-block-tagline">{tagline}</p>
-    </section>
+        <h2 className="pk-block-message">“{message}”</h2>
+        <p className="pk-block-reason">{reason}</p>
+        <div className="pk-block-rule">
+          <p className="pk-block-rule-when">Always</p>
+          <div className="pk-block-rule-row">
+            <span>Keep</span>
+            <strong>${dollars}</strong>
+          </div>
+          {planCatch && <p className="pk-block-catch">Caught by plan rule: {planCatch}</p>}
+        </div>
+        {rentPaidNote && <p className="pk-block-rent">{rentPaidNote}</p>}
+        <p className="pk-block-tagline">{tagline}</p>
+        <button type="button" className="pk-btn-primary pk-block-dismiss" onClick={onDismiss}>
+          Go back
+        </button>
+      </section>
+    </div>
   );
 }

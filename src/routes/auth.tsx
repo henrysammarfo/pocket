@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -8,10 +9,10 @@ import { PrivyLoginButton } from "@/components/privy/PrivyLoginButton";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — POCKET" },
-      { name: "description", content: "Sign in to talk to POCKET and build money plans." },
-      { property: "og:title", content: "Sign in to POCKET" },
-      { property: "og:description", content: "Your personal money assistant." },
+      { title: "Continue — Pocket" },
+      { name: "description", content: "Save your plan and return to it on this device." },
+      { property: "og:title", content: "Continue to use Pocket" },
+      { property: "og:description", content: "Save your plan and return to it on this device." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -30,21 +31,28 @@ function AuthPage() {
   }, [session, privyAuthed, link?.userId, navigate]);
 
   return (
-    <main className="auth-page">
-      <div className="auth-card">
+    <main className="auth-beebah">
+      <header className="auth-beebah-top">
+        <Link to="/" className="auth-back" aria-label="Back to home">
+          <ArrowLeft size={20} />
+        </Link>
         <BrandLogo compact />
-        <h1>Welcome back.</h1>
-        <p>Tell POCKET a goal. Get a plan that can't overspend.</p>
+      </header>
+      <div className="auth-beebah-body">
+        <h1>Continue to use Pocket</h1>
+        <p className="auth-beebah-sub">Save your plan and return to it on this device</p>
         {privyEnabled ? (
-          <PrivyLoginButton onError={setMsg} />
+          <div className="auth-beebah-cta">
+            <PrivyLoginButton onError={setMsg} />
+          </div>
         ) : (
           <button
             type="button"
-            className="auth-privy"
+            className="pk-btn-primary auth-beebah-continue"
             disabled
             onClick={() => setMsg("Set VITE_PRIVY_APP_ID + PRIVY_APP_SECRET for login.")}
           >
-            Continue — invisible wallet
+            Continue
           </button>
         )}
         {msg && (
@@ -52,7 +60,7 @@ function AuthPage() {
             {msg}
           </p>
         )}
-        <p className="auth-switch">Sign in with email or Google via Privy. No crypto UI — wallets stay under the hood.</p>
+        <p className="auth-beebah-note">Email or Google via Privy. Wallets stay under the hood.</p>
       </div>
     </main>
   );

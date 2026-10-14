@@ -10,7 +10,6 @@ import { Conversation, ConversationContent, ConversationScrollButton } from "@/c
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputButton, PromptInputFooter, PromptInputSubmit, PromptInputTextarea, PromptInputTools } from "@/components/ai-elements/prompt-input";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
-import { BrandMark } from "@/components/BrandLogo";
 import { LoadingState } from "@/components/pocket-ui/LoadingState";
 import { GoalCard } from "@/components/pocket-ui/GoalCard";
 import { BlockScreen } from "@/components/pocket-ui/BlockScreen";
@@ -185,6 +184,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             bufferCents={block.bufferCents}
             {...(block.planCatch ? { planCatch: block.planCatch } : {})}
             rentPaidNote="Rent was already paid inside the plan."
+            onDismiss={() => setBlock(null)}
           />
         )}
         {planReady && !block && (
@@ -198,9 +198,14 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
           ))}
         </div>}
         {messages.length === 0 && !block && <div className="pk-hero">
-          <span className="pk-hero-mark"><BrandMark size={52} /></span>
-          <h1>What should your money do?</h1>
-          <p>Say it out loud or type it. POCKET turns your goal into a plan with rules that can't overspend.</p>
+          <p className="pk-hero-kicker"><i aria-hidden />One plan. Your rules.</p>
+          <h1>
+            Your <span>money</span>
+            <br />
+            on <span>your</span> terms
+          </h1>
+          <p>Tell pocket what you want your money to do</p>
+          <img className="pk-hero-art" src="/brand/hero-coins.png" alt="" width={297} height={181} />
           {showGoal
             ? <GoalCard onComplete={(g) => void send(g)} onDismiss={() => setShowGoal(false)} />
             : <div className="pk-suggest">{SUGGESTIONS.map((s) => <button key={s} onClick={() => void send(s)}><CornerDownRight size={12} />{s}</button>)}</div>}
@@ -247,7 +252,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
         {slash.map((c) => <button key={c.cmd} role="option" aria-selected="false" onClick={() => { setText(c.text); taRef.current?.focus(); }}><code>{c.cmd}</code><span>{c.text.replace(/\$/g, "$…")}</span></button>)}
       </div>}
       <PromptInput onSubmit={(msg) => void send(msg.text)} className="pk-prompt">
-        <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Describe a money goal, or type / for templates" autoFocus />
+        <PromptInputTextarea ref={taRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tell pocket what you want your money to do" autoFocus />
         <PromptInputFooter className="justify-between">
           <PromptInputTools><VoiceButton onText={(t) => { void send(t, "spoken"); }} onError={setErr} /></PromptInputTools>
           <PromptInputSubmit status={status} onStop={stop} disabled={!busy && !text.trim()} className="pk-send" />

@@ -97,7 +97,7 @@ function AppLayout() {
         </div>
         <button className="pk-nav-item pk-new" onClick={newThread}>
           <SquarePen size={17} />
-          <span>New plan</span>
+          <span>Create new plan</span>
         </button>
         <label className="pk-search">
           <Search size={14} />
