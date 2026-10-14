@@ -45,3 +45,10 @@
 - Fixed indexer for Envio Cloud V3: `networks`→`chains`, pin `envio@3.14.0`, `indexer.onEvent` handlers.
 - Pushed to `envio` branch to trigger hosted deployment.
 - Privy: guide user to enable Email + Google + Ethereum embedded wallets.
+
+## 2026-10-14 — Approve→block demo beat
+
+- planId sessionStorage per thread; approve returns id for same-tick settle (race fix).
+- BlockScreen auto-speaks tagline via `/api/speak`.
+- Quiet HealthDot in app chrome from `/api/health`.
+- Production alias `pocket-zeta-lime.vercel.app` → `dpl_4cCSNxazv8NDL1HJsyqqjb8xKXdU` (health ok; envioGraphql still false).
