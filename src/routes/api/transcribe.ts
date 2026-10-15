@@ -10,8 +10,9 @@ export const Route = createFileRoute("/api/transcribe")({
       POST: async ({ request }) => {
         const auth = await authenticate(request);
         if (!auth) return json({ error: "Please sign in again." }, 401);
-        const apiKey = process.env['LOVABLE_API_KEY'];
-        if (!apiKey) return json({ error: "AI is not configured." }, 500);
+        const apiKey = process.env["AGENTROUTER_API_KEY"];
+        const baseURL = process.env["AGENTROUTER_BASE_URL"] || "https://agentrouter.org/v1";
+        if (!apiKey) return json({ error: "AI is not configured (AGENTROUTER_API_KEY)." }, 500);
         const length = Number(request.headers.get("content-length") ?? 0);
         if (length > MAX + 1024 * 64) return json({ error: "Recording is too long." }, 413);
         const form = await request.formData().catch(() => null);
@@ -19,7 +20,13 @@ export const Route = createFileRoute("/api/transcribe")({
         if (!(file instanceof File) || !file.size) return json({ error: "No audio received." }, 400);
         try {
           const upstream = await transcribe(
-            { baseURL: "https://ai.gateway.lovable.dev", apiKey, model: "openai/gpt-transcribe", maxFileBytes: MAX, audioOnly: false },
+            {
+              baseURL,
+              apiKey,
+              model: process.env["AGENTROUTER_TRANSCRIBE_MODEL"] || "whisper-1",
+              maxFileBytes: MAX,
+              audioOnly: false,
+            },
             file,
             { signal: request.signal },
           );

@@ -1,25 +1,35 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { verifyPrivyAccessToken } from "@/lib/auth/privy.server";
+import { ensureMemberForPrivy, findMemberByPrivyUserId, type PocketMember } from "@/lib/db/members";
 
-export async function authenticate(request: Request) {
-  const url = process.env['SUPABASE_URL'];
-  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
-  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
-  if (!url || !key || !token || token.split(".").length !== 3) return null;
-  const supabase = createClient<Database>(url, key, {
-    global: {
-      headers: { Authorization: `Bearer ${token}` },
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        headers.set("apikey", key);
-        return fetch(input, { ...init, headers });
-      },
-    },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data, error } = await supabase.auth.getClaims(token);
-  if (error || !data?.claims?.sub) return null;
-  return { supabase, userId: data.claims.sub as string };
+export type AuthContext = {
+  member: PocketMember;
+  userId: string;
+  privyUserId: string;
+};
+
+/** Authenticate API requests via Privy bearer token; resolve Neon member row. */
+export async function authenticate(request: Request): Promise<AuthContext | null> {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "")?.trim();
+  if (!token) return null;
+
+  const privy = await verifyPrivyAccessToken(token);
+  if (!privy) return null;
+
+  let member = await findMemberByPrivyUserId(privy.userId).catch(() => null);
+  if (!member) {
+    try {
+      member = await ensureMemberForPrivy(privy);
+    } catch (e) {
+      console.error("[auth] ensure member failed", e);
+      return null;
+    }
+  }
+
+  return {
+    member,
+    userId: member.id,
+    privyUserId: privy.userId,
+  };
 }
 
 export const json = (body: unknown, status = 200) =>

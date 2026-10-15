@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { authHeader } from "@/hooks/useAuth";
 import { createThread, threadsKey } from "./app";
 
 export const Route = createFileRoute("/app/")({ component: AppIndex });
@@ -14,8 +14,9 @@ function AppIndex() {
     if (started.current) return;
     started.current = true;
     (async () => {
-      const { data } = await supabase.from("threads").select("id").order("updated_at", { ascending: false }).limit(1);
-      const id = data?.[0]?.id ?? (await createThread());
+      const res = await fetch("/api/threads", { headers: await authHeader() });
+      const body = (await res.json()) as { threads?: { id: string }[] };
+      const id = body.threads?.[0]?.id ?? (await createThread());
       await qc.invalidateQueries({ queryKey: threadsKey });
       navigate({ to: "/app/$threadId", params: { threadId: id }, replace: true });
     })();

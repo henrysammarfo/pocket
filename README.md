@@ -737,17 +737,9 @@ File: public/instagram.svg (find insta icon)
 
 File: public/tiktok.svg (find simple Tiktok iocn)
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f382c502-e467-48ce-beee-baf7a18bf3f0).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
 ## Development
+
+POCKET runs on Vercel + Neon Postgres + Privy. See `memory/KEYS_GUIDE.md` for key setup.
 
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 

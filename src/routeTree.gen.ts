@@ -22,9 +22,24 @@ import { Route as ProductRouteImport } from './routes/product'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StoryRouteImport } from './routes/story'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiReceiptsRouteImport } from './routes/api/receipts'
+import { Route as ApiSettleRouteImport } from './routes/api/settle'
+import { Route as ApiSpeakRouteImport } from './routes/api/speak'
+import { Route as ApiThreadsRouteImport } from './routes/api/threads'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as ApiWalletRouteImport } from './routes/api/wallet'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppThreadIdRouteImport } from './routes/app.$threadId'
+import { Route as AppReceiveRouteImport } from './routes/app.receive'
+import { Route as AppSendRouteImport } from './routes/app.send'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSwapRouteImport } from './routes/app.swap'
+import { Route as AppWalletRouteImport } from './routes/app.wallet'
+import { Route as ApiAuthPrivyLinkRouteImport } from './routes/api/auth/privy-link'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiPlansApproveRouteImport } from './routes/api/plans/approve'
+import { Route as ApiThreadsThreadIdRouteImport } from './routes/api/threads.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -91,9 +106,39 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReceiptsRoute = ApiReceiptsRouteImport.update({
+  id: '/api/receipts',
+  path: '/api/receipts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSettleRoute = ApiSettleRouteImport.update({
+  id: '/api/settle',
+  path: '/api/settle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSpeakRoute = ApiSpeakRouteImport.update({
+  id: '/api/speak',
+  path: '/api/speak',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiThreadsRoute = ApiThreadsRouteImport.update({
+  id: '/api/threads',
+  path: '/api/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   id: '/api/transcribe',
   path: '/api/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWalletRoute = ApiWalletRouteImport.update({
+  id: '/api/wallet',
+  path: '/api/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -105,6 +150,51 @@ const AppThreadIdRoute = AppThreadIdRouteImport.update({
   id: '/$threadId',
   path: '/$threadId',
   getParentRoute: () => AppRoute,
+} as any)
+const AppReceiveRoute = AppReceiveRouteImport.update({
+  id: '/receive',
+  path: '/receive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSendRoute = AppSendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSwapRoute = AppSwapRouteImport.update({
+  id: '/swap',
+  path: '/swap',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWalletRoute = AppWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
+const ApiAuthPrivyLinkRoute = ApiAuthPrivyLinkRouteImport.update({
+  id: '/api/auth/privy-link',
+  path: '/api/auth/privy-link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlansApproveRoute = ApiPlansApproveRouteImport.update({
+  id: '/api/plans/approve',
+  path: '/api/plans/approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiThreadsThreadIdRoute = ApiThreadsThreadIdRouteImport.update({
+  id: '/$threadId',
+  path: '/$threadId',
+  getParentRoute: () => ApiThreadsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -121,9 +211,24 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/receipts': typeof ApiReceiptsRoute
+  '/api/settle': typeof ApiSettleRoute
+  '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app/': typeof AppIndexRoute
+  '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -138,9 +243,24 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/receipts': typeof ApiReceiptsRoute
+  '/api/settle': typeof ApiSettleRoute
+  '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app': typeof AppIndexRoute
+  '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -157,9 +277,24 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/receipts': typeof ApiReceiptsRoute
+  '/api/settle': typeof ApiSettleRoute
+  '/api/speak': typeof ApiSpeakRoute
+  '/api/threads': typeof ApiThreadsRouteWithChildren
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/api/wallet': typeof ApiWalletRoute
   '/app/$threadId': typeof AppThreadIdRoute
+  '/app/receive': typeof AppReceiveRoute
+  '/app/send': typeof AppSendRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/swap': typeof AppSwapRoute
+  '/app/wallet': typeof AppWalletRoute
   '/app/': typeof AppIndexRoute
+  '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/plans/approve': typeof ApiPlansApproveRoute
+  '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,9 +312,24 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
+    | '/api/receipts'
+    | '/api/settle'
+    | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app/'
+    | '/api/auth/privy-link'
+    | '/api/auth/session'
+    | '/api/plans/approve'
+    | '/api/threads/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,9 +344,24 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
+    | '/api/receipts'
+    | '/api/settle'
+    | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app'
+    | '/api/auth/privy-link'
+    | '/api/auth/session'
+    | '/api/plans/approve'
+    | '/api/threads/$threadId'
   id:
     | '__root__'
     | '/'
@@ -212,9 +377,24 @@ export interface FileRouteTypes {
     | '/security'
     | '/story'
     | '/api/chat'
+    | '/api/health'
+    | '/api/receipts'
+    | '/api/settle'
+    | '/api/speak'
+    | '/api/threads'
     | '/api/transcribe'
+    | '/api/wallet'
     | '/app/$threadId'
+    | '/app/receive'
+    | '/app/send'
+    | '/app/settings'
+    | '/app/swap'
+    | '/app/wallet'
     | '/app/'
+    | '/api/auth/privy-link'
+    | '/api/auth/session'
+    | '/api/plans/approve'
+    | '/api/threads/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,7 +411,16 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   StoryRoute: typeof StoryRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiReceiptsRoute: typeof ApiReceiptsRoute
+  ApiSettleRoute: typeof ApiSettleRoute
+  ApiSpeakRoute: typeof ApiSpeakRoute
+  ApiThreadsRoute: typeof ApiThreadsRouteWithChildren
   ApiTranscribeRoute: typeof ApiTranscribeRoute
+  ApiWalletRoute: typeof ApiWalletRoute
+  ApiAuthPrivyLinkRoute: typeof ApiAuthPrivyLinkRoute
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiPlansApproveRoute: typeof ApiPlansApproveRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -327,11 +516,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/receipts': {
+      id: '/api/receipts'
+      path: '/api/receipts'
+      fullPath: '/api/receipts'
+      preLoaderRoute: typeof ApiReceiptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/settle': {
+      id: '/api/settle'
+      path: '/api/settle'
+      fullPath: '/api/settle'
+      preLoaderRoute: typeof ApiSettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/speak': {
+      id: '/api/speak'
+      path: '/api/speak'
+      fullPath: '/api/speak'
+      preLoaderRoute: typeof ApiSpeakRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/threads': {
+      id: '/api/threads'
+      path: '/api/threads'
+      fullPath: '/api/threads'
+      preLoaderRoute: typeof ApiThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/transcribe': {
       id: '/api/transcribe'
       path: '/api/transcribe'
       fullPath: '/api/transcribe'
       preLoaderRoute: typeof ApiTranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/wallet': {
+      id: '/api/wallet'
+      path: '/api/wallet'
+      fullPath: '/api/wallet'
+      preLoaderRoute: typeof ApiWalletRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -348,20 +579,105 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppThreadIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/receive': {
+      id: '/app/receive'
+      path: '/receive'
+      fullPath: '/app/receive'
+      preLoaderRoute: typeof AppReceiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/send': {
+      id: '/app/send'
+      path: '/send'
+      fullPath: '/app/send'
+      preLoaderRoute: typeof AppSendRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/swap': {
+      id: '/app/swap'
+      path: '/swap'
+      fullPath: '/app/swap'
+      preLoaderRoute: typeof AppSwapRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/wallet': {
+      id: '/app/wallet'
+      path: '/wallet'
+      fullPath: '/app/wallet'
+      preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/auth/privy-link': {
+      id: '/api/auth/privy-link'
+      path: '/api/auth/privy-link'
+      fullPath: '/api/auth/privy-link'
+      preLoaderRoute: typeof ApiAuthPrivyLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plans/approve': {
+      id: '/api/plans/approve'
+      path: '/api/plans/approve'
+      fullPath: '/api/plans/approve'
+      preLoaderRoute: typeof ApiPlansApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/threads/$threadId': {
+      id: '/api/threads/$threadId'
+      path: '/$threadId'
+      fullPath: '/api/threads/$threadId'
+      preLoaderRoute: typeof ApiThreadsThreadIdRouteImport
+      parentRoute: typeof ApiThreadsRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppThreadIdRoute: typeof AppThreadIdRoute
+  AppReceiveRoute: typeof AppReceiveRoute
+  AppSendRoute: typeof AppSendRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppSwapRoute: typeof AppSwapRoute
+  AppWalletRoute: typeof AppWalletRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppThreadIdRoute: AppThreadIdRoute,
+  AppReceiveRoute: AppReceiveRoute,
+  AppSendRoute: AppSendRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppSwapRoute: AppSwapRoute,
+  AppWalletRoute: AppWalletRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface ApiThreadsRouteChildren {
+  ApiThreadsThreadIdRoute: typeof ApiThreadsThreadIdRoute
+}
+
+const ApiThreadsRouteChildren: ApiThreadsRouteChildren = {
+  ApiThreadsThreadIdRoute: ApiThreadsThreadIdRoute,
+}
+
+const ApiThreadsRouteWithChildren = ApiThreadsRoute._addFileChildren(
+  ApiThreadsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -377,7 +693,16 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   StoryRoute: StoryRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiReceiptsRoute: ApiReceiptsRoute,
+  ApiSettleRoute: ApiSettleRoute,
+  ApiSpeakRoute: ApiSpeakRoute,
+  ApiThreadsRoute: ApiThreadsRouteWithChildren,
   ApiTranscribeRoute: ApiTranscribeRoute,
+  ApiWalletRoute: ApiWalletRoute,
+  ApiAuthPrivyLinkRoute: ApiAuthPrivyLinkRoute,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiPlansApproveRoute: ApiPlansApproveRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
