@@ -52,3 +52,14 @@
 - BlockScreen auto-speaks tagline via `/api/speak`.
 - Quiet HealthDot in app chrome from `/api/health`.
 - Production alias `pocket-zeta-lime.vercel.app` → `dpl_4cCSNxazv8NDL1HJsyqqjb8xKXdU` (health ok; envioGraphql still false).
+
+## 2026-11-11 — Pocket on Otari (branch otari-devs-wilding)
+
+- All AI moved to Otari (first commit f0c1e1b). Client, header parsing, error mapping in `src/lib/ai/otari`.
+- Roles: intent (`pocket-intent`, strict JSON, checked against text), explainer (`pocket-explain`, streamed, web fetch + code execution + wallet MCP), safety classifier (`pocket-guard` workspace).
+- Guard service `/api/guard/validate` + `/profiles` (Otari contract); wallet MCP `/api/mcp` read only, member HMAC tokens, 5 min.
+- Allowance from Otari end-user routes; `ai_requests` table (migration 0003, not yet applied to Neon).
+- Fallback drill via `pocket-intent-drill`. Output screening in code (Otari enforces input guardrails only).
+- UI: minimal typed components (AiReceiptStrip, AiNotice, AllowanceCard, AiActivityList, DrillCard) and `/states/otari`; visual ownership moved to Hack Designer.
+- Vercel previews of this branch are BLOCKED (account configuration: commit author henrysammarfo@gmail.com not linked to the Vercel team member).
+- Voice input off on this branch (no open speech-to-text model in Otari's catalog).
