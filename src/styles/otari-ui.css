@@ -128,6 +128,24 @@ html,body{overflow-x:clip}
 .pk-ai-row span{color:var(--ot-ink-2)}
 .pk-ai-row time{font-family:var(--ot-mono);font-size:11.5px;color:var(--ot-ink-2)}
 
+/* ---------- Mobile tab bar and More sheet (design-taste-guide 2; 60fps.design #2126 Plasma bottom sheet) ---------- */
+.ot-tabbar{flex:none;display:none;align-items:stretch;justify-content:space-around;gap:4px;padding:4px 8px calc(4px + env(safe-area-inset-bottom));background:var(--ot-surface);box-shadow:inset 0 1px 0 var(--ot-line);font-family:var(--ot-sans)}
+.ot-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:56px;min-width:44px;border:0;border-radius:var(--ot-radius-md);background:transparent;color:var(--ot-ink-2);font-size:11.5px;font-weight:500;cursor:pointer;transition:transform var(--ot-press) var(--ot-ease-out),background-color var(--ot-press) var(--ot-ease-out)}
+.ot-tab img{opacity:.7}
+.ot-tab.is-active{color:var(--ot-forest);background:var(--ot-forest-tint)}
+.ot-tab.is-active img{opacity:1}
+.ot-tab:active{transform:scale(.97)}
+.ot-sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;justify-content:flex-end}
+.ot-sheet-scrim{position:absolute;inset:0;border:0;background:var(--ot-ink);opacity:.4;animation:ot-fade var(--ot-sheet) var(--ot-ease-out) both}
+.ot-sheet{position:relative;display:flex;flex-direction:column;gap:4px;padding:8px 12px calc(16px + env(safe-area-inset-bottom));border-radius:var(--ot-radius-lg) var(--ot-radius-lg) 0 0;background:var(--ot-surface);animation:ot-sheet-in var(--ot-sheet) var(--ot-ease-out) both;font-family:var(--ot-sans)}
+.ot-sheet-grip{align-self:center;width:36px;height:4px;margin:4px 0 8px;border-radius:2px;background:var(--ot-line-strong)}
+.ot-sheet-row{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px;border-radius:var(--ot-radius-md);color:var(--ot-ink);font-size:15px;font-weight:500}
+.ot-sheet-row:hover,.ot-sheet-row.is-active{background:var(--ot-field)}
+.ot-sheet-row:focus-visible{outline:2px solid var(--ot-forest);outline-offset:-2px}
+@keyframes ot-sheet-in{from{transform:translateY(100%)}to{transform:none}}
+@keyframes ot-fade{from{opacity:0}}
+@media(max-width:960px){.ot-tabbar.bb-only-mobile{display:flex!important}.ot-sheet-wrap.bb-only-mobile{display:flex!important}}
+
 /* ---------- Review page (/states/otari) ---------- */
 .pk-states{max-width:1120px;padding:48px 32px 96px;gap:48px}
 .pk-states h1{text-wrap:balance;font-variant-numeric:tabular-nums;font-size:clamp(28px,3.4vw,36px);line-height:1.15;overflow-wrap:break-word;min-width:0}
@@ -144,5 +162,6 @@ html,body{overflow-x:clip}
 @media (prefers-reduced-motion:reduce){
   .pk-receipt-details,.pk-notice{animation:none}
   .pk-receipt-item.is-running svg,.pk-meter.is-loading i{animation:none}
-  .pk-meter i,.pk-receipt-more,.pk-receipt-more svg,.pk-notice-btn,.pk-notice-x{transition:none}
+  .ot-sheet,.ot-sheet-scrim{animation:none}
+  .ot-tab,.pk-meter i,.pk-receipt-more,.pk-receipt-more svg,.pk-notice-btn,.pk-notice-x{transition:none}
 }

@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/pocket-ui/AppSidebar";
 import { BrandLogo } from "@/components/BrandLogo";
 import { authHeader } from "@/hooks/useAuth";
 import { HealthDot } from "@/components/pocket-ui/HealthDot";
+import { MobileTabBar } from "@/components/pocket-ui/MobileTabBar";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -90,8 +91,8 @@ function AppLayout() {
       <AppSidebar
         collapsed={collapsed}
         open={open}
-        email={session?.user.email ?? (previewUi ? "davidlloyd@gmail.com" : null)}
-        displayName={previewUi ? "davidlloyd" : session?.user.email?.split("@")[0] || "Member"}
+        email={session?.user.email ?? (previewUi ? "preview@example.com" : null)}
+        displayName={previewUi ? "Preview member" : session?.user.email?.split("@")[0] || "Member"}
         active={activeFromPath(path)}
         onCollapse={() => setCollapsed((c) => !c)}
         onCloseMobile={() => setOpen(false)}
@@ -118,6 +119,7 @@ function AppLayout() {
           </header>
         )}
         <Outlet />
+        <MobileTabBar active={activeFromPath(path)} />
       </main>
     </div>
   );
