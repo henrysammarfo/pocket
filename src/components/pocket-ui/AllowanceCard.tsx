@@ -58,6 +58,13 @@ export function AllowanceCard({ allowance, configured, loading, error, onRetry }
           <i style={{ width: `${Math.max(2, pct)}%` }} />
         </div>
       )}
+      {pct != null && (
+        <span className="pk-allow-scale" aria-hidden>
+          <span>0%</span>
+          <span>Lighter model from 80%</span>
+          <span>100%</span>
+        </span>
+      )}
       <span>{line}</span>
       {state !== "blocked" && state !== "unknown" && state !== "new" && <span className="pk-allow-sub">{sub}</span>}
     </div>

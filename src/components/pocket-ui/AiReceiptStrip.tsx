@@ -12,7 +12,7 @@ export function shortModel(model: string | null): string {
 const secs = (ms: number | null) => (ms == null ? null : ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`);
 
 function ToolIcon({ kind }: { kind: ToolChip["kind"] }) {
-  const p = { size: 12, "aria-hidden": true } as const;
+  const p = { size: 14, "aria-hidden": true } as const;
   if (kind === "fetch" || kind === "search") return <Globe {...p} />;
   if (kind === "code") return <Calculator {...p} />;
   if (kind === "mcp") return <Wallet {...p} />;
@@ -49,69 +49,69 @@ function runningLabel(kind: ToolChip["kind"]): string {
   return "Working";
 }
 
-export function AiReceiptStrip({ receipt }: { receipt: AiReceipt }) {
-  const [open, setOpen] = useState(false);
+export function AiReceiptStrip({ receipt, defaultOpen = false }: { receipt: AiReceipt; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   const detailsId = useId();
   const time = secs(receipt.durationMs);
   return (
-    <div className="pk-receipt" data-role={receipt.role}>
+    <div className={`pk-receipt${receipt.fallback ? " is-backup" : ""}`} data-role={receipt.role}>
       <div className="pk-receipt-row">
         <span className="pk-receipt-item">
-          <Route size={12} aria-hidden />
-          Answered by <strong>{shortModel(receipt.model)}</strong>
-          {receipt.fallback && <em className="pk-receipt-flag">backup model, try {receipt.attempts ?? 2}</em>}
+          <Route size={14} aria-hidden />
+          {receipt.fallback ? "Served by backup model" : "Answered by"} <strong>{shortModel(receipt.model)}</strong>
+          {receipt.fallback && <em className="pk-receipt-flag">attempt {receipt.attempts ?? 2}</em>}
         </span>
         {receipt.lighter && (
           <span className="pk-receipt-item">
-            <Feather size={12} aria-hidden />
+            <Feather size={14} aria-hidden />
             Lighter model, to stretch your allowance
           </span>
         )}
         {receipt.guard === "passed" && (
           <span className="pk-receipt-item is-ok">
-            <ShieldCheck size={12} aria-hidden />
+            <ShieldCheck size={14} aria-hidden />
             Safety check passed
           </span>
         )}
         {receipt.guard === "flagged" && (
           <span className="pk-receipt-item is-warn">
-            <ShieldAlert size={12} aria-hidden />
+            <ShieldAlert size={14} aria-hidden />
             Safety check flagged this
           </span>
         )}
         {receipt.tools.map((t, i) => (
-          <span key={i} className={`pk-receipt-item ${t.ok ? "" : "is-warn"}`}>
+          <span key={i} data-kind={t.ok ? t.kind : undefined} className={`pk-receipt-item ${t.ok ? "" : "is-warn"}`}>
             <ToolIcon kind={t.kind} />
-            {t.label}
+            {t.ok && t.kind === "code" ? "Computed in sandbox" : t.label}
           </span>
         ))}
         {receipt.projection === "match" && (
           <span className="pk-receipt-item is-ok">
-            <ShieldCheck size={12} aria-hidden />
+            <ShieldCheck size={14} aria-hidden />
             Pocket rechecked the math: same answer
           </span>
         )}
         {receipt.projection === "mismatch" && (
           <span className="pk-receipt-item is-bad">
-            <ShieldAlert size={12} aria-hidden />
+            <ShieldAlert size={14} aria-hidden />
             Pocket got a different answer. Do not rely on these numbers.
           </span>
         )}
         {receipt.output?.includes("claims_money_moved") && (
           <span className="pk-receipt-item is-bad">
-            <ShieldAlert size={12} aria-hidden />
+            <ShieldAlert size={14} aria-hidden />
             This answer talks as if money moved. It did not: only your approved plan moves money.
           </span>
         )}
         {receipt.output?.includes("asks_for_secret") && (
           <span className="pk-receipt-item is-bad">
-            <ShieldAlert size={12} aria-hidden />
+            <ShieldAlert size={14} aria-hidden />
             Never share a recovery phrase or private key. Pocket will never ask.
           </span>
         )}
         <button type="button" className="pk-receipt-more" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen((v) => !v)}>
           Details
-          <ChevronDown size={12} aria-hidden style={{ transform: open ? "rotate(180deg)" : undefined }} />
+          <ChevronDown size={14} aria-hidden style={{ transform: open ? "rotate(180deg)" : undefined }} />
         </button>
       </div>
       {open && (
@@ -122,7 +122,7 @@ export function AiReceiptStrip({ receipt }: { receipt: AiReceipt }) {
           <div><dt>Models tried</dt><dd>{receipt.attempts ?? "Not reported"}</dd></div>
           <div><dt>Time to answer</dt><dd>{time ?? "Not reported"}</dd></div>
           <div><dt>Cost</dt><dd>{receipt.costUsd == null ? "Not reported" : `$${receipt.costUsd.toFixed(6)}`}</dd></div>
-          {receipt.ratesSource === "ecb" && <div><dt>Exchange rates</dt><dd>European Central Bank daily reference rates</dd></div>}
+          {receipt.ratesSource === "ecb" && <div><dt>Exchange rates</dt><dd>European Central Bank daily reference rates (ecb.europa.eu)</dd></div>}
           <div><dt>Request</dt><dd className="pk-mono">{receipt.requestId ?? "Not reported"}</dd></div>
         </dl>
       )}

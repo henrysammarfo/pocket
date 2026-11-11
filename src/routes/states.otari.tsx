@@ -82,6 +82,24 @@ function StatesPage() {
       </section>
 
       <section>
+        <h2>Receipt unfolded</h2>
+        <div className="pk-states-item">
+          <p className="pk-states-label">Details open: every figure comes from Otari's response headers</p>
+          <div className="pk-assistant pk-states-msg">
+            <p>Save $900 a month and you reach $3,000 in 4 months.</p>
+            <AiReceiptStrip receipt={{ ...base, model: "Qwen/Qwen3-32B", provider: "together", attempts: 2, fallback: true }} defaultOpen />
+          </div>
+        </div>
+        <div className="pk-states-item">
+          <p className="pk-states-label">Currency answer with its source (example rate, the live one comes from the ECB file)</p>
+          <div className="pk-assistant pk-states-msg">
+            <p>40 US dollars is about 34.50 euros at the European Central Bank reference rate.</p>
+            <AiReceiptStrip receipt={{ ...base, tools: [{ kind: "fetch", label: "Read www.ecb.europa.eu", ok: true }], ratesSource: "ecb" }} defaultOpen />
+          </div>
+        </div>
+      </section>
+
+      <section>
         <h2>While Otari runs tools</h2>
         <LiveToolChips
           chips={[

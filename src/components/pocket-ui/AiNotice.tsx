@@ -26,7 +26,7 @@ export function AiNotice({ state, onRetry, onDismiss }: { state: AiStatePayload;
       <div className="pk-notice-actions">
         {onDismiss && (
           <button type="button" onClick={onDismiss} className="pk-notice-x" aria-label="Dismiss">
-            <X size={14} aria-hidden />
+            <X size={18} aria-hidden />
           </button>
         )}
       </div>
