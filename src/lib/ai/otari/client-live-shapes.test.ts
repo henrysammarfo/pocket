@@ -81,3 +81,34 @@ describe("guardrail refusal as Otari sends it live", () => {
     expect(e.message).toBe("Request blocked by guardrail policy.");
   });
 });
+
+import { crossCheckProjection, PROJECTION_PY, project } from "./projection";
+import { payeesFromGoal, parseMoneyPlanFromGoal, parseSpendIntent } from "@/lib/policy/plan-parser";
+
+describe("what-if with two scenarios in one run", () => {
+  const a = { start: 124000, income: 200000, fixed: 150000, goal: 300000, drop_pct: 0 };
+  const b = { ...a, drop_pct: 20 };
+  const code = PROJECTION_PY.replace(/INPUT = .*\nprint.*\n/, `A = ${JSON.stringify(a)}\nB = ${JSON.stringify(b)}\nprint(json.dumps(project(**A)))\nprint(json.dumps(project(**B)))\n`);
+  it("matches when every printed scenario equals Pocket's own result", () => {
+    const out = [project(a), project(b)].map((r) => JSON.stringify(r)).join("\n");
+    expect(crossCheckProjection(code, out).status).toBe("match");
+  });
+  it("flags a wrong scenario", () => {
+    const out = [project(a), { ...project(b), months_to_goal: 3 }].map((r) => JSON.stringify(r)).join("\n");
+    expect(crossCheckProjection(code, out).status).toBe("mismatch");
+  });
+});
+
+describe("plans approve named payees", () => {
+  it("reads payees and the Keep from the goal", () => {
+    expect(payeesFromGoal("Keep $50 and approve Ama as a payee")).toEqual(["Ama"]);
+    expect(payeesFromGoal("Pay my rent on Friday, keep $500")).toEqual([]);
+    const plan = parseMoneyPlanFromGoal("Keep $5 and approve Ama as a payee", { reserveFloorCents: 50_000 });
+    expect(plan.reserveFloorCents).toBe(500);
+    expect(plan.allowlist.map((p) => p.label)).toContain("Ama");
+  });
+  it("names the payee of a spend", () => {
+    expect(parseSpendIntent("Send $20 to Ama for lunch").payeeLabel).toBe("Ama");
+    expect(parseSpendIntent("Pay my rent $900").payeeLabel).toBe("Rent");
+  });
+});

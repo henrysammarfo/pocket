@@ -63,13 +63,26 @@ const COMMANDS = [
 
 const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 
+/** A message that sets up money rules (a Keep, a bill, payees), not a question or a one-off payment. */
+export function looksLikeGoal(text: string): boolean {
+  if (!text.trim()) return false;
+  if (/\bkeep\s*\$?\s*\d/i.test(text)) return true;
+  if (/\b(approve|payees?|allow)\b/i.test(text) && /\b(pay|payee|send)\b/i.test(text)) return true;
+  return /\b(pay|send)\b[\s\w]{0,20}\brent\b/i.test(text);
+}
+
 function stepsFromGoal(goal: string) {
   const plan = parseMoneyPlanFromGoal(goal, { reserveFloorCents: 50_000 });
-  return plan.steps.map((s) => ({
+  const steps = plan.steps.map((s) => ({
     when: s.when === "always" ? "Always" : s.when ?? "Soon",
     label: s.label.replace(/^Pay /i, "Pay ").replace(/^Keep /i, "Keep"),
     amountLabel: `$${((s.amountCents ?? 0) / 100).toFixed(2)}`,
   }));
+  const payees = plan.allowlist.filter((p) => p.label !== "Rent" || /\brent\b/i.test(goal));
+  return [
+    ...steps,
+    ...payees.filter((p) => p.label !== "Rent").map((p) => ({ when: "Approved", label: `Pay ${p.label}`, amountLabel: "Above the Keep" })),
+  ];
 }
 
 function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessage[] }) {
@@ -138,7 +151,8 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     const res = await fetch("/api/plans/approve", {
       method: "POST",
       headers: { "content-type": "application/json", ...(await authHeader()) },
-      body: JSON.stringify({ goalText, threadId, reserveFloorCents: 50_000 }),
+      // The Keep comes from the goal ("keep $50"); $500 only when the goal names none.
+      body: JSON.stringify({ goalText, threadId, ...(/keep\s*\$?\s*\d/i.test(goalText) ? {} : { reserveFloorCents: 50_000 }) }),
     });
     const body = (await res.json()) as { planId?: string; error?: string };
     if (!res.ok) throw new Error(body.error ?? "Could not approve plan");
@@ -318,11 +332,11 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
           {busy && <ReadingPlan />}
           {busy && <LiveToolChips chips={liveTools} />}
 
-          {!planReady && showPlanCard && lastAssistant && !busy && (
+          {!planReady && showPlanCard && lastAssistant && !busy && looksLikeGoal(textOf(lastUser!) || "") && (
             <PlanCard
-              steps={stepsFromGoal(textOf(lastUser!) || planGoal)}
+              steps={stepsFromGoal(textOf(lastUser!))}
               onApprove={() => {
-                void approvePlan(textOf(lastUser!) || planGoal)
+                void approvePlan(textOf(lastUser!))
                   .then(() => setErr(null))
                   .catch((e) => setErr(e instanceof Error ? e.message : "Approve failed"));
               }}

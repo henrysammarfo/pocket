@@ -89,17 +89,38 @@ export function readProjectionInput(code: string): ProjectionInput | null {
 
 export type CrossCheck = { status: "match" | "mismatch" | "not_projection"; input?: ProjectionInput; expected?: ProjectionResult };
 
-/** Compare what the sandbox printed with Pocket's own computation. */
+/** Every projection input dict in the code: the INPUT line, or several scenarios (INPUT_A = {...}, project(**{...})). */
+export function readProjectionInputs(code: string): ProjectionInput[] {
+  const out: ProjectionInput[] = [];
+  for (const m of code.matchAll(/\{[^{}]*["']start["'][^{}]*\}/g)) {
+    const one = readProjectionInput(`INPUT = ${m[0]}`);
+    if (one && !out.some((o) => JSON.stringify(o) === JSON.stringify(one))) out.push(one);
+  }
+  return out;
+}
+
+/**
+ * Compare what the sandbox printed with Pocket's own computation. One run may
+ * hold several scenarios (a what-if): every JSON line it printed must equal
+ * Pocket's result for one of the inputs in the code, and there must be one per input.
+ */
 export function crossCheckProjection(code: string | undefined, stdout: string | undefined): CrossCheck {
   if (!code || !code.includes("def project(")) return { status: "not_projection" };
-  const input = readProjectionInput(code);
-  if (!input) return { status: "not_projection" };
-  const expected = project(input);
-  let got: unknown;
-  try {
-    got = JSON.parse((stdout ?? "").trim().split("\n").pop() ?? "");
-  } catch {
-    return { status: "mismatch", input, expected };
+  const inputs = readProjectionInputs(code);
+  if (!inputs.length) return { status: "not_projection" };
+  const expected = inputs.map(project);
+  const printed: unknown[] = [];
+  for (const line of (stdout ?? "").split("\n")) {
+    const t = line.trim();
+    if (!t.startsWith("{")) continue;
+    try {
+      printed.push(JSON.parse(t));
+    } catch {
+      return { status: "mismatch", input: inputs[0]!, expected: expected[0]! };
+    }
   }
-  return { status: JSON.stringify(got) === JSON.stringify(expected) ? "match" : "mismatch", input, expected };
+  const ok =
+    printed.length >= inputs.length &&
+    printed.every((g) => expected.some((e) => JSON.stringify(g) === JSON.stringify(e)));
+  return { status: ok ? "match" : "mismatch", input: inputs[0]!, expected: expected[0]! };
 }

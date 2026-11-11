@@ -2,6 +2,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import type { ReactNode } from "react";
 import { monadTestnet } from "@/lib/monad/config";
 import { PrivySessionBridge } from "./PrivySessionBridge";
+import { EnsureEmbeddedWallet } from "./EnsureEmbeddedWallet";
 import { PrivySessionContext } from "./PrivySessionContext";
 
 const appId = import.meta.env["VITE_PRIVY_APP_ID"] as string | undefined;
@@ -40,6 +41,7 @@ export function PrivyAppProvider({ children }: { children: ReactNode }) {
         supportedChains: [monadTestnet],
       }}
     >
+      <EnsureEmbeddedWallet />
       <PrivySessionBridge>{children}</PrivySessionBridge>
     </PrivyProvider>
   );

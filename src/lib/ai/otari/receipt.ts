@@ -37,7 +37,8 @@ export function buildReceipt(
 ): AiReceipt {
   const ended = calls.filter((c) => c.status !== "in_progress");
   const checks = ended.filter((c) => c.type === "code_execution").map((c) => crossCheckProjection(c.code, c.stdout));
-  const proj = checks.find((c) => c.status !== "not_projection");
+  // Several code runs (one per scenario): any mismatch wins, else any match.
+  const proj = checks.find((c) => c.status === "mismatch") ?? checks.find((c) => c.status === "match");
   const g = meta?.guardrails ?? [];
   return {
     role,
