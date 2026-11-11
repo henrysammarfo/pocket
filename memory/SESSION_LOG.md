@@ -63,3 +63,10 @@
 - UI: minimal typed components (AiReceiptStrip, AiNotice, AllowanceCard, AiActivityList, DrillCard) and `/states/otari`; visual ownership moved to Hack Designer.
 - Vercel previews of this branch are BLOCKED (account configuration: commit author henrysammarfo@gmail.com not linked to the Vercel team member).
 - Voice input off on this branch (no open speech-to-text model in Otari's catalog).
+
+## 2026-11-11 about 10:00 Accra, Hack Designer (UI pass)
+- Restyled the Otari components in `src/styles/otari-ui.css` (linked after `styles.css` in `__root.tsx`), logic untouched. Signature: AI receipt slip. DESIGN.md (lint: 0 errors, 0 warnings) and REFERENCES.md at the repo root.
+- Phone tab bar (Chat, Wallet, Send, Receive, More sheet) in `MobileTabBar.tsx`, rendered by `app.tsx`.
+- Manrope and Plus Jakarta Sans self hosted in `public/fonts`; Google Fonts link removed (legal check LG).
+- Hallmark sloplint on `otari-ui.css`: clean. Screens and contact sheet: /workspace/screens/pocket-otari on the box.
+- Open: `useWallet.ts` preview mode still shows an example email and a $8000.00 balance; the plan review is inline, not a bottom sheet.
