@@ -4,9 +4,14 @@ import { members, moneyPlans, receipts } from "../../../drizzle/schema";
 import { readAusdBalanceCents } from "@/lib/settlement/agora";
 import type { WalletData } from "./server";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Member ids are uuids; anything else is no member (Postgres would throw on the cast). */
+export const isMemberId = (id: string) => UUID.test(id);
+
 /** Live wallet data for the MCP server, always scoped to one member id. */
 export const walletData: WalletData = {
   async getBalance(memberId) {
+    if (!isMemberId(memberId)) return null;
     const db = getDb();
     const [m] = await db.select({ wallet: members.walletAddress }).from(members).where(eq(members.id, memberId)).limit(1);
     if (!m?.wallet) return null;
@@ -14,6 +19,7 @@ export const walletData: WalletData = {
     return { balanceCents, asset: "AUSD", network: "Monad testnet" };
   },
   async listActivity(memberId, limit) {
+    if (!isMemberId(memberId)) return [];
     const rows = await getDb()
       .select({ text: receipts.plainEnglish, kind: receipts.kind, at: receipts.createdAt })
       .from(receipts)
@@ -40,6 +46,7 @@ export const walletData: WalletData = {
 };
 
 async function approvedPlan(memberId: string) {
+  if (!isMemberId(memberId)) return null;
   const [row] = await getDb()
     .select({ title: moneyPlans.title, reserveFloorCents: moneyPlans.reserveFloorCents, planJson: moneyPlans.planJson })
     .from(moneyPlans)

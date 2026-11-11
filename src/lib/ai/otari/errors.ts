@@ -53,6 +53,12 @@ export async function otariErrorFromResponse(res: Response, meta: OtariMeta): Pr
     if (!code && typeof body["code"] === "string") code = body["code"];
     const d = body["detail"];
     if (typeof d === "string") detail = d;
+    else if (d && typeof d === "object") {
+      // Guardrail refusals nest it: {"detail": {"message", "code": "guardrail_violation", "guardrails": [...]}}
+      const o = d as Record<string, unknown>;
+      if (!code && typeof o["code"] === "string") code = o["code"];
+      if (typeof o["message"] === "string") detail = o["message"];
+    }
     else if (typeof body["error"] === "object" && body["error"]) {
       const m = (body["error"] as Record<string, unknown>)["message"];
       if (typeof m === "string") detail = m;

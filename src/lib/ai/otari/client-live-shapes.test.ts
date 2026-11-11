@@ -68,3 +68,16 @@ describe("readAllowance with live Otari shapes", () => {
     expect(readAllowance([], budgets)).toEqual({ state: "new", spentUsd: 0, limitUsd: 0.5, period: "daily", usedFraction: 0 });
   });
 });
+
+import { otariErrorFromResponse } from "./errors";
+import { parseOtariHeaders } from "./headers";
+
+describe("guardrail refusal as Otari sends it live", () => {
+  it("reads the code nested in detail and maps it to guard_blocked", async () => {
+    const res = new Response(JSON.stringify({ detail: { message: "Request blocked by guardrail policy.", code: "guardrail_violation", guardrails: [{ profile: "pocket-money-rules", score: 0.997 }] } }), { status: 403 });
+    const e = await otariErrorFromResponse(res, parseOtariHeaders(new Headers()));
+    expect(e.code).toBe("guardrail_violation");
+    expect(e.state).toBe("guard_blocked");
+    expect(e.message).toBe("Request blocked by guardrail policy.");
+  });
+});
