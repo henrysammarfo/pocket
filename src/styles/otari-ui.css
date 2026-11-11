@@ -21,6 +21,7 @@
   --ot-danger-ink:#a32c2c;
   --ot-danger-bg:#fbeceb;
   --ot-danger-bar:#c83c3c;
+  --ot-mask:#000;
   --ot-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --ot-sans:var(--pk-sans);
   --ot-press:120ms;
@@ -32,30 +33,32 @@
   --ot-radius-lg:16px;
 }
 
+html,body{overflow-x:clip}
+
 /* ---------- 1. AI receipt strip (signature) ---------- */
-.pk-receipt{margin-top:12px;padding-top:10px;border-top:1px dashed var(--ot-line-strong);font-family:var(--ot-sans);font-size:12.5px;color:var(--ot-ink-2)}
-.pk-receipt-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px}
-.pk-receipt-item{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:4px 10px;border-radius:var(--ot-radius-sm);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);color:var(--ot-ink-2);line-height:18px;font-size:12.5px}
-.pk-receipt-item:first-child{background:transparent;box-shadow:none;padding-left:0}
+.pk-receipt{margin-top:12px;padding-top:12px;border-top:1px dashed var(--ot-line-strong);font-family:var(--ot-sans);font-size:12.5px;color:var(--ot-ink-2)}
+.pk-receipt-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 8px}
+.pk-receipt-item{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:4px 12px;border-radius:var(--ot-radius-sm);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);color:var(--ot-ink-2);line-height:18px;font-size:12.5px}
+.pk-receipt-item:first-child{white-space:normal;flex-wrap:wrap;background:transparent;box-shadow:none;padding-left:0}
 .pk-receipt-item strong{font-family:var(--ot-mono);font-weight:600;font-size:12px;color:var(--ot-ink)}
 .pk-receipt-item.is-ok{color:var(--ot-forest);background:var(--ot-forest-tint);box-shadow:none}
 .pk-receipt-item.is-warn{color:var(--ot-warn-ink);background:var(--ot-warn-bg);box-shadow:none}
 .pk-receipt-item.is-bad{color:var(--ot-danger-ink);background:var(--ot-danger-bg);box-shadow:none;font-weight:500}
 .pk-receipt-item[data-kind="code"]{color:var(--ot-forest);box-shadow:inset 0 0 0 1px var(--ot-forest)}
 .pk-receipt-item[data-kind="fetch"]{color:var(--ot-ink)}
-.pk-receipt-flag{font-style:normal;font-weight:600;font-size:11.5px;color:var(--ot-warn-ink);background:var(--ot-warn-bg);border:0;border-radius:6px;padding:2px 7px;margin-left:4px}
+.pk-receipt-flag{font-style:normal;font-weight:600;font-size:11.5px;color:var(--ot-warn-ink);background:var(--ot-warn-bg);border:0;border-radius:6px;padding:4px 8px;margin-left:4px}
 .pk-receipt.is-backup{border-top-color:var(--ot-warn-bar)}
-.pk-receipt-more{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin:-8px 0;padding:0 10px;border:0;border-radius:var(--ot-radius-sm);background:transparent;color:var(--ot-ink-2);font-size:12.5px;font-weight:500;cursor:pointer;transition:background-color var(--ot-press) var(--ot-ease-out),color var(--ot-press) var(--ot-ease-out),transform var(--ot-press) var(--ot-ease-out)}
+.pk-receipt-more{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin:-8px 0;padding:0 12px;border:0;border-radius:var(--ot-radius-sm);background:transparent;color:var(--ot-ink-2);font-size:12.5px;font-weight:500;cursor:pointer;transition:background-color var(--ot-press) var(--ot-ease-out),color var(--ot-press) var(--ot-ease-out),transform var(--ot-press) var(--ot-ease-out)}
 .pk-receipt-more:hover{color:var(--ot-ink);background:var(--ot-field)}
 .pk-receipt-more:active{transform:scale(.97)}
 .pk-receipt-more svg{transition:transform var(--ot-unfold) var(--ot-ease-out)}
 .pk-receipt-more:focus-visible,.pk-notice-btn:focus-visible,.pk-notice-x:focus-visible,.ot-btn:focus-visible,.ot-tab:focus-visible{outline:2px solid var(--ot-forest);outline-offset:2px;transition:none}
 
 /* The unfolded slip: echoes Pocket's payment receipt (dotted leaders, mono figures, torn top edge) */
-.pk-receipt-details{position:relative;display:flex;flex-direction:column;gap:0;max-width:440px;margin:10px 0 0;padding:18px 16px 12px;border-radius:0 0 var(--ot-radius-md) var(--ot-radius-md);background:var(--ot-canvas);box-shadow:none;transform-origin:top left;animation:ot-unfold var(--ot-unfold) var(--ot-ease-out) both;
-  -webkit-mask:radial-gradient(circle 5px at 7px 0,transparent 98%,#000) 0 0/14px 100% repeat-x;
-          mask:radial-gradient(circle 5px at 7px 0,transparent 98%,#000) 0 0/14px 100% repeat-x}
-.pk-receipt-details div{display:flex;flex-direction:row;align-items:baseline;gap:8px;padding:6px 0;min-width:0}
+.pk-receipt-details{position:relative;display:flex;flex-direction:column;gap:0;max-width:440px;margin:12px 0 0;padding:20px 16px 12px;border-radius:0 0 var(--ot-radius-md) var(--ot-radius-md);background:var(--ot-canvas);box-shadow:none;transform-origin:top left;animation:ot-unfold var(--ot-unfold) var(--ot-ease-out) both;
+  -webkit-mask:radial-gradient(circle 5px at 7px 0,transparent 98%,var(--ot-mask)) 0 0/14px 100% repeat-x;
+          mask:radial-gradient(circle 5px at 7px 0,transparent 98%,var(--ot-mask)) 0 0/14px 100% repeat-x}
+.pk-receipt-details div{display:flex;flex-direction:row;align-items:baseline;gap:8px;padding:8px 0;min-width:0}
 .pk-receipt-details div::after{content:"";order:1;flex:1;border-bottom:1px dotted var(--ot-line-strong);min-width:12px;transform:translateY(-3px)}
 .pk-receipt-details dt{order:0;color:var(--ot-ink-2);font-size:12px;white-space:nowrap}
 .pk-receipt-details dd{order:2;margin:0;color:var(--ot-ink);font-family:var(--ot-mono);font-size:12px;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
@@ -63,14 +66,14 @@
 
 /* Live tool chips while Otari runs tools */
 .pk-live-tools{border-top:0;padding-top:0}
-.pk-live-tools .pk-receipt-item:first-child{background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);padding-left:10px}
+.pk-live-tools .pk-receipt-item:first-child{background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);padding-left:12px}
 .pk-receipt-item.is-running{color:var(--ot-ink);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-ink)}
 .pk-receipt-item.is-running svg{animation:ot-breathe 1.1s ease-in-out infinite}
 @keyframes ot-breathe{50%{opacity:.35}}
 
 /* ---------- 2-5. Chat notices (allowance used, resting, stopped, offline, models failed) ---------- */
 .pk-notice{position:relative;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;margin:12px 0;padding:16px 56px 16px 16px;border-radius:var(--ot-radius-lg);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);font-family:var(--ot-sans);animation:ot-enter var(--ot-unfold) var(--ot-ease-out) both}
-.pk-notice-icon{width:36px!important;height:36px!important;padding:9px;margin:0;border-radius:10px;background:var(--ot-field);color:var(--ot-ink)}
+.pk-notice-icon{width:36px!important;height:36px!important;padding:8px;margin:0;border-radius:10px;background:var(--ot-field);color:var(--ot-ink)}
 .pk-notice.is-info .pk-notice-icon{background:var(--ot-forest-tint);color:var(--ot-forest)}
 .pk-notice.is-warn{background:var(--ot-warn-bg);box-shadow:none}
 .pk-notice.is-warn .pk-notice-icon{background:var(--ot-surface);color:var(--ot-warn-ink)}
@@ -84,17 +87,17 @@
 .pk-notice-actions{position:absolute;top:6px;right:6px}
 .pk-notice-x{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:var(--ot-radius-md);background:transparent;color:var(--ot-ink-2);cursor:pointer;transition:background-color var(--ot-press) var(--ot-ease-out)}
 .pk-notice-x:hover{background:var(--ot-field);color:var(--ot-ink)}
-.pk-notice-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;min-height:44px;margin-top:10px;padding:0 18px;border:0;border-radius:999px;background:var(--ot-forest);color:var(--ot-forest-fg);font-size:14px;font-weight:500;cursor:pointer;transition:transform var(--ot-press) var(--ot-ease-out),background-color var(--ot-press) var(--ot-ease-out)}
+.pk-notice-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;min-height:44px;margin-top:12px;padding:0 20px;border:0;border-radius:999px;background:var(--ot-forest);color:var(--ot-forest-fg);font-size:14px;font-weight:500;cursor:pointer;transition:transform var(--ot-press) var(--ot-ease-out),background-color var(--ot-press) var(--ot-ease-out)}
 .pk-notice-btn:hover{background:var(--ot-ink)}
 .pk-notice-btn:active{transform:scale(.97)}
 .pk-notice-btn:disabled{opacity:.6;cursor:default;transform:none}
 @keyframes ot-enter{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
 
 /* ---------- 6. Review sheet: which model read the request ---------- */
-[aria-label="How Pocket read your last payment message"] .pk-chip,.pk-states .pk-chip-row .pk-chip,.ot-parsed{margin:0;display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:6px 12px;border:0;border-radius:var(--ot-radius-sm);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);color:var(--ot-ink-2);font-size:12.5px}
+[aria-label="How Pocket read your last payment message"] .pk-chip,.pk-states .pk-chip-row .pk-chip,.ot-parsed{margin:0;display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:8px 12px;border:0;border-radius:var(--ot-radius-sm);background:var(--ot-surface);box-shadow:inset 0 0 0 1px var(--ot-line);color:var(--ot-ink-2);font-size:12.5px}
 
 /* ---------- 9. Settings: AI allowance meter ---------- */
-.pk-allow{gap:10px;padding:18px 18px 16px}
+.pk-allow{gap:12px;padding:20px 20px 16px}
 .pk-allow-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .pk-allow-head strong{font-size:15px;font-weight:600}
 .pk-allow-pct{font-family:var(--ot-mono);font-size:22px!important;font-weight:600;color:var(--ot-ink)!important;font-variant-numeric:tabular-nums;line-height:1}
@@ -114,29 +117,29 @@
 .pk-allow.is-low .pk-allow-sub{color:var(--ot-warn-ink)!important}
 
 /* Resilience drill */
-.pk-drill{gap:10px;padding:18px}
-.pk-tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px!important;font-weight:600;color:var(--ot-warn-ink)!important;background:var(--ot-warn-bg);border-radius:6px;padding:3px 8px}
+.pk-drill{gap:12px;padding:20px}
+.pk-tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px!important;font-weight:600;color:var(--ot-warn-ink)!important;background:var(--ot-warn-bg);border-radius:6px;padding:4px 8px}
 .pk-drill-result{display:flex;flex-direction:column;gap:4px;padding-top:12px;margin-top:4px;border-top:1px dashed var(--ot-line-strong)}
 .pk-drill-result>span{font-size:13.5px!important;font-weight:500;color:var(--ot-ink)!important}
 
 /* AI activity list */
 .pk-ai-list{border-radius:var(--ot-radius-lg)}
-.pk-ai-row{min-height:60px;padding:12px 18px;border-top:1px solid var(--ot-field)}
+.pk-ai-row{min-height:60px;padding:12px 20px;border-top:1px solid var(--ot-field)}
 .pk-ai-row span{color:var(--ot-ink-2)}
 .pk-ai-row time{font-family:var(--ot-mono);font-size:11.5px;color:var(--ot-ink-2)}
 
 /* ---------- Review page (/states/otari) ---------- */
 .pk-states{max-width:1120px;padding:48px 32px 96px;gap:48px}
-.pk-states h1{font-size:clamp(28px,3.4vw,36px);line-height:1.15;overflow-wrap:break-word;min-width:0}
-.pk-states section{gap:14px}
-.pk-states h2{font-size:18px;font-weight:600;color:var(--ot-ink)}
+.pk-states h1{text-wrap:balance;font-variant-numeric:tabular-nums;font-size:clamp(28px,3.4vw,36px);line-height:1.15;overflow-wrap:break-word;min-width:0}
+.pk-states section{gap:16px}
+.pk-states h2{text-wrap:balance;font-size:18px;font-weight:600;color:var(--ot-ink)}
 .pk-states .pk-hero-kicker i{display:none}
 .pk-states-label{font-size:12.5px;color:var(--ot-ink-2)}
-.pk-states-msg{padding:16px 18px!important;border-radius:var(--ot-radius-lg);background:var(--ot-surface)!important;box-shadow:inset 0 0 0 1px var(--ot-line)}
-.pk-states .bb-settings{max-width:none;display:grid;align-items:start;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:14px}
+.pk-states-msg{padding:16px 20px!important;border-radius:var(--ot-radius-lg);background:var(--ot-surface)!important;box-shadow:inset 0 0 0 1px var(--ot-line)}
+.pk-states .bb-settings{max-width:none;display:grid;align-items:start;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
 .pk-states .bb-settings h2{grid-column:1/-1}
 @media(min-width:900px){.pk-states>section:first-of-type{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.pk-states>section:first-of-type h2{grid-column:1/-1}}
-@media(max-width:600px){.pk-states{padding:28px 16px 72px;gap:36px}.pk-notice{padding:14px 52px 14px 14px;grid-template-columns:32px minmax(0,1fr);gap:10px}.pk-notice-icon{width:32px!important;height:32px!important;padding:7px}.pk-receipt-details{max-width:none}}
+@media(max-width:600px){.pk-states{padding:28px 16px 72px;gap:36px}.pk-notice{padding:16px 52px 16px 16px;grid-template-columns:32px minmax(0,1fr);gap:12px}.pk-notice-icon{width:32px!important;height:32px!important;padding:8px}.pk-receipt-details{max-width:none}}
 
 @media (prefers-reduced-motion:reduce){
   .pk-receipt-details,.pk-notice{animation:none}
