@@ -39,7 +39,9 @@ export function DrillCard({ run }: { run?: () => Promise<DrillResult | { ok: fal
       </button>
       {result?.ok && (
         <div className="pk-drill-result" role="status">
-          <span>{result.receipt.fallback ? "Backup model answered. Fallback works." : "The first model answered, so no fallback was needed this time."}</span>
+          <span>{result.receipt.fallback
+            ? `${result.receipt.attempts ?? 2} attempts. Fallback: the first provider failed, Otari answered with ${result.receipt.model?.split("/").pop() ?? "the backup model"}${result.receipt.provider ? ` on ${result.receipt.provider}` : ""}.`
+            : "The first model answered, so no fallback was needed this time."}</span>
           <AiReceiptStrip receipt={result.receipt} />
         </div>
       )}

@@ -59,7 +59,7 @@ export function AiReceiptStrip({ receipt, defaultOpen = false }: { receipt: AiRe
         <span className="pk-receipt-item">
           <Route size={14} aria-hidden />
           {receipt.fallback ? "Served by backup model" : "Answered by"} <strong>{shortModel(receipt.model)}</strong>
-          {receipt.fallback && receipt.attempts != null && <em className="pk-receipt-flag">attempt {receipt.attempts}</em>}
+          {receipt.fallback && <em className="pk-receipt-flag">{receipt.attempts ?? 2} attempts · fallback</em>}
         </span>
         {receipt.lighter && (
           <span className="pk-receipt-item">

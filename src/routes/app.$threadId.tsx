@@ -91,7 +91,8 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const [err, setErr] = useState<string | null>(null);
   const [aiState, setAiState] = useState<AiStatePayload | null>(null);
   const [liveTools, setLiveTools] = useState<(ToolChip & { running?: boolean })[]>([]);
-  const [intentNote, setIntentNote] = useState<{ parsedBy: "model" | "rules"; model: string | null } | null>(null);
+  const [intentNote, setIntentNote] = useState<{ parsedBy: "model" | "rules"; model: string | null; receipt: AiReceipt | null } | null>(null);
+  const noticeRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(() => readStoredPlanId(threadId));
   const [planReady, setPlanReady] = useState(() => Boolean(readStoredPlanId(threadId)));
@@ -123,6 +124,10 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     },
   });
   const busy = status === "submitted" || status === "streaming";
+  // A refusal notice (blocked attack, budget) must be fully on screen, above the composer.
+  useEffect(() => {
+    if (aiState && !busy) requestAnimationFrame(() => noticeRef.current?.scrollIntoView({ block: "end", behavior: "smooth" }));
+  }, [aiState, busy]);
   useEffect(() => { if (!busy) taRef.current?.focus(); }, [busy]);
   useEffect(() => {
     rememberThread(threadId);
@@ -181,7 +186,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       settlement?: { explorerUrl: string };
       aiIntent?: { parsedBy: "model" | "rules"; receipt: AiReceipt | null };
     };
-    if (body.aiIntent) setIntentNote({ parsedBy: body.aiIntent.parsedBy, model: body.aiIntent.receipt?.model ?? null });
+    if (body.aiIntent) setIntentNote({ parsedBy: body.aiIntent.parsedBy, model: body.aiIntent.receipt?.model ?? null, receipt: body.aiIntent.receipt ?? null });
     if (body.blocked && body.screen) {
       setBlock({
         message: body.screen.message,
@@ -255,6 +260,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
               </span>
             </div>
           )}
+          {intentNote?.receipt && <AiReceiptStrip receipt={intentNote.receipt} />}
           {receipts.length > 0 && (
             <div className="pk-chip-row" aria-label="Activity">
               {receipts.slice(0, 6).map((r, i) => (
@@ -356,6 +362,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             </div>
           )}
           {aiState && !busy && (
+            <div ref={noticeRef} style={{ scrollMarginBottom: 160, paddingBottom: 24 }}>
             <AiNotice
               state={aiState}
               onRetry={() => {
@@ -364,6 +371,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
               }}
               onDismiss={() => setAiState(null)}
             />
+            </div>
           )}
           {err && <p className="pk-error" role="alert">{err}</p>}
         </ConversationContent>

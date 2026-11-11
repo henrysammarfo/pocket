@@ -34,6 +34,8 @@ export function parseSpendIntent(rawText: string, source: SpendIntent["source"] 
   else if (PAY_RENT.test(text)) kind = "pay";
   else if (/\b(buy|swap|put\s+the\s+rest\s+to\s+work)\b/i.test(text)) kind = "buy";
   else if (/\b(pay|send|transfer)\b/i.test(text)) kind = "pay";
+  // "$20 to Ama": an amount and a named payee is a payment even without a verb.
+  else if (/\$\s*\d/.test(text) && spendPayee(text)) kind = "pay";
 
   const amounts = [...text.matchAll(AMOUNT)].map((m) => dollarsToCents(m[1]!));
   const amountCents = amounts[0];
