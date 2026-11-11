@@ -105,16 +105,17 @@ export async function handleSettle(request: Request): Promise<Response> {
     }
   }
 
+  // The signing wallet id and the address must belong to the same wallet:
+  // take both from Privy, never a Privy id with a stale address from the db.
   let walletId = body.walletId;
-  let walletAddress =
-    body.walletAddress ??
-    (auth.member.walletAddress as `0x${string}` | null) ??
-    undefined;
+  let walletAddress = body.walletAddress;
   if (!walletId || !walletAddress) {
     const resolved = await resolvePrivyWallet(auth.privyUserId);
     if (resolved) {
-      walletId = walletId ?? resolved.walletId;
-      walletAddress = walletAddress ?? resolved.address;
+      walletId = resolved.walletId || undefined;
+      walletAddress = resolved.address;
+    } else {
+      walletAddress = walletAddress ?? (auth.member.walletAddress as `0x${string}` | null) ?? undefined;
     }
   }
 

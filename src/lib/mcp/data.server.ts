@@ -2,6 +2,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { members, moneyPlans, receipts } from "../../../drizzle/schema";
 import { readAusdBalanceCents } from "@/lib/settlement/agora";
+import { isEvmAddress } from "@/lib/auth/pick-wallet";
+import { resolvePrivyWallet } from "@/lib/auth/privy-wallet.server";
+import { setMemberWallet } from "@/lib/db/members";
 import type { WalletData } from "./server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,9 +16,21 @@ export const walletData: WalletData = {
   async getBalance(memberId) {
     if (!isMemberId(memberId)) return null;
     const db = getDb();
-    const [m] = await db.select({ wallet: members.walletAddress }).from(members).where(eq(members.id, memberId)).limit(1);
-    if (!m?.wallet) return null;
-    const balanceCents = await readAusdBalanceCents(m.wallet as `0x${string}`);
+    const [m] = await db
+      .select({ wallet: members.walletAddress, privyUserId: members.privyUserId })
+      .from(members)
+      .where(eq(members.id, memberId))
+      .limit(1);
+    if (!m) return null;
+    let wallet = isEvmAddress(m.wallet) ? m.wallet.trim() : null;
+    if (!wallet) {
+      // Stored wallet missing or not EVM: ask Privy, and remember it.
+      const resolved = await resolvePrivyWallet(m.privyUserId).catch(() => null);
+      if (!resolved) return null;
+      wallet = resolved.address;
+      await setMemberWallet(memberId, wallet).catch(() => undefined);
+    }
+    const balanceCents = await readAusdBalanceCents(wallet as `0x${string}`);
     return { balanceCents, asset: "AUSD", network: "Monad testnet" };
   },
   async listActivity(memberId, limit) {

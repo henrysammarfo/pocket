@@ -99,6 +99,22 @@ describe("what-if with two scenarios in one run", () => {
   });
 });
 
+describe("what-if from one INPUT with a drop_pct loop", () => {
+  const a = { start: 124000, income: 200000, fixed: 150000, goal: 300000, drop_pct: 0 };
+  const code = PROJECTION_PY.replace(
+    /INPUT = .*\nprint.*\n/,
+    `INPUT = ${JSON.stringify(a)}\nfor d in [0, 20]:\n    print(json.dumps(project(**{**INPUT, "drop_pct": d})))\n`,
+  );
+  it("matches both scenarios even though only one dict is literal", () => {
+    const out = [project(a), project({ ...a, drop_pct: 20 })].map((r) => JSON.stringify(r)).join("\n");
+    expect(crossCheckProjection(code, out).status).toBe("match");
+  });
+  it("still flags made-up numbers", () => {
+    const out = [project(a), { ...project({ ...a, drop_pct: 20 }), months_to_goal: 2 }].map((r) => JSON.stringify(r)).join("\n");
+    expect(crossCheckProjection(code, out).status).toBe("mismatch");
+  });
+});
+
 describe("plans approve named payees", () => {
   it("reads payees and the Keep from the goal", () => {
     expect(payeesFromGoal("Keep $50 and approve Ama as a payee")).toEqual(["Ama"]);

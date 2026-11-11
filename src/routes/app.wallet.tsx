@@ -61,7 +61,9 @@ function WalletPage() {
                 ? "Reading AUSD on Monad testnet…"
                 : error
                   ? error.message
-                  : hasPlan
+                  : data?.balanceError
+                    ? `Could not read your balance just now. Tap refresh. · ${data.shortAddress ?? ""}`
+                    : hasPlan
                     ? `Keep $${((data?.plan?.reserveFloorCents ?? 0) / 100).toFixed(0)} live · ${data?.network}`
                     : data?.shortAddress
                       ? `${data.shortAddress} · ${data.network}`

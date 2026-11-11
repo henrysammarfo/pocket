@@ -1,3 +1,4 @@
+import { pickEvmWallet, type LinkedLike } from "./pick-wallet";
 import { PrivyClient } from "@privy-io/node";
 
 export type VerifiedPrivyUser = {
@@ -40,10 +41,10 @@ export async function verifyPrivyAccessToken(token: string): Promise<VerifiedPri
         : emailAccount && "email" in emailAccount
           ? String((emailAccount as { email?: string }).email)
           : undefined;
-    const walletAccount = user.linked_accounts?.find((a) => a.type === "wallet" || a.type === "smart_wallet");
+    const walletAccount = pickEvmWallet(user.linked_accounts as unknown as LinkedLike[]);
     const wallet =
-      walletAccount && "address" in walletAccount
-        ? (String(walletAccount.address) as `0x${string}`)
+      walletAccount
+        ? (String(walletAccount.address).trim() as `0x${string}`)
         : undefined;
     const out: VerifiedPrivyUser = { userId: claims.user_id };
     if (email) out.email = email;

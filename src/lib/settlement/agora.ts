@@ -1,5 +1,5 @@
-import { createPublicClient, encodeFunctionData, http, parseUnits } from "viem";
-import { agoraAddresses, monadTestnet } from "@/lib/monad/config";
+import { createPublicClient, encodeFunctionData, fallback, http, parseUnits } from "viem";
+import { agoraAddresses, monadRpcUrls, monadTestnet } from "@/lib/monad/config";
 import { erc20Abi, instantSettlementPairAbi } from "./abis";
 import { encodeApprove, sendSponsoredTransaction, type ExecResult } from "./privy-exec";
 
@@ -17,7 +17,7 @@ export type AgoraPayParams = {
 function publicClient() {
   return createPublicClient({
     chain: monadTestnet,
-    transport: http(monadTestnet.rpcUrls.default.http[0]),
+    transport: fallback(monadRpcUrls().map((u) => http(u, { timeout: 8_000, retryCount: 1 }))),
   });
 }
 

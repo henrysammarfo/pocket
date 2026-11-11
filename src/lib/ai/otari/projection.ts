@@ -119,8 +119,18 @@ export function crossCheckProjection(code: string | undefined, stdout: string | 
       return { status: "mismatch", input: inputs[0]!, expected: expected[0]! };
     }
   }
+  const same = (g: unknown, e: ProjectionResult) => JSON.stringify(g) === JSON.stringify(e);
+  // A what-if is often one INPUT plus a loop or an override of drop_pct
+  // (for d in [0, 20]: project(**{**INPUT, "drop_pct": d})). Those scenarios
+  // never appear as literal dicts, so also accept a printed result that equals
+  // Pocket's own result for a parsed input at some whole drop_pct.
+  const variants = (g: unknown) =>
+    inputs.some((inp) => {
+      for (let d = 0; d <= 100; d++) if (same(g, project({ ...inp, drop_pct: d }))) return true;
+      return false;
+    });
   const ok =
     printed.length >= inputs.length &&
-    printed.every((g) => expected.some((e) => JSON.stringify(g) === JSON.stringify(e)));
+    printed.every((g) => expected.some((e) => same(g, e)) || variants(g));
   return { status: ok ? "match" : "mismatch", input: inputs[0]!, expected: expected[0]! };
 }

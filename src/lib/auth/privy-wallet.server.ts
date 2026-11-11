@@ -1,4 +1,5 @@
 import { getPrivyNodeClient } from "./privy.server";
+import { pickEvmWallet, type LinkedLike } from "./pick-wallet";
 
 export type ResolvedPrivyWallet = {
   walletId: string;
@@ -12,12 +13,9 @@ export async function resolvePrivyWallet(privyUserId: string): Promise<ResolvedP
   try {
     const user = await privy.users()._get(privyUserId);
     const accounts = user.linked_accounts ?? [];
-    const embedded =
-      accounts.find((a) => a.type === "wallet" && "wallet_client" in a && (a as { wallet_client?: string }).wallet_client === "privy") ??
-      accounts.find((a) => a.type === "smart_wallet") ??
-      accounts.find((a) => a.type === "wallet");
-    if (!embedded || !("address" in embedded)) return null;
-    const address = String(embedded.address) as `0x${string}`;
+    const embedded = pickEvmWallet(accounts as unknown as LinkedLike[]);
+    if (!embedded) return null;
+    const address = String(embedded.address).trim() as `0x${string}`;
     const walletId =
       ("id" in embedded && embedded.id ? String(embedded.id) : null) ??
       ("wallet_id" in embedded && (embedded as { wallet_id?: string }).wallet_id
@@ -28,11 +26,11 @@ export async function resolvePrivyWallet(privyUserId: string): Promise<ResolvedP
       try {
         const listed = await privy.wallets().list({ user_id: privyUserId });
         const data = (listed as { data?: { id: string; address: string }[] }).data ?? [];
-        const match = data.find((w) => w.address?.toLowerCase() === address.toLowerCase()) ?? data[0];
-        if (!match?.id) return null;
+        const match = data.find((w) => w.address?.toLowerCase() === address.toLowerCase());
+        if (!match?.id) return { walletId: "", address };
         return { walletId: match.id, address: (match.address as `0x${string}`) || address };
       } catch {
-        return null;
+        return { walletId: "", address };
       }
     }
     return { walletId, address };

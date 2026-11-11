@@ -107,3 +107,8 @@ export async function ensureMemberForPrivy(privy: VerifiedPrivyUser): Promise<Po
     displayName: member.displayName,
   };
 }
+
+/** Keep the member's stored EVM wallet in step with Privy. */
+export async function setMemberWallet(memberId: string, walletAddress: string): Promise<void> {
+  await getDb().update(members).set({ walletAddress, updatedAt: new Date() }).where(eq(members.id, memberId));
+}

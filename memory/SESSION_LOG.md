@@ -70,3 +70,9 @@
 - Manrope and Plus Jakarta Sans self hosted in `public/fonts`; Google Fonts link removed (legal check LG).
 - Hallmark sloplint on `otari-ui.css`: clean. Screens and contact sheet: /workspace/screens/pocket-otari on the box.
 - Open: `useWallet.ts` preview mode still shows an example email and a $8000.00 balance; the plan review is inline, not a bottom sheet.
+
+## 2026-11-11 about 23:40 Accra, wallet + chat fixes
+- Wallet showed $0.00 / chat saw no wallet: Privy wallet pick took the first linked "wallet" (could be Solana, Bitcoin or external), and existing members never had `wallet_address` refreshed after the embedded wallet was created. Now `pickEvmWallet` (EVM, Privy embedded first), auth syncs the stored wallet, MCP getBalance falls back to Privy.
+- RPC: viem fallback over MONAD_RPC_URL, VITE_MONAD_RPC_URL, public testnet RPC (trimmed); env addresses trimmed; API JSON is no-store; wallet page says when the balance read failed instead of a silent $0.00.
+- What-if cross-check accepts scenarios made by overriding drop_pct on one INPUT (no false "different answer").
+- Chat: messages sent while Pocket is answering are queued and sent next, not dropped.

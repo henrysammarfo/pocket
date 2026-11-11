@@ -124,6 +124,17 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     },
   });
   const busy = status === "submitted" || status === "streaming";
+  const preparing = useRef(false);
+  const queued = useRef<{ v: string; source: "typed" | "spoken" } | null>(null);
+  const [queuedNote, setQueuedNote] = useState<string | null>(null);
+  const sendRef = useRef<((v: string, s?: "typed" | "spoken") => Promise<void>) | null>(null);
+  useEffect(() => {
+    if (busy || !queued.current) return;
+    const next = queued.current;
+    queued.current = null;
+    setQueuedNote(null);
+    void sendRef.current?.(next.v, next.source);
+  }, [busy]);
   // A refusal notice (blocked attack, budget) must be fully on screen, above the composer.
   useEffect(() => {
     if (aiState && !busy) requestAnimationFrame(() => noticeRef.current?.scrollIntoView({ block: "end", behavior: "smooth" }));
@@ -209,7 +220,18 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
 
   const send = async (value: string, source: "typed" | "spoken" = "typed") => {
     const v = value.trim();
-    if (!v || busy) return;
+    if (!v) return;
+    // A message sent while Pocket is still answering (or still checking the
+    // plan for the last one) used to be dropped without a word. Keep it and
+    // send it as soon as Pocket is free.
+    if (busy || preparing.current) {
+      queued.current = { v, source };
+      setText("");
+      setQueuedNote(v);
+      return;
+    }
+    preparing.current = true;
+    let handledLocally = false;
     setErr(null);
     setAiState(null);
     setPlanGoal(v);
@@ -221,14 +243,26 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       const settled = await trySettle(v, source, activePlanId);
       if (settled && parseSpendIntent(v, source).kind !== "unknown") {
         setText("");
+        handledLocally = true;
         return;
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not run plan guards");
+    } finally {
+      preparing.current = false;
+      // No chat turn follows a payment handled here, so busy never flips:
+      // send anything queued meanwhile now.
+      if (handledLocally && queued.current) {
+        const next = queued.current;
+        queued.current = null;
+        setQueuedNote(null);
+        setTimeout(() => void sendRef.current?.(next.v, next.source), 0);
+      }
     }
     sendMessage({ text: v });
     setText("");
   };
+  sendRef.current = send;
 
   const slash = /^\/\w*$/.test(text) ? COMMANDS.filter((c) => c.cmd.startsWith(text)) : [];
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
@@ -261,6 +295,11 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
             </div>
           )}
           {intentNote?.receipt && <AiReceiptStrip receipt={intentNote.receipt} />}
+          {queuedNote && (
+            <div className="pk-chip-row" aria-live="polite">
+              <span className="pk-chip">Next up, once Pocket finishes: “{queuedNote.length > 60 ? `${queuedNote.slice(0, 60)}…` : queuedNote}”</span>
+            </div>
+          )}
           {receipts.length > 0 && (
             <div className="pk-chip-row" aria-label="Activity">
               {receipts.slice(0, 6).map((r, i) => (
