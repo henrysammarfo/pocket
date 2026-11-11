@@ -1,4 +1,4 @@
--- POCKET on Neon Postgres — Privy identity, app-enforced access (no Supabase auth.uid / RLS)
+-- POCKET on Neon Postgres — Privy identity, app-enforced access (app-enforced access, no row level security)
 
 CREATE TABLE IF NOT EXISTS public.households (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

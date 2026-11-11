@@ -39,4 +39,4 @@ Updated: 2026-10-14
 
 ## Do not
 
-- Fake settles · Reintroduce Lovable/Supabase · Commit secrets · Unhackable claims
+- Fake settles · Commit secrets · Unhackable claims

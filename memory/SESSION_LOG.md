@@ -19,7 +19,7 @@
 
 - Removed all Lovable packages, integrations, AI gateway, OAuth, error reporting, `.lovable/`, AGENTS/README Lovable blocks.
 - Created Vercel project `pocket`; wired Drizzle + `@neondatabase/serverless` (lazy `getDb()`).
-- Neon schema `0002_neon_privy_schema.sql` (Privy member ids, no Supabase auth.uid/RLS).
+- Neon schema `0002_neon_privy_schema.sql` (Privy member ids, app-enforced scoping).
 - Auth/data plane: Privy bearer → Neon members/households/threads/plans/settlements.
 - Chat + transcribe → AgentRouter; Vite config is stock TanStack Start + Nitro (no Lovable vite package).
 - Page-by-page key guide: `memory/KEYS_GUIDE.md`.
