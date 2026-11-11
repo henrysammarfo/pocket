@@ -8,6 +8,8 @@ export const testConfig = (over: Partial<OtariConfig> = {}): OtariConfig => ({
   intentModel: "pocket-intent",
   explainModel: "pocket-explain",
   guardModel: "pocket-guard",
+  drillModel: "pocket-intent-drill",
+  lightModel: "gpt-oss-120b",
   publicOrigin: "https://pocket.test",
   mcpSigningSecret: "s".repeat(40),
   ...over,

@@ -16,7 +16,8 @@ import { PlanCard, ReadingPlan } from "@/components/pocket-ui/PlanCard";
 import { threadsKey } from "./app";
 import { parseSpendIntent, parseMoneyPlanFromGoal } from "@/lib/policy/plan-parser";
 import { readStoredPlanId, rememberThread, writeStoredPlanId } from "@/lib/pocket/plan-session";
-import { AiReceiptStrip, shortModel } from "@/components/pocket-ui/AiReceiptStrip";
+import { AiReceiptStrip, LiveToolChips, shortModel } from "@/components/pocket-ui/AiReceiptStrip";
+import type { ToolChip } from "@/lib/ai/otari/tool-calls";
 import { AiNotice } from "@/components/pocket-ui/AiNotice";
 import { decodeAiStateLoose, type AiStatePayload } from "@/lib/ai/ai-states";
 import type { AiReceipt } from "@/lib/ai/otari/receipt";
@@ -76,6 +77,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [aiState, setAiState] = useState<AiStatePayload | null>(null);
+  const [liveTools, setLiveTools] = useState<(ToolChip & { running?: boolean })[]>([]);
   const [intentNote, setIntentNote] = useState<{ parsedBy: "model" | "rules"; model: string | null } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(() => readStoredPlanId(threadId));
@@ -95,8 +97,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
         setAiState(state);
         setErr(null);
       } else setErr(e.message || "Something went wrong.");
+      setLiveTools([]);
+    },
+    onData: (part) => {
+      if (part.type === "data-tools") setLiveTools(part.data as (ToolChip & { running?: boolean })[]);
     },
     onFinish: () => {
+      setLiveTools([]);
       qc.invalidateQueries({ queryKey: threadsKey });
       qc.invalidateQueries({ queryKey: ["thread-messages", threadId] });
       setShowPlanCard(true);
@@ -309,6 +316,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
           ))}
 
           {busy && <ReadingPlan />}
+          {busy && <LiveToolChips chips={liveTools} />}
 
           {!planReady && showPlanCard && lastAssistant && !busy && (
             <PlanCard

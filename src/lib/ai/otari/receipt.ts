@@ -2,6 +2,7 @@ import type { OtariMeta } from "./headers";
 import { crossCheckProjection, type CrossCheck } from "./projection";
 import { isEcbFetch } from "./ecb";
 import { toolChip, type OtariToolCall, type ToolChip } from "./tool-calls";
+import type { OutputCheck } from "./output-check";
 
 /**
  * The AI receipt: what served one answer, shown under it. Built only from
@@ -22,9 +23,18 @@ export type AiReceipt = {
   tools: ToolChip[];
   projection: CrossCheck["status"] | null;
   ratesSource: "ecb" | null;
+  /** True when pocket-explain stepped down to its lighter model (member near budget). */
+  lighter: boolean;
+  output: OutputCheck["reasons"];
 };
 
-export function buildReceipt(role: AiReceipt["role"], policy: string, meta: OtariMeta | null, calls: OtariToolCall[]): AiReceipt {
+export function buildReceipt(
+  role: AiReceipt["role"],
+  policy: string,
+  meta: OtariMeta | null,
+  calls: OtariToolCall[],
+  extra: { lightModel?: string; output?: OutputCheck } = {},
+): AiReceipt {
   const ended = calls.filter((c) => c.status !== "in_progress");
   const checks = ended.filter((c) => c.type === "code_execution").map((c) => crossCheckProjection(c.code, c.stdout));
   const proj = checks.find((c) => c.status !== "not_projection");
@@ -42,6 +52,8 @@ export function buildReceipt(role: AiReceipt["role"], policy: string, meta: Otar
     guard: g.length === 0 ? "not_run" : g.some((x) => x.valid === false) ? "flagged" : "passed",
     tools: ended.map(toolChip),
     projection: proj ? proj.status : null,
+    lighter: Boolean(extra.lightModel && meta?.model && !meta.fallback && meta.model.split("/").pop() === extra.lightModel.split("/").pop()),
+    output: extra.output?.reasons ?? [],
     ratesSource: ended.some((c) => c.type === "web_fetch" && c.status === "completed" && isEcbFetch(c.url)) ? "ecb" : null,
   };
 }

@@ -8,7 +8,7 @@ const usd = (n: number) => (n < 0.1 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`);
  * The member's own AI allowance, read live from Otari's end-user budget.
  * When it runs out, only the AI pauses; plans and payments keep working.
  */
-export function AllowanceCard({ allowance, configured, loading, error }: { allowance: Allowance | null; configured: boolean; loading?: boolean; error?: boolean }) {
+export function AllowanceCard({ allowance, configured, loading, error, onRetry }: { allowance: Allowance | null; configured: boolean; loading?: boolean; error?: boolean; onRetry?: () => void }) {
   if (loading) {
     return (
       <div className="bb-set-card pk-allow" aria-busy="true">
@@ -23,6 +23,11 @@ export function AllowanceCard({ allowance, configured, loading, error }: { allow
       <div className="bb-set-card pk-allow">
         <strong>AI allowance</strong>
         <span>{!configured ? "AI is not set up on this build. Plans and payments still work." : "Could not read your allowance right now. Your money is not affected."}</span>
+        {configured && onRetry && (
+          <button type="button" className="bb-text-link pk-linkbtn" onClick={onRetry}>
+            Try again
+          </button>
+        )}
       </div>
     );
   }

@@ -13,6 +13,10 @@ export type OtariConfig = {
   intentModel: string;
   explainModel: string;
   guardModel: string;
+  /** Routing policy whose first candidate is deliberately invalid, for the fallback drill. */
+  drillModel: string;
+  /** The model pocket-explain steps down to at 80% of a member's budget. */
+  lightModel: string;
   /** Public origin of this app, used for the wallet MCP server URL. */
   publicOrigin: string | null;
   mcpSigningSecret: string | null;
@@ -29,6 +33,8 @@ export function readOtariConfig(env: Env = process.env): OtariConfig {
     intentModel: env["OTARI_INTENT_MODEL"] || "pocket-intent",
     explainModel: env["OTARI_EXPLAIN_MODEL"] || "pocket-explain",
     guardModel: env["OTARI_GUARD_MODEL"] || "pocket-guard",
+    drillModel: env["OTARI_DRILL_MODEL"] || "pocket-intent-drill",
+    lightModel: env["OTARI_EXPLAIN_LIGHT_MODEL"] || "gpt-oss-120b",
     publicOrigin: (env["POCKET_PUBLIC_ORIGIN"] || "").replace(/\/+$/, "") || null,
     mcpSigningSecret: env["POCKET_MCP_SIGNING_SECRET"] || null,
   };

@@ -7,15 +7,21 @@ type Rule = { id: string; weight: number; re: RegExp };
 
 export const RULES: Rule[] = [
   { id: "ignore_instructions", weight: 0.9, re: /\b(ignore|disregard|forget|override)\b[\s\w,]{0,30}\b(previous|prior|above|all|your|system|earlier)\b[\s\w]{0,20}\b(instructions?|rules?|prompts?|guardrails?|polic(y|ies))\b/i },
-  { id: "new_instructions", weight: 0.6, re: /\b(new|updated|real|actual)\s+(system\s+)?(instructions?|rules?|prompt)\s*[:=]/i },
+  { id: "new_instructions", weight: 0.85, re: /\b(new|updated|real|actual)\s+(system\s+)?(instructions?|rules?|prompt)\s*[:=]/i },
   { id: "role_hijack", weight: 0.6, re: /\b(you are now|from now on you are|act as|pretend (to be|you are)|roleplay as)\b/i },
   { id: "system_tag", weight: 0.9, re: /<\/?\s*(system|assistant|developer|instructions?)\s*>|\[\/?(system|inst)\]|^\s*(system|developer)\s*:/im },
   { id: "mode_unlock", weight: 0.7, re: /\b(developer|god|admin|debug|jailbreak|dan|unrestricted)\s+mode\b/i },
-  { id: "reveal_prompt", weight: 0.6, re: /\b(reveal|print|show|repeat|leak)\b[\s\w]{0,20}\b(system prompt|hidden (rules|instructions)|your (prompt|instructions))\b/i },
+  { id: "reveal_prompt", weight: 0.85, re: /\b(reveal|print|show|repeat|leak)\b[\s\w]{0,20}\b(system prompt|hidden (rules|instructions)|your (prompt|instructions))\b/i },
   { id: "bypass_and_move", weight: 0.9, re: /\b(ignore|bypass|override|disable|skip)\b[\s\w]{0,25}\b(keep|reserve|floor|cap|allowlist|approval|rules?)\b[\s\w,]{0,30}\b(send|pay|move|transfer|withdraw)\b/i },
   { id: "disable_keep", weight: 0.6, re: /\b(disable|remove|bypass|turn off|lift|ignore|unlock|skip)\b[\s\w]{0,20}\b(keep|reserve floor|reserve|floor|spending cap|allowlist|policy engine|guardrails?|approval|limits?)\b/i },
   { id: "pre_approved", weight: 0.6, re: /\b(already|pre)[- ]?approved\b|\bapproved by (the )?(admin|system|pocket|developer)\b|\bauthori[sz]ed by (the )?(admin|system|pocket)\b/i },
   { id: "tool_injection", weight: 0.7, re: /\b(call|invoke|run|use)\b[\s\w]{0,15}\b(tool|function|mcp)\b[\s\w]{0,30}\b(transfer|send|pay|withdraw)\b/i },
+  { id: "secret_request", weight: 0.9, re: /\b(send|share|give|enter|paste|type|reveal|tell)\b[\s\w]{0,25}\b(seed phrase|recovery phrase|secret phrase|private key|mnemonic|12 words|24 words)\b/i },
+  { id: "secret_mention", weight: 0.4, re: /\b(seed phrase|recovery phrase|private key|mnemonic)\b/i },
+  { id: "assistant_command", weight: 0.9, re: /\b(assistant|ai|bot|agent)\s*[,:]\s*(approve|confirm|ignore|authori[sz]e)\b/i },
+  // Alone this is an ordinary request; it only tips the score when another signal is present.
+  { id: "money_action", weight: 0.65, re: /\b(send|pay|transfer|withdraw|move|authori[sz]e|approve|proceed)\b/i },
+  { id: "urgency", weight: 0.3, re: /\b(urgent(ly)?|immediately|right now|within \d+ (minutes|mins)|act now|or (your|the) account will be (closed|locked|suspended))\b/i },
 ];
 
 export const FLAG_AT = 0.85;

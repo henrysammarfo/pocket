@@ -37,6 +37,9 @@ describe("streamExplainer", () => {
     const receipt = c.find((x) => x["type"] === "data-receipt")!["data"];
     expect(receipt).toMatchObject({ model: "openai/gpt-oss-120b", fallback: true, attempts: 2, projection: "match" });
     expect(done).toMatchObject({ outcome: "ok" });
+    const live = c.find((x) => x["type"] === "data-tools")!;
+    expect(live["data"][0]).toMatchObject({ kind: "code", running: false });
+    expect(receipt.output).toEqual([]);
 
     const body = f.calls[0]!.body;
     expect(body["model"]).toBe("pocket-explain");

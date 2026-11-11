@@ -39,6 +39,7 @@ import { Route as AppSwapRouteImport } from './routes/app.swap'
 import { Route as AppWalletRouteImport } from './routes/app.wallet'
 import { Route as StatesOtariRouteImport } from './routes/states.otari'
 import { Route as ApiAiAllowanceRouteImport } from './routes/api/ai/allowance'
+import { Route as ApiAiDrillRouteImport } from './routes/api/ai/drill'
 import { Route as ApiAiReceiptsRouteImport } from './routes/api/ai/receipts'
 import { Route as ApiAuthPrivyLinkRouteImport } from './routes/api/auth/privy-link'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
@@ -197,6 +198,11 @@ const ApiAiAllowanceRoute = ApiAiAllowanceRouteImport.update({
   path: '/api/ai/allowance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiDrillRoute = ApiAiDrillRouteImport.update({
+  id: '/api/ai/drill',
+  path: '/api/ai/drill',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiReceiptsRoute = ApiAiReceiptsRouteImport.update({
   id: '/api/ai/receipts',
   path: '/api/ai/receipts',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/states/otari': typeof StatesOtariRoute
   '/app/': typeof AppIndexRoute
   '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/drill': typeof ApiAiDrillRoute
   '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -302,6 +309,7 @@ export interface FileRoutesByTo {
   '/states/otari': typeof StatesOtariRoute
   '/app': typeof AppIndexRoute
   '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/drill': typeof ApiAiDrillRoute
   '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -342,6 +350,7 @@ export interface FileRoutesById {
   '/states/otari': typeof StatesOtariRoute
   '/app/': typeof AppIndexRoute
   '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/drill': typeof ApiAiDrillRoute
   '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/states/otari'
     | '/app/'
     | '/api/ai/allowance'
+    | '/api/ai/drill'
     | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/states/otari'
     | '/app'
     | '/api/ai/allowance'
+    | '/api/ai/drill'
     | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/states/otari'
     | '/app/'
     | '/api/ai/allowance'
+    | '/api/ai/drill'
     | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
@@ -493,6 +505,7 @@ export interface RootRouteChildren {
   ApiWalletRoute: typeof ApiWalletRoute
   StatesOtariRoute: typeof StatesOtariRoute
   ApiAiAllowanceRoute: typeof ApiAiAllowanceRoute
+  ApiAiDrillRoute: typeof ApiAiDrillRoute
   ApiAiReceiptsRoute: typeof ApiAiReceiptsRoute
   ApiAuthPrivyLinkRoute: typeof ApiAuthPrivyLinkRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
@@ -713,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiAllowanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai/drill': {
+      id: '/api/ai/drill'
+      path: '/api/ai/drill'
+      fullPath: '/api/ai/drill'
+      preLoaderRoute: typeof ApiAiDrillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai/receipts': {
       id: '/api/ai/receipts'
       path: '/api/ai/receipts'
@@ -823,6 +843,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiWalletRoute: ApiWalletRoute,
   StatesOtariRoute: StatesOtariRoute,
   ApiAiAllowanceRoute: ApiAiAllowanceRoute,
+  ApiAiDrillRoute: ApiAiDrillRoute,
   ApiAiReceiptsRoute: ApiAiReceiptsRoute,
   ApiAuthPrivyLinkRoute: ApiAuthPrivyLinkRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,

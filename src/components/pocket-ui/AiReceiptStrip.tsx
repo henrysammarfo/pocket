@@ -1,4 +1,4 @@
-import { Calculator, ChevronDown, Globe, Route, ShieldAlert, ShieldCheck, Wallet, Wrench } from "lucide-react";
+import { Calculator, ChevronDown, Feather, Globe, Route, ShieldAlert, ShieldCheck, Wallet, Wrench } from "lucide-react";
 import { useId, useState } from "react";
 import type { AiReceipt } from "@/lib/ai/otari/receipt";
 import type { ToolChip } from "@/lib/ai/otari/tool-calls";
@@ -24,6 +24,31 @@ function ToolIcon({ kind }: { kind: ToolChip["kind"] }) {
  * fell back, the safety check, and each tool Otari ran. Built only from what
  * Otari reported, never from the model's own words.
  */
+/** Chips shown while Otari is still running tools for an answer. */
+export function LiveToolChips({ chips }: { chips: (ToolChip & { running?: boolean })[] }) {
+  if (!chips.length) return null;
+  return (
+    <div className="pk-receipt pk-live-tools" aria-live="polite">
+      <div className="pk-receipt-row">
+        {chips.map((t, i) => (
+          <span key={i} className={`pk-receipt-item ${t.running ? "is-running" : t.ok ? "" : "is-warn"}`}>
+            <ToolIcon kind={t.kind} />
+            {t.running ? runningLabel(t.kind) : t.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function runningLabel(kind: ToolChip["kind"]): string {
+  if (kind === "fetch") return "Reading exchange rates";
+  if (kind === "code") return "Running the numbers";
+  if (kind === "mcp") return "Checking your wallet";
+  if (kind === "search") return "Searching";
+  return "Working";
+}
+
 export function AiReceiptStrip({ receipt }: { receipt: AiReceipt }) {
   const [open, setOpen] = useState(false);
   const detailsId = useId();
@@ -36,6 +61,12 @@ export function AiReceiptStrip({ receipt }: { receipt: AiReceipt }) {
           Answered by <strong>{shortModel(receipt.model)}</strong>
           {receipt.fallback && <em className="pk-receipt-flag">backup model, try {receipt.attempts ?? 2}</em>}
         </span>
+        {receipt.lighter && (
+          <span className="pk-receipt-item">
+            <Feather size={12} aria-hidden />
+            Lighter model, to stretch your allowance
+          </span>
+        )}
         {receipt.guard === "passed" && (
           <span className="pk-receipt-item is-ok">
             <ShieldCheck size={12} aria-hidden />
@@ -64,6 +95,18 @@ export function AiReceiptStrip({ receipt }: { receipt: AiReceipt }) {
           <span className="pk-receipt-item is-bad">
             <ShieldAlert size={12} aria-hidden />
             Pocket got a different answer. Do not rely on these numbers.
+          </span>
+        )}
+        {receipt.output?.includes("claims_money_moved") && (
+          <span className="pk-receipt-item is-bad">
+            <ShieldAlert size={12} aria-hidden />
+            This answer talks as if money moved. It did not: only your approved plan moves money.
+          </span>
+        )}
+        {receipt.output?.includes("asks_for_secret") && (
+          <span className="pk-receipt-item is-bad">
+            <ShieldAlert size={12} aria-hidden />
+            Never share a recovery phrase or private key. Pocket will never ask.
           </span>
         )}
         <button type="button" className="pk-receipt-more" aria-expanded={open} aria-controls={detailsId} onClick={() => setOpen((v) => !v)}>

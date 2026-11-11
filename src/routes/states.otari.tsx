@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AiReceiptStrip } from "@/components/pocket-ui/AiReceiptStrip";
+import { AiReceiptStrip, LiveToolChips } from "@/components/pocket-ui/AiReceiptStrip";
+import { DrillCard } from "@/components/pocket-ui/DrillCard";
 import { AiNotice } from "@/components/pocket-ui/AiNotice";
 import { AllowanceCard } from "@/components/pocket-ui/AllowanceCard";
 import { AiActivityList } from "@/components/pocket-ui/AiActivityList";
@@ -29,6 +30,8 @@ const base: AiReceipt = {
   tools: [],
   projection: null,
   ratesSource: null,
+  lighter: false,
+  output: [],
 };
 
 const RECEIPTS: { label: string; r: AiReceipt }[] = [
@@ -48,6 +51,8 @@ const RECEIPTS: { label: string; r: AiReceipt }[] = [
     },
   },
   { label: "Projection disagreed", r: { ...base, tools: [{ kind: "code", label: "Ran the numbers in a sandbox", ok: true }], projection: "mismatch" } },
+  { label: "Lighter model (member past 80% of allowance)", r: { ...base, lighter: true } },
+  { label: "Answer talked as if money moved", r: { ...base, output: ["claims_money_moved"] } },
   { label: "A tool failed, no guard header", r: { ...base, guard: "not_run", tools: [{ kind: "fetch", label: "Read www.ecb.europa.eu", ok: false }] } },
 ];
 
@@ -74,6 +79,17 @@ function StatesPage() {
             </div>
           </div>
         ))}
+      </section>
+
+      <section>
+        <h2>While Otari runs tools</h2>
+        <LiveToolChips
+          chips={[
+            { kind: "mcp", label: "Checked your balance", ok: true },
+            { kind: "fetch", label: "Read www.ecb.europa.eu", ok: true, running: true },
+            { kind: "code", label: "", ok: false, running: true },
+          ]}
+        />
       </section>
 
       <section>
@@ -107,6 +123,12 @@ function StatesPage() {
         <AllowanceCard allowance={{ state: "unknown", spentUsd: null, limitUsd: null, period: null, usedFraction: null }} configured />
         <AllowanceCard allowance={null} configured={false} />
         <AllowanceCard allowance={null} configured error />
+      </section>
+
+      <section className="bb-settings">
+        <h2>Settings: fallback test</h2>
+        <DrillCard run={async () => ({ ok: true, reply: "ready", receipt: { ...base, role: "intent", policy: "pocket-intent-drill", model: "openai/gpt-oss-20b", attempts: 2, fallback: true } })} />
+        <DrillCard run={async () => ({ ok: false, state: "allowance_used", receipt: null })} />
       </section>
 
       <section className="bb-settings">

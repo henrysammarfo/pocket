@@ -6,7 +6,8 @@ import { OtariError } from "./otari/errors";
 import { EXPLAIN_SYSTEM, explainTools, toChatMessages } from "./otari/explain";
 import type { OtariMeta } from "./otari/headers";
 import { buildReceipt, type AiReceipt } from "./otari/receipt";
-import { mergeToolCalls, type OtariToolCall } from "./otari/tool-calls";
+import { mergeToolCalls, toolChip, type OtariToolCall } from "./otari/tool-calls";
+import { checkOutput } from "./otari/output-check";
 import { signMcpToken } from "@/lib/mcp/token";
 
 /**
@@ -34,6 +35,7 @@ export function streamExplainer(args: {
       let meta: OtariMeta | null = null;
       const calls = new Map<string, OtariToolCall>();
       let started = false;
+      let answer = "";
       const mcpToken = config.mcpSigningSecret ? signMcpToken(args.memberId, config.mcpSigningSecret) : null;
       const { tools, mcp_servers } = explainTools(config, mcpToken);
       try {
@@ -52,17 +54,22 @@ export function streamExplainer(args: {
           { config, ...(args.signal ? { signal: args.signal } : {}), ...(args.fetch ? { fetch: args.fetch } : {}) },
         )) {
           if (ev.type === "meta") meta = ev.meta;
-          else if (ev.type === "tools") mergeToolCalls(calls, ev.calls);
+          else if (ev.type === "tools") {
+            mergeToolCalls(calls, ev.calls);
+            // Live chips while tools run; replaced by the receipt at the end.
+            writer.write({ type: "data-tools", id: "tools", data: [...calls.values()].map((c) => ({ ...toolChip(c), running: c.status === "in_progress" })), transient: true });
+          }
           else if (ev.type === "delta") {
             if (!started) {
               writer.write({ type: "text-start", id: textId });
               started = true;
             }
             writer.write({ type: "text-delta", id: textId, delta: ev.text });
+            answer += ev.text;
           } else if (ev.type === "error") throw ev.error;
         }
         if (started) writer.write({ type: "text-end", id: textId });
-        receipt = buildReceipt("explain", config.explainModel, meta, [...calls.values()]);
+        receipt = buildReceipt("explain", config.explainModel, meta, [...calls.values()], { lightModel: config.lightModel, output: checkOutput(answer) });
         writer.write({ type: "data-receipt", data: receipt });
       } catch (e) {
         if (started) writer.write({ type: "text-end", id: textId });

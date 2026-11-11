@@ -28,4 +28,12 @@ describe("buildReceipt", () => {
     expect(r.ratesSource).toBeNull();
     expect(r.tools[0]!.ok).toBe(false);
   });
+  it("marks the lighter model only when it was not a fallback", () => {
+    const light = parseOtariHeaders(new Headers({ "otari-model": "openai/gpt-oss-120b", "otari-fallback": "false" }));
+    expect(buildReceipt("explain", "p", light, [], { lightModel: "gpt-oss-120b" }).lighter).toBe(true);
+    const fb = parseOtariHeaders(new Headers({ "otari-model": "gpt-oss-120b", "otari-fallback": "true" }));
+    expect(buildReceipt("explain", "p", fb, [], { lightModel: "gpt-oss-120b" }).lighter).toBe(false);
+    const main = parseOtariHeaders(new Headers({ "otari-model": "deepseek-v4.1-flash" }));
+    expect(buildReceipt("explain", "p", main, [], { lightModel: "gpt-oss-120b" }).lighter).toBe(false);
+  });
 });

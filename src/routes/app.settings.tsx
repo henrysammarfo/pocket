@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authHeader } from "@/hooks/useAuth";
 import { AllowanceCard } from "@/components/pocket-ui/AllowanceCard";
 import { AiActivityList, type AiActivityRow } from "@/components/pocket-ui/AiActivityList";
+import { DrillCard } from "@/components/pocket-ui/DrillCard";
 import type { Allowance } from "@/lib/ai/otari/allowance";
 
 export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
@@ -81,8 +82,10 @@ function SettingsPage() {
             configured={allowance.data?.configured ?? true}
             loading={allowance.isLoading}
             error={allowance.isError}
+            onRetry={() => void allowance.refetch()}
           />
           <AiActivityList rows={(aiRows.data ?? []).slice(0, 6)} loading={aiRows.isLoading} />
+          <DrillCard />
         </section>
       )}
 
