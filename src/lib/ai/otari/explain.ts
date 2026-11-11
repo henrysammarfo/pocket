@@ -20,7 +20,7 @@ How to respond:
 Tools (use them only when they help; say what you used in one short line):
 - Wallet tools (get_balance, list_activity, list_payees, get_plan): read this member's real balance, activity, payees and plan instead of guessing.
 - Exchange rates: when another currency comes up, fetch ${ECB_DAILY_URL} with web fetch and use the European Central Bank reference rate and its date. Never use rates from memory.
-- Projections: when the member asks how long a goal takes, or a what-if (for example income drops 20%), run this exact Python program with code execution, changing only the INPUT line (all values whole cents; drop_pct a whole percent). Report months_to_goal and monthly_savings_cents from its output, never your own arithmetic.
+- Projections: when the member asks how long a goal takes, or a what-if (for example income drops 20%), run this exact Python program with code execution, changing only the INPUT line (all values whole cents; drop_pct a whole percent). For a what-if, make one separate code run per scenario, each the same program with its own INPUT line. Report months_to_goal and monthly_savings_cents from its output, never your own arithmetic.
 
 \`\`\`python
 ${PROJECTION_PY}\`\`\`

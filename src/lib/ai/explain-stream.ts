@@ -33,27 +33,30 @@ export function streamExplainer(args: {
     execute: async ({ writer }) => {
       const textId = "t0";
       let meta: OtariMeta | null = null;
+      let streamCost: number | null = null;
+      const settled = (): OtariMeta | null => (meta && meta.costUsd == null && streamCost != null ? { ...meta, costUsd: streamCost } : meta);
       const calls = new Map<string, OtariToolCall>();
       let started = false;
       let answer = "";
       const mcpToken = config.mcpSigningSecret ? signMcpToken(args.memberId, config.mcpSigningSecret) : null;
       const { tools, mcp_servers } = explainTools(config, mcpToken);
       try {
-        for await (const ev of otariChatStream(
+        for await (const ev of withoutMcpIfRefused(mcp_servers, (servers) => otariChatStream(
           {
             model: config.explainModel,
             memberId: args.memberId,
             temperature: 0.4,
-            max_tokens: 900,
-            tags: ["pocket:explain"],
+            max_tokens: 2000,
+            tags: { app: "pocket", role: "explain" },
             tools,
-            mcp_servers,
+            mcp_servers: servers,
             max_tool_iterations: 4,
             messages: [{ role: "system", content: EXPLAIN_SYSTEM }, ...toChatMessages(args.messages as never)],
           },
           { config, ...(args.signal ? { signal: args.signal } : {}), ...(args.fetch ? { fetch: args.fetch } : {}) },
-        )) {
+        ))) {
           if (ev.type === "meta") meta = ev.meta;
+          else if (ev.type === "usage") streamCost = ev.costUsd;
           else if (ev.type === "tools") {
             mergeToolCalls(calls, ev.calls);
             // Live chips while tools run; replaced by the receipt at the end.
@@ -69,7 +72,7 @@ export function streamExplainer(args: {
           } else if (ev.type === "error") throw ev.error;
         }
         if (started) writer.write({ type: "text-end", id: textId });
-        receipt = buildReceipt("explain", config.explainModel, meta, [...calls.values()], { lightModel: config.lightModel, output: checkOutput(answer) });
+        receipt = buildReceipt("explain", config.explainModel, settled(), [...calls.values()], { lightModel: config.lightModel, output: checkOutput(answer) });
         writer.write({ type: "data-receipt", data: receipt });
       } catch (e) {
         if (started) writer.write({ type: "text-end", id: textId });
@@ -87,3 +90,31 @@ export function streamExplainer(args: {
   return createUIMessageStreamResponse({ stream });
 }
 
+
+/**
+ * A workspace that does not let requests name MCP servers by URL answers 400
+ * before anything streams. Rather than lose the answer, ask once more without
+ * the wallet server: web fetch and code execution still work, and the receipt
+ * simply shows no wallet tools.
+ */
+export async function* withoutMcpIfRefused<T>(servers: unknown[], open: (servers: unknown[]) => AsyncGenerator<T>): AsyncGenerator<T> {
+  if (!servers.length) {
+    yield* open(servers);
+    return;
+  }
+  const first = open(servers);
+  let head: IteratorResult<T>;
+  try {
+    head = await first.next();
+  } catch (e) {
+    if (e instanceof OtariError && e.status === 400 && /mcp server/i.test(e.message)) {
+      console.warn("[chat] workspace refuses request MCP servers; answering without wallet tools");
+      yield* open([]);
+      return;
+    }
+    throw e;
+  }
+  if (head.done) return;
+  yield head.value;
+  yield* first;
+}

@@ -33,9 +33,10 @@ export async function judge(input: string, deps: GuardDeps = {}): Promise<Verdic
       {
         model: config.guardModel,
         temperature: 0,
-        max_tokens: 40,
-        response_format: { type: "json_object" },
-        tags: ["pocket:guard"],
+        max_tokens: 400,
+        // Bedrock's safeguard model and Llama Guard both refuse response_format (Otari: all_candidates_rejected),
+        // so the JSON is asked for in the prompt and read leniently.
+        tags: { app: "pocket", role: "guard" },
         messages: [
           { role: "system", content: SAFEGUARD_SYSTEM },
           { role: "user", content: `TEXT:\n${input.slice(0, 6000)}` },
@@ -43,7 +44,7 @@ export async function judge(input: string, deps: GuardDeps = {}): Promise<Verdic
       },
       { config, key: "guard", ...(deps.fetch ? { fetch: deps.fetch } : {}) },
     );
-    const out = JSON.parse(res.text) as { attack?: unknown; confidence?: unknown };
+    const out = readVerdictJson(res.text);
     if (typeof out.attack !== "boolean") return { valid: null, score: null, explanation: "safeguard gave no verdict", source: "rules+model" };
     const conf = typeof out.confidence === "number" ? Math.min(1, Math.max(0, out.confidence)) : 0.5;
     const modelScore = out.attack ? conf : 1 - conf;
@@ -82,4 +83,17 @@ export function handleGuardProfiles(request: Request, token = process.env["POCKE
   if (!token) return json({ detail: "Guard is not configured" }, 503);
   if (!bearerOk(request, token)) return json({ detail: "Unauthorized" }, 401);
   return json(PROFILES);
+}
+
+/** The first JSON object in a model's reply (it may wrap it in prose or a code fence). Never throws. */
+export function readVerdictJson(text: string): { attack?: unknown; confidence?: unknown } {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start < 0 || end <= start) return {};
+  try {
+    const v: unknown = JSON.parse(text.slice(start, end + 1));
+    return v && typeof v === "object" ? (v as { attack?: unknown; confidence?: unknown }) : {};
+  } catch {
+    return {};
+  }
 }

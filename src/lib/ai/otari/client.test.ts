@@ -6,14 +6,14 @@ import { fakeFetch, jsonRes, ROUTED, sse, testConfig } from "./test-helpers";
 describe("otariChat", () => {
   it("sends the member as an Otari end user, with the policy as model", async () => {
     const f = fakeFetch(() => jsonRes({ choices: [{ message: { content: "hi" } }] }, 200, ROUTED));
-    const r = await otariChat({ model: "pocket-intent", memberId: "m1", messages: [{ role: "user", content: "x" }], tags: ["pocket:intent"] }, { config: testConfig(), fetch: f.fetch });
+    const r = await otariChat({ model: "pocket-intent", memberId: "m1", messages: [{ role: "user", content: "x" }], tags: { app: "pocket", role: "intent" } }, { config: testConfig(), fetch: f.fetch });
     expect(r.text).toBe("hi");
     expect(r.meta.fallback).toBe(true);
     const c = f.calls[0]!;
     expect(c.url).toBe("https://otari.test/api/v1/chat/completions");
     expect(c.body).toMatchObject({ model: "pocket-intent", user: "pocket:m1", stream: false });
     expect((c.init.headers as Record<string, string>)["authorization"]).toBe("Bearer svc_test");
-    expect((c.init.headers as Record<string, string>)["otari-tags"]).toBe("pocket:intent");
+    expect((c.init.headers as Record<string, string>)["otari-tags"]).toBe("app=pocket,role=intent");
   });
   it("uses the guard key for the guard role", async () => {
     const f = fakeFetch(() => jsonRes({ choices: [{ message: { content: "{}" } }] }));

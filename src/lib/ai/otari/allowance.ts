@@ -30,10 +30,24 @@ const pickStr = (o: Record<string, unknown>, keys: string[]): string | null => {
   return null;
 };
 
+/** "daily" for Otari's calendar_day alignment or a 86400 s duration; otherwise whatever it says. */
+function budgetPeriod(b: Record<string, unknown>): string | null {
+  const align = pickStr(b, ["reset_alignment", "period", "budget_duration", "reset_period"]);
+  if (align === "calendar_day" || b["budget_duration_sec"] === 86400) return "daily";
+  if (align === "calendar_week" || b["budget_duration_sec"] === 604800) return "weekly";
+  if (align === "calendar_month") return "monthly";
+  return align;
+}
+
 export function readAllowance(endUser: unknown, budgets: unknown): Allowance {
   const list = Array.isArray(endUser) ? endUser : endUser ? [endUser] : [];
   const eu = list[0] as Record<string, unknown> | undefined;
-  if (!eu) return { state: "new", spentUsd: 0, limitUsd: null, period: null, usedFraction: 0 };
+  const budgetList = Array.isArray(budgets) ? (budgets as Record<string, unknown>[]).filter((x) => x && typeof x === "object") : [];
+  if (!eu) {
+    // Otari creates the end user on the first request; until then the default budget is what applies.
+    const d = budgetList.find((b) => b["is_default"] === true);
+    return { state: "new", spentUsd: 0, limitUsd: d ? pickNum(d, ["max_budget", "limit", "limit_usd", "amount"]) : null, period: d ? budgetPeriod(d) : null, usedFraction: 0 };
+  }
   if (eu["blocked"] === true) return { state: "blocked", spentUsd: null, limitUsd: null, period: null, usedFraction: null };
 
   const nested = (typeof eu["budget"] === "object" && eu["budget"]) ? (eu["budget"] as Record<string, unknown>) : {};
@@ -41,11 +55,12 @@ export function readAllowance(endUser: unknown, budgets: unknown): Allowance {
   const budgetId = pickStr(eu, ["budget_id"]) ?? pickStr(nested, ["id"]);
   let limit = pickNum(nested, ["max_budget", "limit", "limit_usd", "amount"]);
   let period = pickStr(nested, ["period", "budget_duration", "reset_period"]);
-  if ((limit == null || period == null) && Array.isArray(budgets) && budgetId) {
-    const b = (budgets as Record<string, unknown>[]).find((x) => x && x["id"] === budgetId);
+  if ((limit == null || period == null) && budgetId) {
+    // Live Otari names the key `budget_id` on both objects.
+    const b = budgetList.find((x) => x["budget_id"] === budgetId || x["id"] === budgetId);
     if (b) {
       limit = limit ?? pickNum(b, ["max_budget", "limit", "limit_usd", "amount"]);
-      period = period ?? pickStr(b, ["period", "budget_duration", "reset_period"]);
+      period = period ?? budgetPeriod(b);
     }
   }
   if (spent == null || limit == null || limit <= 0) return { state: "unknown", spentUsd: spent, limitUsd: limit, period, usedFraction: null };

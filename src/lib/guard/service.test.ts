@@ -86,3 +86,15 @@ describe("handleGuardValidate (Otari contract)", () => {
     expect(await r.json()).toEqual([{ name: PROFILE, guardrail_name: "pocket_rules_and_safeguard" }]);
   });
 });
+
+import { readVerdictJson } from "./service";
+
+describe("readVerdictJson (live safeguard replies)", () => {
+  it("reads plain, fenced and wrapped JSON and never throws", () => {
+    expect(readVerdictJson('{"attack": true, "confidence": 0.95}')).toEqual({ attack: true, confidence: 0.95 });
+    expect(readVerdictJson('```json\n{"attack": false, "confidence": 0.99}\n```')).toEqual({ attack: false, confidence: 0.99 });
+    expect(readVerdictJson("Verdict: {\"attack\":false} done")).toEqual({ attack: false });
+    expect(readVerdictJson("")).toEqual({});
+    expect(readVerdictJson("{not json}")).toEqual({});
+  });
+});

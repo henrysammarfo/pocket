@@ -87,9 +87,9 @@ export async function parseIntentWithOtari(
         model: config.intentModel,
         memberId,
         temperature: 0,
-        max_tokens: 120,
+        max_tokens: 600,
         response_format: INTENT_JSON_SCHEMA,
-        tags: ["pocket:intent"],
+        tags: { app: "pocket", role: "intent" },
         messages: [
           { role: "system", content: INTENT_SYSTEM },
           { role: "user", content: rawText.slice(0, 600) },

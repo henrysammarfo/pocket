@@ -102,13 +102,15 @@ Do these once in the Otari dashboard, in this order. Names must match exactly; t
        - openai/gpt-oss-120b
    pocket-intent-drill:
      select:
-       - default: <a candidate that cannot serve, for example a provider with no key in this organization>
+       - default: <an organization provider key whose credential is deliberately invalid>:<model>
      on_failure:
        - openai/gpt-oss-20b
    ```
-5. **Web fetch** on, allowed domains `ecb.europa.eu` only (covers `www.ecb.europa.eu`).
-6. **Code execution** on.
-7. **Workspace `pocket-guard`**, separate, with an ordinary API key set as `OTARI_GUARD_KEY`, and a routing policy:
+   Why a dead credential and not a $0 budget: Otari fails over on a provider error, a missing credential or a rejected credential (401), but a budget refusal on a fixed policy's first candidate is final (`403 budget_exceeded`, scope `workspace`); only automatic routing skips a budget-refused candidate. Measured live on 2026-11-11.
+5. **Request MCP servers** on for the workspace the service key lives in (Tools, workspace MCP servers, "Let requests name their own MCP servers"). Without it Otari answers `400` to any request with `mcp_servers`; Pocket then answers once more without the wallet tools, so chat still works but the receipt shows no wallet reads.
+6. **Web fetch** on, allowed domains `ecb.europa.eu` only (covers `www.ecb.europa.eu`).
+7. **Code execution** on.
+8. **Workspace `pocket-guard`**, separate, with an ordinary API key set as `OTARI_GUARD_KEY`, and a routing policy:
    ```yaml
    pocket-guard:
      select:
@@ -116,8 +118,17 @@ Do these once in the Otari dashboard, in this order. Names must match exactly; t
      on_failure:
        - meta/llama-guard-4-12b
    ```
-8. **Guardrail mandate** on the `pocket` workspace (not on `pocket-guard`): profile `pocket-money-rules`, URL `https://<pocket host>/api/guard`, credential = the value of `POCKET_GUARD_TOKEN`, mode `block`, if unreachable `block`.
-9. On the Pocket deployment set `POCKET_PUBLIC_ORIGIN=https://<pocket host>`, plus `POCKET_GUARD_TOKEN` and `POCKET_MCP_SIGNING_SECRET` (long random strings you generate).
+9. **Guardrail mandate** scoped to the workspace the service key lives in (never to `pocket-guard`, or the guard would check itself): profile `pocket-money-rules`, URL `https://<pocket host>/api/guard`, credential = the value of `POCKET_GUARD_TOKEN`, mode `block`, if unreachable `block`.
+   Mandates are created from the dashboard (or with the master key); a service key or ordinary key cannot create one. Otari posts to `<URL>/validate`.
+10. On the Pocket deployment set `POCKET_PUBLIC_ORIGIN=https://<pocket host>`, plus `POCKET_GUARD_TOKEN` and `POCKET_MCP_SIGNING_SECRET` (long random strings you generate).
+
+## Live findings (2026-11-11)
+
+- `Otari-Tags` must be `key=value` pairs; a bare word such as `pocket:intent` is a `422 invalid_request`. Pocket sends `app=pocket,role=<role>`.
+- Chat completions report cost in `usage.cost_usd`, not an `Otari-Cost-USD` header; a stream sends it only with `stream_options.include_usage`. Pocket reads both.
+- The safeguard models on Bedrock and DeepInfra reject `response_format` (`400 all_candidates_rejected`), so the guard asks for JSON in the prompt and reads it leniently.
+- `gpt-oss` models spend tokens reasoning first: a 12 token cap returns an empty answer. Intent uses 600, the drill 200, the guard 400.
+- End users and budgets join on `budget_id`; `reset_alignment: calendar_day` is shown as daily.
 
 ## Run it yourself
 
