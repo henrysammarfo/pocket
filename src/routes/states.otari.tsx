@@ -4,6 +4,7 @@ import { DrillCard } from "@/components/pocket-ui/DrillCard";
 import { AiNotice } from "@/components/pocket-ui/AiNotice";
 import { AllowanceCard } from "@/components/pocket-ui/AllowanceCard";
 import { AiActivityList } from "@/components/pocket-ui/AiActivityList";
+import { PlanCard } from "@/components/pocket-ui/PlanCard";
 import { AI_STATE_COPY, type AiStateCode } from "@/lib/ai/ai-states";
 import type { AiReceipt } from "@/lib/ai/otari/receipt";
 
@@ -67,6 +68,22 @@ function StatesPage() {
         <h1>Every AI state</h1>
         <p>Sample data. The chat and settings screens render these same components.</p>
       </header>
+
+      <section className="pk-states-chat">
+        <h2>In a conversation (example)</h2>
+        <div className="pk-thread-body pk-states-thread">
+          <div className="pk-user">Send Ama 40 dollars for lunch on Friday</div>
+          <div className="pk-chip-row" aria-label="How Pocket read your last payment message">
+            <span className="pk-chip">Read by gpt-oss-20b. Your plan made the decision.</span>
+          </div>
+          <PlanCard steps={[{ when: "Friday", label: "Send Ama", amountLabel: "$40.00" }]} onApprove={() => undefined} onEdit={() => undefined} />
+          <div className="pk-user">How much is that in euros?</div>
+          <div className="pk-assistant">
+            <p>About 34.50 euros at the European Central Bank reference rate. Your plan still sends dollars.</p>
+            <AiReceiptStrip receipt={{ ...base, tools: [{ kind: "fetch", label: "Read www.ecb.europa.eu", ok: true }], ratesSource: "ecb" }} />
+          </div>
+        </div>
+      </section>
 
       <section>
         <h2>Answer receipts</h2>
