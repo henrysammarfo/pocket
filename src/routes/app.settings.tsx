@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { useQuery } from "@tanstack/react-query";
+import { authHeader } from "@/hooks/useAuth";
+import { AllowanceCard } from "@/components/pocket-ui/AllowanceCard";
+import { AiActivityList, type AiActivityRow } from "@/components/pocket-ui/AiActivityList";
+import type { Allowance } from "@/lib/ai/otari/allowance";
 
 export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
 
@@ -30,6 +35,26 @@ function SettingsPage() {
   const email = session?.user.email ?? wallet.data?.email;
   const plan = wallet.data?.plan;
   const name = email?.split("@")[0] ?? null;
+  const allowance = useQuery({
+    queryKey: ["ai-allowance"],
+    queryFn: async () => {
+      const res = await fetch("/api/ai/allowance", { headers: await authHeader() });
+      if (!res.ok) throw new Error("allowance");
+      return (await res.json()) as { allowance: Allowance | null; configured: boolean };
+    },
+    enabled: Boolean(session),
+    staleTime: 30_000,
+  });
+  const aiRows = useQuery({
+    queryKey: ["ai-receipts"],
+    queryFn: async () => {
+      const res = await fetch("/api/ai/receipts", { headers: await authHeader() });
+      if (!res.ok) throw new Error("receipts");
+      return ((await res.json()) as { receipts: AiActivityRow[] }).receipts;
+    },
+    enabled: Boolean(session),
+    staleTime: 30_000,
+  });
 
   return (
     <div className="bb-money bb-settings">
@@ -47,6 +72,19 @@ function SettingsPage() {
           </Link>
         </div>
       </section>
+
+      {session && (
+        <section className="bb-settings-block" aria-labelledby="set-ai">
+          <p className="bb-set-label" id="set-ai">AI</p>
+          <AllowanceCard
+            allowance={allowance.data?.allowance ?? null}
+            configured={allowance.data?.configured ?? true}
+            loading={allowance.isLoading}
+            error={allowance.isError}
+          />
+          <AiActivityList rows={(aiRows.data ?? []).slice(0, 6)} loading={aiRows.isLoading} />
+        </section>
+      )}
 
       <section className="bb-settings-block">
         <p className="bb-set-label">Account</p>

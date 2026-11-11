@@ -16,6 +16,10 @@ import { PlanCard, ReadingPlan } from "@/components/pocket-ui/PlanCard";
 import { threadsKey } from "./app";
 import { parseSpendIntent, parseMoneyPlanFromGoal } from "@/lib/policy/plan-parser";
 import { readStoredPlanId, rememberThread, writeStoredPlanId } from "@/lib/pocket/plan-session";
+import { AiReceiptStrip, shortModel } from "@/components/pocket-ui/AiReceiptStrip";
+import { AiNotice } from "@/components/pocket-ui/AiNotice";
+import { decodeAiStateLoose, type AiStatePayload } from "@/lib/ai/ai-states";
+import type { AiReceipt } from "@/lib/ai/otari/receipt";
 
 export const Route = createFileRoute("/app/$threadId")({ component: ThreadPage });
 
@@ -71,6 +75,8 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [aiState, setAiState] = useState<AiStatePayload | null>(null);
+  const [intentNote, setIntentNote] = useState<{ parsedBy: "model" | "rules"; model: string | null } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [planId, setPlanId] = useState<string | null>(() => readStoredPlanId(threadId));
   const [planReady, setPlanReady] = useState(() => Boolean(readStoredPlanId(threadId)));
@@ -83,7 +89,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     id: threadId,
     messages: initial,
     transport: new DefaultChatTransport({ api: "/api/chat", headers: authHeader, body: { threadId } }),
-    onError: (e) => setErr(e.message || "Something went wrong."),
+    onError: (e) => {
+      const state = decodeAiStateLoose(e.message);
+      if (state) {
+        setAiState(state);
+        setErr(null);
+      } else setErr(e.message || "Something went wrong.");
+    },
     onFinish: () => {
       qc.invalidateQueries({ queryKey: threadsKey });
       qc.invalidateQueries({ queryKey: ["thread-messages", threadId] });
@@ -146,7 +158,9 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
       screen?: { message: string; bufferCents: number; planCatch?: string };
       error?: string;
       settlement?: { explorerUrl: string };
+      aiIntent?: { parsedBy: "model" | "rules"; receipt: AiReceipt | null };
     };
+    if (body.aiIntent) setIntentNote({ parsedBy: body.aiIntent.parsedBy, model: body.aiIntent.receipt?.model ?? null });
     if (body.blocked && body.screen) {
       setBlock({
         message: body.screen.message,
@@ -171,6 +185,7 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
     const v = value.trim();
     if (!v || busy) return;
     setErr(null);
+    setAiState(null);
     setPlanGoal(v);
     try {
       let activePlanId = planId;
@@ -212,6 +227,13 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
               <span className="pk-chip is-ok">Plan approved · Keep live · Try Send the rest</span>
             </div>
           )}
+          {intentNote && (
+            <div className="pk-chip-row" aria-label="How Pocket read your last payment message">
+              <span className="pk-chip">
+                {intentNote.parsedBy === "model" ? `Read by ${shortModel(intentNote.model)}` : "Read by Pocket's own rules"}. Your plan made the decision.
+              </span>
+            </div>
+          )}
           {receipts.length > 0 && (
             <div className="pk-chip-row" aria-label="Activity">
               {receipts.slice(0, 6).map((r, i) => (
@@ -247,6 +269,9 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
                 {m.parts.map((p, i) => {
                   if (p.type === "text") {
                     return m.role === "user" ? <p key={i}>{p.text}</p> : <MessageResponse key={i}>{p.text}</MessageResponse>;
+                  }
+                  if (p.type === "data-receipt") {
+                    return <AiReceiptStrip key={i} receipt={(p as unknown as { data: AiReceipt }).data} />;
                   }
                   if (p.type === "reasoning" && p.text) {
                     return (
@@ -307,6 +332,16 @@ function ChatWindow({ threadId, initial }: { threadId: string; initial: UIMessag
                 </button>
               ))}
             </div>
+          )}
+          {aiState && !busy && (
+            <AiNotice
+              state={aiState}
+              onRetry={() => {
+                setAiState(null);
+                void regenerate();
+              }}
+              onDismiss={() => setAiState(null)}
+            />
           )}
           {err && <p className="pk-error" role="alert">{err}</p>}
         </ConversationContent>

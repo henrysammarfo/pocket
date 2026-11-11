@@ -22,3 +22,11 @@ describe("ai states", () => {
     expect(formatWait(null)).toBeNull();
   });
 });
+
+import { decodeAiStateLoose } from "./ai-states";
+describe("decodeAiStateLoose", () => {
+  it("unwraps a JSON error body", () => {
+    expect(decodeAiStateLoose(JSON.stringify({ error: encodeAiState("not_configured") }))!.code).toBe("not_configured");
+    expect(decodeAiStateLoose('{"error":"Conversation not found"}')).toBeNull();
+  });
+});

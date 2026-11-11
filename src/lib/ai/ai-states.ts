@@ -37,17 +37,17 @@ export const AI_STATE_COPY: Record<AiStateCode, { title: string; body: string; t
   },
   guard_offline: {
     title: "The safety check is offline",
-    body: "Pocket will not send anything to the AI without it. Nothing moved. Try again in a minute.",
+    body: "Pocket will not send anything to the AI without it. Nothing moved.",
     tone: "warn",
   },
   busy: {
     title: "Pocket is busy",
-    body: "Too many requests at once. Try again in a moment.",
+    body: "Too many requests at once.",
     tone: "info",
   },
   models_down: {
     title: "Every AI model is unavailable right now",
-    body: "Pocket tried each one in turn. Nothing moved. Try again shortly.",
+    body: "Pocket tried each one in turn. Nothing moved.",
     tone: "warn",
   },
   not_configured: {
@@ -57,7 +57,7 @@ export const AI_STATE_COPY: Record<AiStateCode, { title: string; body: string; t
   },
   unknown: {
     title: "Something went wrong",
-    body: "Nothing moved. Please try again.",
+    body: "Nothing moved.",
     tone: "warn",
   },
 };
@@ -94,4 +94,16 @@ export function formatWait(sec: number | null): string | null {
   const h = Math.floor(m / 60);
   const rem = m % 60;
   return rem ? `in ${h} h ${rem} min` : `in ${h} h`;
+}
+
+/** Also unwraps a JSON error body ({"error": "<state>"}) as the chat transport reports it. */
+export function decodeAiStateLoose(message: string | null | undefined): AiStatePayload | null {
+  const direct = decodeAiState(message);
+  if (direct || !message) return direct;
+  try {
+    const v = JSON.parse(message) as { error?: unknown };
+    return typeof v?.error === "string" ? decodeAiState(v.error) : null;
+  } catch {
+    return null;
+  }
 }

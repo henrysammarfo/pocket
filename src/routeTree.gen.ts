@@ -23,6 +23,7 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as StoryRouteImport } from './routes/story'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as ApiReceiptsRouteImport } from './routes/api/receipts'
 import { Route as ApiSettleRouteImport } from './routes/api/settle'
 import { Route as ApiSpeakRouteImport } from './routes/api/speak'
@@ -36,8 +37,13 @@ import { Route as AppSendRouteImport } from './routes/app.send'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppSwapRouteImport } from './routes/app.swap'
 import { Route as AppWalletRouteImport } from './routes/app.wallet'
+import { Route as StatesOtariRouteImport } from './routes/states.otari'
+import { Route as ApiAiAllowanceRouteImport } from './routes/api/ai/allowance'
+import { Route as ApiAiReceiptsRouteImport } from './routes/api/ai/receipts'
 import { Route as ApiAuthPrivyLinkRouteImport } from './routes/api/auth/privy-link'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiGuardProfilesRouteImport } from './routes/api/guard/profiles'
+import { Route as ApiGuardValidateRouteImport } from './routes/api/guard/validate'
 import { Route as ApiPlansApproveRouteImport } from './routes/api/plans/approve'
 import { Route as ApiThreadsThreadIdRouteImport } from './routes/api/threads.$threadId'
 
@@ -111,6 +117,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiReceiptsRoute = ApiReceiptsRouteImport.update({
   id: '/api/receipts',
   path: '/api/receipts',
@@ -176,6 +187,21 @@ const AppWalletRoute = AppWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AppRoute,
 } as any)
+const StatesOtariRoute = StatesOtariRouteImport.update({
+  id: '/states/otari',
+  path: '/states/otari',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiAllowanceRoute = ApiAiAllowanceRouteImport.update({
+  id: '/api/ai/allowance',
+  path: '/api/ai/allowance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiReceiptsRoute = ApiAiReceiptsRouteImport.update({
+  id: '/api/ai/receipts',
+  path: '/api/ai/receipts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthPrivyLinkRoute = ApiAuthPrivyLinkRouteImport.update({
   id: '/api/auth/privy-link',
   path: '/api/auth/privy-link',
@@ -184,6 +210,16 @@ const ApiAuthPrivyLinkRoute = ApiAuthPrivyLinkRouteImport.update({
 const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
   id: '/api/auth/session',
   path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGuardProfilesRoute = ApiGuardProfilesRouteImport.update({
+  id: '/api/guard/profiles',
+  path: '/api/guard/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGuardValidateRoute = ApiGuardValidateRouteImport.update({
+  id: '/api/guard/validate',
+  path: '/api/guard/validate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPlansApproveRoute = ApiPlansApproveRouteImport.update({
@@ -212,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -224,9 +261,14 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/swap': typeof AppSwapRoute
   '/app/wallet': typeof AppWalletRoute
+  '/states/otari': typeof StatesOtariRoute
   '/app/': typeof AppIndexRoute
+  '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/guard/profiles': typeof ApiGuardProfilesRoute
+  '/api/guard/validate': typeof ApiGuardValidateRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
   '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
@@ -244,6 +286,7 @@ export interface FileRoutesByTo {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -256,9 +299,14 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/swap': typeof AppSwapRoute
   '/app/wallet': typeof AppWalletRoute
+  '/states/otari': typeof StatesOtariRoute
   '/app': typeof AppIndexRoute
+  '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/guard/profiles': typeof ApiGuardProfilesRoute
+  '/api/guard/validate': typeof ApiGuardValidateRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
   '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
@@ -278,6 +326,7 @@ export interface FileRoutesById {
   '/story': typeof StoryRoute
   '/api/chat': typeof ApiChatRoute
   '/api/health': typeof ApiHealthRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/api/receipts': typeof ApiReceiptsRoute
   '/api/settle': typeof ApiSettleRoute
   '/api/speak': typeof ApiSpeakRoute
@@ -290,9 +339,14 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/swap': typeof AppSwapRoute
   '/app/wallet': typeof AppWalletRoute
+  '/states/otari': typeof StatesOtariRoute
   '/app/': typeof AppIndexRoute
+  '/api/ai/allowance': typeof ApiAiAllowanceRoute
+  '/api/ai/receipts': typeof ApiAiReceiptsRoute
   '/api/auth/privy-link': typeof ApiAuthPrivyLinkRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/guard/profiles': typeof ApiGuardProfilesRoute
+  '/api/guard/validate': typeof ApiGuardValidateRoute
   '/api/plans/approve': typeof ApiPlansApproveRoute
   '/api/threads/$threadId': typeof ApiThreadsThreadIdRoute
 }
@@ -313,6 +367,7 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/health'
+    | '/api/mcp'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -325,9 +380,14 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/swap'
     | '/app/wallet'
+    | '/states/otari'
     | '/app/'
+    | '/api/ai/allowance'
+    | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
+    | '/api/guard/profiles'
+    | '/api/guard/validate'
     | '/api/plans/approve'
     | '/api/threads/$threadId'
   fileRoutesByTo: FileRoutesByTo
@@ -345,6 +405,7 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/health'
+    | '/api/mcp'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -357,9 +418,14 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/swap'
     | '/app/wallet'
+    | '/states/otari'
     | '/app'
+    | '/api/ai/allowance'
+    | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
+    | '/api/guard/profiles'
+    | '/api/guard/validate'
     | '/api/plans/approve'
     | '/api/threads/$threadId'
   id:
@@ -378,6 +444,7 @@ export interface FileRouteTypes {
     | '/story'
     | '/api/chat'
     | '/api/health'
+    | '/api/mcp'
     | '/api/receipts'
     | '/api/settle'
     | '/api/speak'
@@ -390,9 +457,14 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/swap'
     | '/app/wallet'
+    | '/states/otari'
     | '/app/'
+    | '/api/ai/allowance'
+    | '/api/ai/receipts'
     | '/api/auth/privy-link'
     | '/api/auth/session'
+    | '/api/guard/profiles'
+    | '/api/guard/validate'
     | '/api/plans/approve'
     | '/api/threads/$threadId'
   fileRoutesById: FileRoutesById
@@ -412,14 +484,20 @@ export interface RootRouteChildren {
   StoryRoute: typeof StoryRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ApiMcpRoute: typeof ApiMcpRoute
   ApiReceiptsRoute: typeof ApiReceiptsRoute
   ApiSettleRoute: typeof ApiSettleRoute
   ApiSpeakRoute: typeof ApiSpeakRoute
   ApiThreadsRoute: typeof ApiThreadsRouteWithChildren
   ApiTranscribeRoute: typeof ApiTranscribeRoute
   ApiWalletRoute: typeof ApiWalletRoute
+  StatesOtariRoute: typeof StatesOtariRoute
+  ApiAiAllowanceRoute: typeof ApiAiAllowanceRoute
+  ApiAiReceiptsRoute: typeof ApiAiReceiptsRoute
   ApiAuthPrivyLinkRoute: typeof ApiAuthPrivyLinkRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiGuardProfilesRoute: typeof ApiGuardProfilesRoute
+  ApiGuardValidateRoute: typeof ApiGuardValidateRoute
   ApiPlansApproveRoute: typeof ApiPlansApproveRoute
 }
 
@@ -523,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/receipts': {
       id: '/api/receipts'
       path: '/api/receipts'
@@ -614,6 +699,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWalletRouteImport
       parentRoute: typeof AppRoute
     }
+    '/states/otari': {
+      id: '/states/otari'
+      path: '/states/otari'
+      fullPath: '/states/otari'
+      preLoaderRoute: typeof StatesOtariRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/allowance': {
+      id: '/api/ai/allowance'
+      path: '/api/ai/allowance'
+      fullPath: '/api/ai/allowance'
+      preLoaderRoute: typeof ApiAiAllowanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/receipts': {
+      id: '/api/ai/receipts'
+      path: '/api/ai/receipts'
+      fullPath: '/api/ai/receipts'
+      preLoaderRoute: typeof ApiAiReceiptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/privy-link': {
       id: '/api/auth/privy-link'
       path: '/api/auth/privy-link'
@@ -626,6 +732,20 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/session'
       fullPath: '/api/auth/session'
       preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/guard/profiles': {
+      id: '/api/guard/profiles'
+      path: '/api/guard/profiles'
+      fullPath: '/api/guard/profiles'
+      preLoaderRoute: typeof ApiGuardProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/guard/validate': {
+      id: '/api/guard/validate'
+      path: '/api/guard/validate'
+      fullPath: '/api/guard/validate'
+      preLoaderRoute: typeof ApiGuardValidateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/plans/approve': {
@@ -694,14 +814,20 @@ const rootRouteChildren: RootRouteChildren = {
   StoryRoute: StoryRoute,
   ApiChatRoute: ApiChatRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ApiMcpRoute: ApiMcpRoute,
   ApiReceiptsRoute: ApiReceiptsRoute,
   ApiSettleRoute: ApiSettleRoute,
   ApiSpeakRoute: ApiSpeakRoute,
   ApiThreadsRoute: ApiThreadsRouteWithChildren,
   ApiTranscribeRoute: ApiTranscribeRoute,
   ApiWalletRoute: ApiWalletRoute,
+  StatesOtariRoute: StatesOtariRoute,
+  ApiAiAllowanceRoute: ApiAiAllowanceRoute,
+  ApiAiReceiptsRoute: ApiAiReceiptsRoute,
   ApiAuthPrivyLinkRoute: ApiAuthPrivyLinkRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiGuardProfilesRoute: ApiGuardProfilesRoute,
+  ApiGuardValidateRoute: ApiGuardValidateRoute,
   ApiPlansApproveRoute: ApiPlansApproveRoute,
 }
 export const routeTree = rootRouteImport
