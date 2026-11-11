@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/health")({
         const checks = {
           database: Boolean(process.env["DATABASE_URL"] || process.env["DATABASE_URL_UNPOOLED"] || process.env["POSTGRES_URL"]),
           privy: privyConfigured(),
-          agentrouter: Boolean(process.env["AGENTROUTER_API_KEY"]),
+          otari: Boolean(process.env["OTARI_SERVICE_KEY"]),
           elevenlabs: Boolean(process.env["ELEVENLABS_API_KEY"]),
           monadRpc: Boolean(process.env["MONAD_RPC_URL"] || process.env["VITE_MONAD_RPC_URL"]),
           envioGraphql: Boolean(process.env["ENVIO_GRAPHQL_URL"]),

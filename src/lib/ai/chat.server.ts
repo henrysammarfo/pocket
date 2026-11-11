@@ -5,8 +5,10 @@ import { authenticate, json } from "./auth.server";
 import { getDb } from "@/lib/db/client";
 import { threadMessages, threads } from "../../../drizzle/schema";
 
-const MODEL = process.env["AGENTROUTER_MODEL"] || "gpt-4o";
-const BASE_URL = process.env["AGENTROUTER_BASE_URL"] || "https://agentrouter.org/v1";
+// Pocket's AI runs through Otari (https://otari.ai), Mozilla.ai's open-source gateway.
+// MODEL is an Otari routing policy name; the policy resolves to open-weight models.
+const MODEL = process.env["OTARI_EXPLAIN_MODEL"] || "pocket-explain";
+const BASE_URL = process.env["OTARI_BASE_URL"] || "https://api.otari.ai/api/v1";
 
 const INSTRUCTIONS = `You are POCKET, a warm, sharp personal money assistant inside the POCKET app.
 Members describe financial goals (saving for something, paying off debt, budgeting rent, building a reserve). Your job is to turn their goal into a clear, personalized money plan.
@@ -21,8 +23,8 @@ How to respond:
 export async function handleChat(request: Request) {
   const auth = await authenticate(request);
   if (!auth) return json({ error: "Please sign in again." }, 401);
-  const apiKey = process.env["AGENTROUTER_API_KEY"];
-  if (!apiKey) return json({ error: "AI is not configured (AGENTROUTER_API_KEY)." }, 500);
+  const apiKey = process.env["OTARI_SERVICE_KEY"];
+  if (!apiKey) return json({ error: "AI is not configured (OTARI_SERVICE_KEY)." }, 500);
 
   const body = (await request.json().catch(() => null)) as { messages?: UIMessage[]; threadId?: string } | null;
   const messages = body?.messages;
@@ -102,7 +104,7 @@ export async function handleChat(request: Request) {
     },
     onError: (error) => {
       const status = (error as { statusCode?: number })?.statusCode;
-      if (status === 402) return "AI credits are used up. Please top up AgentRouter and try again.";
+      if (status === 402) return "Your AI allowance is used up for today. Your money and plans still work.";
       if (status === 429) return "POCKET is busy right now. Please try again in a moment.";
       console.error(error);
       return "Something went wrong creating your plan. Please try again.";

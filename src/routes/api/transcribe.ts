@@ -10,6 +10,12 @@ export const Route = createFileRoute("/api/transcribe")({
       POST: async ({ request }) => {
         const auth = await authenticate(request);
         if (!auth) return json({ error: "Please sign in again." }, 401);
+        // Voice input is off on the Otari branch: Otari's public catalog lists no
+        // open-weight speech-to-text model (checked 2026-11-11), and every AI call
+        // here must go through Otari.
+        if (process.env["POCKET_VOICE_INPUT"] !== "on") {
+          return json({ error: "Voice input is off in this build. Type your message instead." }, 503);
+        }
         const apiKey = process.env["AGENTROUTER_API_KEY"];
         const baseURL = process.env["AGENTROUTER_BASE_URL"] || "https://agentrouter.org/v1";
         if (!apiKey) return json({ error: "AI is not configured (AGENTROUTER_API_KEY)." }, 500);
