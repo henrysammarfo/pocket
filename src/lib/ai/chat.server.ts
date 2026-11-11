@@ -1,30 +1,18 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { convertToModelMessages, createIdGenerator, streamText, type UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 import { authenticate, json } from "./auth.server";
 import { getDb } from "@/lib/db/client";
 import { threadMessages, threads } from "../../../drizzle/schema";
-
-// Pocket's AI runs through Otari (https://otari.ai), Mozilla.ai's open-source gateway.
-// MODEL is an Otari routing policy name; the policy resolves to open-weight models.
-const MODEL = process.env["OTARI_EXPLAIN_MODEL"] || "pocket-explain";
-const BASE_URL = process.env["OTARI_BASE_URL"] || "https://api.otari.ai/api/v1";
-
-const INSTRUCTIONS = `You are POCKET, a warm, sharp personal money assistant inside the POCKET app.
-Members describe financial goals (saving for something, paying off debt, budgeting rent, building a reserve). Your job is to turn their goal into a clear, personalized money plan.
-
-How to respond:
-- If key facts are missing (income, fixed bills, deadline, current savings), make sensible stated assumptions, give a draft plan anyway, then ask at most 2 short follow-up questions.
-- Structure plans in markdown with these sections: **Your goal** (one line), **The plan** (a short table: step, amount, when), **POCKET guardrails** (3-4 rules POCKET would enforce: protected reserve floor, spending cap, approved recipients, plan expiry), **This week** (1-3 concrete actions).
-- Use the member's currency if they mention one; otherwise use $.
-- Keep it conversational and short, like a great friend who is good with money. No lectures.
-- Never promise fixed returns or guaranteed growth. Never claim money has actually moved: POCKET execution is a testnet demo. Mention briefly when relevant that this is guidance, not regulated financial advice.`;
+import { encodeAiState } from "./ai-states";
+import { readOtariConfig } from "./otari/config";
+import { streamExplainer } from "./explain-stream";
+import { recordAiRequest } from "./otari/record.server";
 
 export async function handleChat(request: Request) {
   const auth = await authenticate(request);
   if (!auth) return json({ error: "Please sign in again." }, 401);
-  const apiKey = process.env["OTARI_SERVICE_KEY"];
-  if (!apiKey) return json({ error: "AI is not configured (OTARI_SERVICE_KEY)." }, 500);
+  const config = readOtariConfig();
+  if (!config.serviceKey) return json({ error: encodeAiState("not_configured") }, 503);
 
   const body = (await request.json().catch(() => null)) as { messages?: UIMessage[]; threadId?: string } | null;
   const messages = body?.messages;
@@ -66,24 +54,15 @@ export async function handleChat(request: Request) {
   }
   await db.update(threads).set({ updatedAt: new Date() }).where(eq(threads.id, threadId));
 
-  const provider = createOpenAI({
-    baseURL: BASE_URL,
-    apiKey,
-  });
-
-  const result = streamText({
-    model: provider.chat(MODEL),
-    system: INSTRUCTIONS,
-    messages: await convertToModelMessages(messages),
-    abortSignal: request.signal,
-  });
-
-  return result.toUIMessageStreamResponse({
-    originalMessages: messages,
-    sendReasoning: false,
-    generateMessageId: createIdGenerator({ prefix: "msg", size: 16 }),
-    onFinish: async ({ responseMessage }) => {
-      if (!responseMessage?.parts?.length) return;
+  return streamExplainer({
+    messages,
+    memberId: userId,
+    threadId,
+    config,
+    signal: request.signal,
+    onDone: async ({ receipt, outcome, responseMessage }) => {
+      await recordAiRequest({ memberId: userId, threadId, role: "explain", policy: config.explainModel, outcome, receipt: receipt ?? {} });
+      if (!responseMessage?.parts?.some((p) => p.type === "text")) return;
       try {
         await db
           .insert(threadMessages)
@@ -101,13 +80,6 @@ export async function handleChat(request: Request) {
       } catch (error) {
         console.error("Failed to save assistant message", error);
       }
-    },
-    onError: (error) => {
-      const status = (error as { statusCode?: number })?.statusCode;
-      if (status === 402) return "Your AI allowance is used up for today. Your money and plans still work.";
-      if (status === 429) return "POCKET is busy right now. Please try again in a moment.";
-      console.error(error);
-      return "Something went wrong creating your plan. Please try again.";
     },
   });
 }

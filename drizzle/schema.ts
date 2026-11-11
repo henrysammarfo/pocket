@@ -187,3 +187,21 @@ export const receipts = pgTable(
   },
   (t) => [index("receipts_household_idx").on(t.householdId, t.createdAt)],
 );
+
+/** One row per Otari call Pocket made, for the member's AI receipts. */
+export const aiRequests = pgTable(
+  "ai_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id").references(() => threads.id, { onDelete: "set null" }),
+    role: text("role").notNull(),
+    policy: text("policy").notNull(),
+    outcome: text("outcome").notNull(),
+    receipt: jsonb("receipt").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("ai_requests_member_idx").on(t.memberId, t.createdAt)],
+);

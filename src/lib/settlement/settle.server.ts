@@ -2,7 +2,11 @@ import { and, desc, eq } from "drizzle-orm";
 import { authenticate, json } from "@/lib/ai/auth.server";
 import { getDb } from "@/lib/db/client";
 import { intents, moneyPlans, receipts, settlements } from "../../../drizzle/schema";
-import { parseSpendIntent, assertMoneyPlan } from "@/lib/policy/plan-parser";
+import { assertMoneyPlan } from "@/lib/policy/plan-parser";
+import { parseIntentWithOtari } from "@/lib/ai/otari/intent";
+import { readOtariConfig } from "@/lib/ai/otari/config";
+import { buildReceipt } from "@/lib/ai/otari/receipt";
+import { recordAiRequest } from "@/lib/ai/otari/record.server";
 import { evaluatePolicy } from "@/lib/policy/policy-engine";
 import { composeIntent } from "@/lib/policy/intent-composer";
 import type { MoneyPlan } from "@/lib/policy/types";
@@ -27,8 +31,26 @@ export async function handleSettle(request: Request): Promise<Response> {
 
   const db = getDb();
   const source = body.source ?? "typed";
-  const intent = parseSpendIntent(body.text, source);
   const userId = auth.userId;
+  // Intent role through Otari; rules are the fail-closed fallback. The model
+  // only reads the text: the PolicyEngine below makes the decision.
+  const otariConfig = readOtariConfig();
+  const parsed = await parseIntentWithOtari(body.text, source, userId, { config: otariConfig });
+  const intent = parsed.intent;
+  const aiIntent = {
+    parsedBy: parsed.parsedBy,
+    ...(parsed.fallbackReason ? { fallbackReason: parsed.fallbackReason } : {}),
+    receipt: parsed.meta ? buildReceipt("intent", otariConfig.intentModel, parsed.meta, []) : null,
+  };
+  if (parsed.meta || parsed.fallbackReason !== "no_key") {
+    void recordAiRequest({
+      memberId: userId,
+      role: "intent",
+      policy: otariConfig.intentModel,
+      outcome: parsed.parsedBy === "model" ? "ok" : (parsed.fallbackReason ?? "rules"),
+      receipt: aiIntent.receipt ?? {},
+    });
+  }
 
   let planRow: {
     id: string;
@@ -109,6 +131,7 @@ export async function handleSettle(request: Request): Promise<Response> {
 
   if (!planRow) {
     return json({
+      aiIntent,
       blocked: true,
       decision,
       screen: {
@@ -152,6 +175,7 @@ export async function handleSettle(request: Request): Promise<Response> {
       kind: "blocked",
     });
     return json({
+      aiIntent,
       blocked: true,
       decision,
       screen: {
@@ -218,6 +242,7 @@ export async function handleSettle(request: Request): Promise<Response> {
     });
 
     return json({
+      aiIntent,
       blocked: false,
       decision,
       composed,
