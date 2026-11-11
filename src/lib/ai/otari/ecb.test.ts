@@ -26,7 +26,9 @@ describe("parseEcbDaily", () => {
 });
 
 describe("isEcbFetch", () => {
-  it("only accepts https www.ecb.europa.eu", () => {
+  it("only accepts https ecb.europa.eu and its subdomains", () => {
+    expect(isEcbFetch("https://ecb.europa.eu/x")).toBe(true);
+    expect(isEcbFetch("https://notecb.europa.eu/x")).toBe(false);
     expect(isEcbFetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")).toBe(true);
     expect(isEcbFetch("http://www.ecb.europa.eu/x")).toBe(false);
     expect(isEcbFetch("https://ecb.europa.eu.evil.test/x")).toBe(false);

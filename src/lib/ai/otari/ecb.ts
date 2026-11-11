@@ -1,10 +1,13 @@
 /**
  * Exchange rates come from the European Central Bank's public daily reference
  * rates, fetched by Otari's web fetch tool. The workspace's web fetch allowed
- * domains are set to www.ecb.europa.eu only (see OTARI.md).
+ * domains are set to ecb.europa.eu only, which Otari also applies to its
+ * subdomains such as www.ecb.europa.eu (see OTARI.md).
  */
 export const ECB_DAILY_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 export const ECB_HOST = "www.ecb.europa.eu";
+/** The workspace allow rule. Otari matches a domain and its subdomains. */
+export const ECB_DOMAIN = "ecb.europa.eu";
 
 export type EcbRates = { date: string; perEur: Record<string, number> };
 
@@ -34,7 +37,7 @@ export function isEcbFetch(url: string | undefined): boolean {
   if (!url) return false;
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && u.hostname === ECB_HOST;
+    return u.protocol === "https:" && (u.hostname === ECB_DOMAIN || u.hostname.endsWith(`.${ECB_DOMAIN}`));
   } catch {
     return false;
   }

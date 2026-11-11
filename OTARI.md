@@ -38,7 +38,7 @@ The first commit where Otari came in: `f0c1e1b` on branch `otari-devs-wilding`.
 - **Check:** the dashboard budget bars; a member above 80% gets the lighter model on the receipt.
 
 ### 5. Web fetch
-- **How:** the explainer declares `{"type": "otari_web_fetch"}` and is told to read `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml` for any currency question. The workspace's web fetch allowed domains list holds only `www.ecb.europa.eu`. Pocket reads the fetch from `otari_tool_calls` and the receipt names the source.
+- **How:** the explainer declares `{"type": "otari_web_fetch"}` and is told to read `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml` for any currency question. The workspace's web fetch allowed domains list holds only `ecb.europa.eu`, which Otari applies to its subdomains too (`domain_rule_matches` in `src/gateway/services/web_retrieval_policy.py`), so `www.ecb.europa.eu` is covered. Pocket reads the fetch from `otari_tool_calls` and the receipt names the source.
 - **Note:** the ECB file has no Ghana cedi rate, so Pocket says it cannot convert GHS rather than guess.
 - **Code:** `src/lib/ai/otari/ecb.ts`, `src/lib/ai/otari/explain.ts`, `src/lib/ai/otari/tool-calls.ts`
 - **Check:** ask "How much is 200 dollars in euros?"; the receipt shows "Read www.ecb.europa.eu" and the details say European Central Bank daily reference rates.
@@ -106,7 +106,7 @@ Do these once in the Otari dashboard, in this order. Names must match exactly; t
      on_failure:
        - openai/gpt-oss-20b
    ```
-5. **Web fetch** on, allowed domains `www.ecb.europa.eu` only.
+5. **Web fetch** on, allowed domains `ecb.europa.eu` only (covers `www.ecb.europa.eu`).
 6. **Code execution** on.
 7. **Workspace `pocket-guard`**, separate, with an ordinary API key set as `OTARI_GUARD_KEY`, and a routing policy:
    ```yaml
