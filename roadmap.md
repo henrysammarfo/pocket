@@ -1,7 +1,0 @@
-- [x] POCKET brand, public pages, merch, history, development
-- [x] New crisp logo mark + wordmark across site and app
-- [x] Footer: Made→About, Story→History, In the lab→Development, Say hey→Contact
-- [x] Redesigned chat app (sidebar search/collapse, goal card, pixel loader, follow-ups, slash templates, mic with live waveform)
-- [ ] Signed-in chat check in preview (blocked: no member account exists yet)
-- [ ] Deeper redesign of each marketing page (next pass)
-- [ ] Connect Shopify checkout (blocked: store creation declined)
