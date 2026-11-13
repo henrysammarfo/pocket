@@ -5,3 +5,4 @@
 * NEP-141 storage: receivers need `storage_deposit` (USDC testnet 0.00125 NEAR) before `ft_transfer`; transfers need 1 yocto.
 * Circle USDC on NEAR testnet: `3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af`.
 * Eth implicit accounts (`0x` + 40 hex) are valid NEAR accounts; Pocket asks the network for 0x and never guesses.
+* Groq docs (console.groq.com/docs): production models gpt-oss-120b, gpt-oss-20b, whisper-large-v3 (+turbo); llama 3.x deprecated Aug 2026. Whisper bills at least 10 s per request, max 25 MB on free tier, verbose_json gives no_speech_prob per segment (used to drop hallucinated words). 429 returns retry-after.

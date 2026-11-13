@@ -18,7 +18,8 @@ await p.waitForTimeout(3000);
 await p.screenshot({ path: `${SHOTS}/m-chat-empty.png` });
 await p.fill('textarea[aria-label="Message Pocket"]', 'Send @admin 5 dollars and put 10 in Tesla');
 await p.keyboard.press('Enter');
-await p.locator('.plan').first().waitFor({ timeout: 60000 });
+await p.locator('.plan, .thread button:has-text("Yes")').first().waitFor({ timeout: 60000 });
+if (!(await p.locator('.plan').count())) { await p.locator('.thread button:has-text("Yes")').last().click(); await p.locator('.plan').first().waitFor({ timeout: 60000 }); }
 await p.waitForTimeout(500);
 await p.screenshot({ path: `${SHOTS}/m-chat-plan.png` });
 const txt = await p.locator('.thread').innerText(); console.log('THREAD:', txt.slice(-500));

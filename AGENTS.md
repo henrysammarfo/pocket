@@ -15,12 +15,18 @@ Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROO
 ## Check it
 | What | Command |
 | --- | --- |
-| Unit tests (NEP-413, plan rules, address rules, units) | `npm test` |
+| Everything, from a clean state, with a report in test-results/summary.md | `npm run test:all` (add `SMOKE_URL=<hosted url>` for the hosted smoke test) |
+| Unit tests (NEP-413, plan rules, address rules, units, messy speech) | `npm test` |
 | Types and lint | `npm run typecheck && npm run lint` |
 | Full testnet flow (server side) | `npm run judge` |
 | UI flow in a browser (needs a running server) | `BASE=http://localhost:3000 npm run e2e` |
 | Responsive matrix 320 to 1440 px, 50 to 100% zoom, light and black | `BASE=http://localhost:3000 npm run e2e:responsive` |
-| Deployed contracts and verifier hash | `GET /api/health` |
+| Chat and voice in a real browser, phone or desktop (`W=1440 H=900`) | `BASE=http://localhost:3000 npm run e2e:chat` |
+| Smoke test any running copy | `npm run smoke -- https://your-url` |
+| Deployed contracts, verifier hash, AI provider and model | `GET /api/health` |
+
+## AI and voice (optional)
+Put a free `GROQ_API_KEY` (console.groq.com/keys) in `.env.local`: chat uses `openai/gpt-oss-120b`, voice uses `whisper-large-v3`. Or `NEARAI_API_KEY` with `AI_PROVIDER=nearai` for NEAR AI Cloud. With no key, Chat uses the built in helper and browser speech, and every test still passes.
 
 ## Rules the code enforces
 * The AI only proposes a plan (`propose_plan` tool). It never holds a key. The device key in the browser signs.
