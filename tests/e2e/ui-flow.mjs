@@ -6,7 +6,7 @@ const u = 'e2e' + Date.now().toString(36).slice(-6);
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 const p = await ctx.newPage();
-p.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+const errs = []; p.on('pageerror', (e) => { errs.push(e.message); console.log('PAGEERROR', e.message); });
 const hold = async (sel = 'button.hold') => { const el = p.locator(sel).first(); await el.waitFor(); const bb = await el.boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(1500); await p.mouse.up(); };
 await p.goto(BASE + '/welcome');
 await p.fill('input[aria-label="Pick a username"]', u);
@@ -54,4 +54,4 @@ await p.goto(BASE + '/send/to?to=@admin&amt=1'); await p.waitForTimeout(4000);
 await p.screenshot({ path: `${SHOTS}/m-xsend.png` });
 for (const r of ['settings', 'profile', 'contacts', 'swap', 'send', 'activity', 'coin/near', 'coin/usdc', 'pay/' + u]) { await p.goto(BASE + '/' + r); await p.waitForTimeout(2500); await p.screenshot({ path: `${SHOTS}/m-${r.replace(/\//g, '-')}.png` }); }
 await b.close();
-console.log('UI FLOW DONE');
+console.log(errs.length ? `UI FLOW FAILED with ${errs.length} page errors` : 'UI FLOW PASS'); process.exit(errs.length ? 1 : 0);

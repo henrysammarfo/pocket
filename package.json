@@ -13,7 +13,10 @@
     "bootstrap": "node scripts/bootstrap-testnet.mjs",
     "judge": "node --conditions=react-server --env-file=.env.local --import tsx scripts/judge.mts",
     "e2e": "node tests/e2e/ui-flow.mjs",
-    "e2e:responsive": "node tests/e2e/responsive.mjs"
+    "e2e:responsive": "node tests/e2e/responsive.mjs",
+    "test:all": "node scripts/test-all.mjs",
+    "smoke": "node tests/smoke.mjs",
+    "e2e:chat": "node tests/e2e/chat-voice.mjs"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",

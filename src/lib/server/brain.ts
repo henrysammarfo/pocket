@@ -95,12 +95,14 @@ export async function chat(input: ChatIn): Promise<ChatOut> {
   if (!aiUp() || input.offline) return rules(input, 'off');
   const ctx = input.ctx;
   try {
-    const msgs = input.messages.slice(-16).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+    const msgs = input.messages.slice(-10).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
     const r = await fetch(AI.baseUrl.replace(/\/$/, '') + '/chat/completions', {
       method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${AI.apiKey}` }, signal: AbortSignal.timeout(40000),
-      body: JSON.stringify({ model: AI.model, temperature: 0.5, max_tokens: 1200, ...(/gpt-oss/.test(AI.model) ? { reasoning_effort: 'low' } : {}), tools: TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice) }, ...msgs] }),
+      body: JSON.stringify({ model: AI.model, temperature: 0.5, max_tokens: 900, ...(/gpt-oss/.test(AI.model) ? { reasoning_effort: 'low' } : {}), tools: TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice) }, ...msgs] }),
     });
     if (r.status === 401 || r.status === 402 || r.status === 403) { aiState.downUntil = Date.now() + 10 * 60e3; aiState.reason = `provider said ${r.status}`; }
+    // Free tiers rate limit (Groq free: 30 a minute, 1K a day). Rest for as long as the provider asks, max 2 minutes.
+    if (r.status === 429) { const s = Number(r.headers.get('retry-after')) || 20; aiState.downUntil = Date.now() + Math.min(120, s) * 1000; aiState.reason = 'provider busy (rate limit)'; }
     if (!r.ok) throw new Error(`AI ${r.status}`);
     const j = await r.json();
     const usd = ((j.usage?.prompt_tokens || 0) * AI.inUsd + (j.usage?.completion_tokens || 0) * AI.outUsd) / 1e6;

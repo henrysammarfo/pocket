@@ -19,7 +19,13 @@ export const POST = handler(async (req) => {
   const last = b.messages[b.messages.length - 1];
   if (last.role !== 'user' || !String(last.content || '').trim()) throw new HttpError(400, 'Say something first.');
   let memories: string[] = [];
-  const useAI = aiUp() && !!account;
+  let useAI = aiUp() && !!account;
+  // Stay inside the provider's free tier for the whole server (Groq free chat: 30 a minute, 1K a day).
+  // Over the line, Pocket answers with its free built in helper instead of failing.
+  if (useAI) {
+    try { await limit('ai:all:min', Number(process.env.AI_GLOBAL_PER_MIN || 25), 60); await limit('ai:all:day', Number(process.env.AI_GLOBAL_PER_DAY || 900), 86400); }
+    catch { useAI = false; }
+  }
   if (account) {
     await limit('chat:acct:' + account, Number(process.env.CHAT_PER_ACCOUNT_HOUR || 90), 3600);
     memories = (await store.memories(account)).map((m) => m.text);

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookUser, Check, ChevronRight, Gauge, Sparkles, Brain, Globe, HeartPulse, Info, KeyRound, Minus, PiggyBank, Plus, ScanFace, SunMoon } from 'lucide-react';
+import { BookUser, Check, ChevronRight, Gauge, Sparkles, Brain, Volume2, Globe, HeartPulse, Info, KeyRound, Minus, PiggyBank, Plus, ScanFace, SunMoon } from 'lucide-react';
 import { AppShell, Logo, Sheet, fmt, toast, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
@@ -16,6 +16,7 @@ function Stepper({ v, set, step, min, max }: { v: number; set: (n: number) => vo
 
 type Credits = { used: number; total: number; left: number; resets: string; ai: boolean; stt: boolean; cost: { chat: number; voice: number } };
 function CreditsMeter() {
+  const rules = useRules();
   const [c, setC] = useState<Credits | null>(null);
   const [mem, setMem] = useState<{ id: string; text: string }[]>([]);
   useEffect(() => { api<Credits>('/api/credits').then(setC).catch(() => {}); api<{ items: { id: string; text: string }[] }>('/api/memory').then((r) => setMem(r.items || [])).catch(() => {}); }, []);
@@ -30,6 +31,7 @@ function CreditsMeter() {
         <div className="meter" role="progressbar" aria-label="AI credits used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: pct + '%' }} /></div>
         <div className="cs">{c ? `A chat reply uses about ${c.cost.chat}, a voice note about ${c.cost.voice}. Resets ${reset}. ${c.ai ? 'AI is on.' : 'AI is resting, so Pocket uses its built in helper for free.'}` : ' '}</div>
       </div></div></div>
+      <button className="cell" onClick={() => setRules({ ...rules, speak: !rules.speak })}><div className="lft"><span className="ic"><Volume2 size={17} aria-hidden /></span><div><div className="ct">Read replies out loud</div><div className="cs">Uses your device voice, free</div></div></div><span className="toggle" role="switch" aria-checked={!!rules.speak} aria-label="Read replies out loud" /></button>
     </section>
     <div className="ghead"><b>What Pocket remembers</b><span>{mem.length}</span></div>
     <section className="group">
