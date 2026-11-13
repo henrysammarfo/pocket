@@ -1,0 +1,57 @@
+// UI smoke on testnet: sign up, chat a plan, hold to approve, trade, receipt. Run against a running server.
+import { chromium } from '@playwright/test';
+const BASE = process.env.BASE || 'http://localhost:3100';
+const SHOTS = process.env.SHOTS || 'shots';
+const u = 'e2e' + Date.now().toString(36).slice(-6);
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const p = await ctx.newPage();
+p.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+const hold = async (sel = 'button.hold') => { const el = p.locator(sel).first(); await el.waitFor(); const bb = await el.boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(1500); await p.mouse.up(); };
+await p.goto(BASE + '/welcome');
+await p.fill('input[aria-label="Pick a username"]', u);
+await p.fill('input[aria-label="Your first name"]', 'Ama');
+await p.click('button:has-text("Create my Pocket")');
+await p.waitForURL('**/chat', { timeout: 90000 });
+console.log('signed up', u);
+await p.waitForTimeout(3000);
+await p.screenshot({ path: `${SHOTS}/m-chat-empty.png` });
+await p.fill('textarea[aria-label="Message Pocket"]', 'Send @admin 5 dollars and put 10 in Tesla');
+await p.keyboard.press('Enter');
+await p.locator('.plan').first().waitFor({ timeout: 60000 });
+await p.waitForTimeout(500);
+await p.screenshot({ path: `${SHOTS}/m-chat-plan.png` });
+const txt = await p.locator('.thread').innerText(); console.log('THREAD:', txt.slice(-500));
+const blocked = await p.locator('.plan .chip:has-text("Blocked")').count();
+if (!blocked) {
+  await p.click('.plan button:has-text("Review and approve")');
+  await p.waitForURL('**/review**');
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: `${SHOTS}/m-review.png` });
+  await hold();
+  await p.locator('a:has-text("See wallet")').waitFor({ timeout: 90000 });
+  console.log('REVIEW:', (await p.locator('.bd').innerText()).replace(/\n/g, ' | '));
+  await p.screenshot({ path: `${SHOTS}/m-review-done.png` });
+}
+await p.goto(BASE + '/wallet'); await p.waitForTimeout(4000);
+await p.screenshot({ path: `${SHOTS}/m-wallet.png` });
+console.log('WALLET:', (await p.locator('.pcard').innerText()).replace(/\n/g, ' | '));
+await p.goto(BASE + '/invest'); await p.waitForTimeout(5000);
+await p.screenshot({ path: `${SHOTS}/m-invest.png` });
+await p.goto(BASE + '/invest/NVDA'); await p.waitForTimeout(5000);
+await p.screenshot({ path: `${SHOTS}/m-stock.png` });
+await p.click('.dock button:has-text("Buy")');
+await p.click('.sheet .quick button:has-text("$10")');
+await p.locator('.sheet .cell:has-text("Quote holds")').waitFor({ timeout: 30000 });
+await p.screenshot({ path: `${SHOTS}/m-buy-sheet.png` });
+await hold('.sheet button.hold');
+await p.locator('.sheet a:has-text("See receipt")').waitFor({ timeout: 90000 });
+await p.click('.sheet a:has-text("See receipt")');
+await p.waitForURL('**/r/**'); await p.locator('.rhead').waitFor({ timeout: 30000 }); await p.waitForTimeout(500);
+await p.screenshot({ path: `${SHOTS}/m-receipt.png` });
+console.log('RECEIPT:', (await p.locator('.receipt').innerText()).replace(/\n/g, ' | ').slice(0, 600));
+await p.goto(BASE + '/send/to?to=@admin&amt=1'); await p.waitForTimeout(4000);
+await p.screenshot({ path: `${SHOTS}/m-xsend.png` });
+for (const r of ['settings', 'profile', 'contacts', 'swap', 'send', 'activity', 'coin/near', 'coin/usdc', 'pay/' + u]) { await p.goto(BASE + '/' + r); await p.waitForTimeout(2500); await p.screenshot({ path: `${SHOTS}/m-${r.replace(/\//g, '-')}.png` }); }
+await b.close();
+console.log('UI FLOW DONE');

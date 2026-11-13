@@ -42,7 +42,8 @@ export async function receipt(hash: string): Promise<Receipt> {
       if (maker && user) {
         const ud = user.intents[0].diff as Record<string, string>;
         const memo: string = maker.intents[0].memo || '';
-        const kv = Object.fromEntries((memo.match(/(\w+) (\S+)/g) || []).map((p) => p.split(' ')));
+        const g = (re: RegExp) => memo.match(re)?.[1];
+        const kv = { price: g(/ price (\S+)/), mid: g(/ mid (\S+)/), spread_bps: g(/ spread_bps (\S+)/), source: g(/ source (.+?) at \S+$/), at: g(/ at (\S+)$/) };
         const entries = Object.entries(ud);
         const pay = entries.find(([, v]) => v.startsWith('-'))!, get = entries.find(([, v]) => !v.startsWith('-'))!;
         const pt = tokenByAsset(pay[0])!, gt = tokenByAsset(get[0])!;

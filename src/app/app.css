@@ -54,3 +54,6 @@ a{color:inherit;text-decoration:none}
 .bd .cell .v small a{color:var(--accent-text);text-decoration:none}
 .sbx input.amt2{width:100%;flex:1;background:none;border:0;padding:0;color:var(--ink);outline:none}
 .amt.over{color:var(--danger)}
+.toggle[aria-checked=false]{background:var(--surface-3)}.toggle[aria-checked=false]::after{right:auto;left:2px}
+.toggle{transition:background .2s}.toggle::after{transition:left .2s,right .2s}
+.composer textarea.inp{resize:none;min-height:1.6rem;max-height:8rem;font-size:1rem}

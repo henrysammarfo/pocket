@@ -23,6 +23,7 @@ function ReviewInner() {
   const plan = useMemo(() => msgs.map((m) => (m.plan as { plan?: Plan } | undefined)?.plan).find((p) => p?.id === id) || null, [msgs, id]);
   const [res, setRes] = useState<Res[]>([]);
   const [running, setRunning] = useState(false);
+  const [snap, setSnap] = useState<number | null>(null);
   const [resolved, setResolved] = useState<Record<number, string>>({});
   useEffect(() => {
     if (!plan) return;
@@ -40,7 +41,7 @@ function ReviewInner() {
   const pick = (amt: number, left: { pusd: number; usdc: number }) => (left.pusd >= amt ? 'pUSD' : left.usdc >= amt ? 'USDC' : null);
 
   const run = async () => {
-    setRunning(true);
+    setRunning(true); setSnap(chk?.after ?? null);
     const out: Res[] = plan.steps.map(() => ({ state: 'wait' }));
     setRes([...out]);
     try { if (getRules().passkey) await passkeyApprove(getRules().passkeyId); } catch (e) { toastErr(e); setRunning(false); setRes([]); return; }
@@ -94,7 +95,7 @@ function ReviewInner() {
           })}
           <div className="cell"><span className="k">Network fee</span><span className="v">0.00<small>Pocket pays it</small></span></div>
           <div className="cell"><span className="k">Arrives</span><span className="v">about 2 s</span></div>
-          {chk && <div className="cell after"><span className="k">Your balance after</span><span className="v">${fmt(chk.after)}</span></div>}
+          {chk && <div className="cell after"><span className="k">Your balance after</span><span className="v">${fmt(snap ?? chk.after)}</span></div>}
         </section>
         {contact?.sends ? <div className="trust"><History size={16} aria-hidden />You&apos;ve sent {contact.name} {contact.sends} {contact.sends === 1 ? 'time' : 'times'}.{contact.lastAt ? ` Last time ${when(contact.lastAt)}.` : ''}</div> : null}
         {single?.note && <div className="note"><StickyNote size={16} aria-hidden /><span>Note: <b>{single.note}</b></span></div>}
@@ -104,7 +105,7 @@ function ReviewInner() {
           {done ? (
             <div className="acts2"><Link className="btn ghost" href="/wallet">See wallet</Link><button className="btn" onClick={() => router.push('/chat')}>Back to Chat</button></div>
           ) : (
-            <HoldButton label={label} doneLabel={running ? 'Working' : 'Done'} hint={single ? 'Keep holding to send' : 'Keep holding to approve'} onDone={run} disabled={!chk?.ok || !!badRecipient || running} />
+            <HoldButton label={label} doneLabel={running ? 'Working' : 'Done'} hint={single ? 'Keep holding to send' : 'Keep holding to approve'} onDone={run} disabled={(!chk?.ok && !running) || !!badRecipient || running} />
           )}
           <div className="fine">Test money on NEAR testnet. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
           {res.some((r) => r.hash) && <div className="fine">{res.filter((r) => r.hash).map((r) => <a key={r.hash} href={txUrl(r.hash!)} target="_blank" rel="noreferrer" style={{ marginRight: '.6rem' }}>Explorer <ExternalLink size={11} aria-hidden /></a>)}</div>}
