@@ -27,12 +27,17 @@ export const POST = handler(async (req) => {
   out.append('file', f, /\.[a-z0-9]+$/i.test(name) ? name : name + '.webm');
   out.append('model', AI.sttModel);
   out.append('prompt', PROMPT);
-  out.append('response_format', 'json');
+  out.append('response_format', 'verbose_json');
+  out.append('temperature', '0');
   const r = await fetch(AI.sttBaseUrl.replace(/\/$/, '') + '/audio/transcriptions', { method: 'POST', headers: { authorization: `Bearer ${AI.sttKey}` }, body: out, signal: AbortSignal.timeout(55000) });
   if (!r.ok) { await refund(account, COST.voice); if ([401, 402, 403].includes(r.status)) aiState.sttDownUntil = Date.now() + 10 * 60e3; if (r.status === 429) aiState.sttDownUntil = Date.now() + Math.min(120, Number(r.headers.get('retry-after')) || 20) * 1000; }
   if (!r.ok) throw new HttpError(r.status === 402 ? 503 : 502, `Transcription failed (${r.status}). Try again, or type it.`);
   const j = await r.json();
-  const text = String(j.text || '').trim();
+  // Whisper invents words on silence or noise ("you", "Thank you."). Drop segments it marks as no speech.
+  const segs: { text?: string; no_speech_prob?: number; avg_logprob?: number }[] = Array.isArray(j.segments) ? j.segments : [];
+  const kept = segs.length ? segs.filter((s) => (s.no_speech_prob ?? 0) < 0.6 && (s.avg_logprob ?? 0) > -1.2).map((s) => s.text || '').join(' ') : String(j.text || '');
+  let text = kept.replace(/\s+/g, ' ').trim();
+  if (/^(you|thank you|thanks|thanks for watching|bye|okay|\.|,)[.!]?$/i.test(text)) text = '';
   if (!text) throw new HttpError(422, 'I could not hear any words in that. Try again a bit closer to the mic.');
   return { text, credits: await creditsOf(account) };
 });

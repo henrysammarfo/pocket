@@ -20,10 +20,12 @@ function words2num(s: string) {
 export function cleanSpeech(raw: string) {
   let s = ' ' + raw.replace(/\s+/g, ' ') + ' ';
   s = s.replace(/[“”"]/g, '');
+  s = s.replace(/\b(e\.? ?h\.? ?m|u\.? ?h\.? ?m|e\.? ?r\.? ?m)\b\.?/gi, ' ');       // "E H M." spelled out fillers
   s = s.replace(FILLERS, ' ');
   s = s.replace(/\b(\w+)(?:[\s,.]+\1\b)+/gi, '$1');           // "my my my" -> "my"
   s = s.replace(/\b(\w)-\1(\w+)/gi, '$1$2');                   // "s-send" -> "send"
   s = words2num(s);
+  s = s.replace(/\b(send|pay|to|give)\s+at\s+([a-z][a-z0-9_]{1,30})\b/gi, '$1 @$2');   // "send at admin" -> "send @admin"
   s = s.replace(/\b(make you|make i|i wan|i want to|i wanna|i would like to|can you|could you|help me)\s+/gi, '');
   s = s.replace(/\b(mama|mommy|mom|mother|ma)\b/gi, 'mum').replace(/\b(dada|daddy|papa|father)\b/gi, 'dad');
   s = s.replace(/\b(dollars?|bucks|usd|cedis?|ghana cedis)\b/gi, 'dollars');

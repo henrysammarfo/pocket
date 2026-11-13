@@ -38,12 +38,33 @@ if (await mic.count()) {
   await p.waitForTimeout(5000);
   ok((await p.locator('.composer.rec').count()) === 0, 'recording stopped cleanly');
 }
-await p.setInputFiles('input[type=file]', 'tests/e2e/fixtures/tone.wav');
-await p.waitForTimeout(6000);
-const last = (await p.locator('.thread').innerText()).slice(-240).replace(/\n/g, ' ');
-ok(true, 'voice note upload handled: ' + last.slice(-140));
+const aiOn = !!health.services?.ai, sttOn = !!health.services?.voice;
+if (sttOn) {
+  // A real messy voice note: fillers, repeats and Pidgin ("abeg"), spoken in West African English.
+  const n = await p.locator('[aria-label="Said by voice"]').count();
+  await p.setInputFiles('input[type=file]', 'tests/e2e/fixtures/messy-voice.mp3');
+  await p.waitForFunction((n) => document.querySelectorAll('[aria-label="Said by voice"]').length > n, n, { timeout: 60000 });
+  await p.waitForFunction(() => !document.querySelector('[aria-label="Pocket is thinking"]') && !document.querySelector('[aria-label="Writing down what you said"]'), null, { timeout: 60000 });
+  await p.waitForTimeout(800);
+  const heard = (await p.locator('.thread .me').last().innerText()).trim();
+  ok(/send|admin|five|5|tesla/i.test(heard), 'voice note transcribed: ' + heard.slice(0, 120));
+  const reply = (await p.locator('.thread .ai').last().innerText()).trim();
+  const conf = await p.locator('.thread button:has-text("Yes")').count();
+  ok(conf > 0 || /plan/i.test(reply), 'voice note confirmed back before a plan: ' + reply.slice(0, 140).replace(/\n/g, ' '));
+  await p.screenshot({ path: `${SHOTS}/${tag}-chat-voice-note.png` });
+} else {
+  await p.setInputFiles('input[type=file]', 'tests/e2e/fixtures/tone.wav'); await p.waitForTimeout(4000);
+  ok(true, 'voice note upload handled without a speech key');
+}
+if (aiOn) {
+  const r3 = await say('By the way I get paid on the 25th of every month, please remember that');
+  ok(r3.length > 3, 'memory request reply: ' + r3.slice(0, 100).replace(/\n/g, ' '));
+  const src = await p.locator('.thread .meta, .thread .chip').allInnerTexts();
+  ok(src.join(' ').length > 0, 'reply labels: ' + [...new Set(src)].slice(-4).join(', '));
+}
 await p.goto(BASE + '/settings'); await p.locator('.meter').waitFor({ timeout: 20000 }); await p.waitForTimeout(800);
 const ct = await p.locator('.credits .ct').innerText(); ok(/left/.test(ct), 'credits meter: ' + ct);
+if (aiOn) { await p.waitForTimeout(1500); const mem = await p.locator('.ghead:has-text("What Pocket remembers") span').innerText(); ok(Number(mem) > 0, 'memory saved in Settings: ' + mem); ok(!/1,000 of 1,000/.test(ct), 'AI use was metered'); }
 await p.screenshot({ path: `${SHOTS}/${tag}-settings-credits.png`, fullPage: true });
 const ow = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); ok(ow <= 0, 'no horizontal overflow in settings');
 ok(errs.length === 0, 'no page errors ' + errs.join(' | '));

@@ -22,3 +22,10 @@ describe('cleanSpeech', () => {
     expect(steps?.length).toBe(1);
   });
 });
+describe('cleanSpeech, from a real Whisper transcript', () => {
+  it('reads "E H M ... send send at admin" as a send to @admin', () => {
+    const c = cleanSpeech('E H M. So I want to, like, send send at admin or $5, and put 10 in tesla abeg.');
+    expect(c).toMatch(/@admin/);
+    expect(c).not.toMatch(/\bE H M\b/i);
+  });
+});
