@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Pocket paper token">
+  <title>Pocket paper token</title>
+  <circle cx="32" cy="32" r="32" fill="#0F3329"/>
+  <!-- the same Pocket silhouette, drawn dashed: it is paper, not real -->
+  <path d="M23 47h18a9 9 0 0 0 9-9v-2.5a18 18 0 0 0-36 0V38a9 9 0 0 0 9 9z" fill="none" stroke="#F4F8F6" stroke-width="3.4" stroke-linejoin="round" stroke-dasharray="5.2 3.6"/>
+  <!-- a rising line that ends in a dot: a trade on paper -->
+  <path d="M22.5 39.5l6.2-6.2 4.6 3.8 7.2-8.4" fill="none" stroke="#5FD3A5" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="41.6" cy="27.8" r="2.7" fill="#5FD3A5"/>
+</svg>
