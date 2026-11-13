@@ -67,7 +67,7 @@ async function yahoo(sym: string) {
 
 export async function sharePrices(): Promise<Record<string, SharePrice | null>> {
   const rows = await Promise.all(STOCKS.map(async (s) => {
-    let q: (Awaited<ReturnType<typeof nasdaq>> & { spark?: number[] }) | null = null;
+    let q: { price: number | null; change: number | null; changePct: number | null; lastTrade: string; marketStatus: string | null; source: string; spark?: number[] } | null = null;
     let t = 0;
     try { const r = await cached('nq:' + s.ticker, 10000, () => nasdaq(s.ticker, s.asset)); q = r.v; t = r.t; }
     catch { try { const r = await cached('yh:' + s.ticker, 15000, () => yahoo(s.ticker)); q = r.v; t = r.t; } catch { q = null; } }
@@ -118,7 +118,6 @@ export async function stockDetail(ticker: string) {
 
 export async function coinDetail(id: 'near' | 'usd-coin') {
   const r: Record<string, number[]> = {};
-  let note: string | undefined;
   for (const [k, d] of [['1D', 1], ['1W', 7], ['1M', 30], ['1Y', 365]] as const) {
     try {
       const { v } = await cached(`cgc:${id}:${d}`, 1800000, () => j(`${CG_BASE}/coins/${id}/market_chart?vs_currency=usd&days=${d}`, cgHeaders));
@@ -128,7 +127,7 @@ export async function coinDetail(id: 'near' | 'usd-coin') {
     } catch { r[k] = []; }
   }
   r.All = r['1Y'];
-  note = 'Free CoinGecko data goes back 365 days';
+  const note = 'Free CoinGecko data goes back 365 days';
   return { id, ranges: r, note, source: 'CoinGecko market_chart', fetchedAt: Date.now() };
 }
 

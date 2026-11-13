@@ -10,7 +10,7 @@ export type Detected =
   | { kind: 'empty' };
 
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-export function detect(input: string, root: string): Detected {
+export function detect(input: string, ..._ignored: unknown[]): Detected {
   const s = input.trim();
   if (!s) return { kind: 'empty' };
   if (s.startsWith('@')) {

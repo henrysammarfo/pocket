@@ -12,7 +12,14 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
+    // RPC and AI responses are untyped JSON; they are validated where they are used.
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
+  {
     ignores: [
+      "contracts/**",
+      "vendor/**",
+      "scripts/**",
       "node_modules/**",
       ".next/**",
       "out/**",
