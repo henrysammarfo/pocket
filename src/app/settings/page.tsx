@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookUser, Check, ChevronRight, Gauge, Globe, HeartPulse, Info, KeyRound, Minus, PiggyBank, Plus, ScanFace, SunMoon } from 'lucide-react';
+import { BookUser, Check, ChevronRight, Gauge, Sparkles, Brain, Globe, HeartPulse, Info, KeyRound, Minus, PiggyBank, Plus, ScanFace, SunMoon } from 'lucide-react';
 import { AppShell, Logo, Sheet, fmt, toast, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
-import { passkeyApprove, passkeyCreate, saveLimit } from '@/lib/client/api';
+import { api, passkeyApprove, passkeyCreate, saveLimit } from '@/lib/client/api';
 import { useBalances } from '@/lib/client/data';
 import { refreshAll, setRules, useContacts, useProfile, useRules, useSession } from '@/lib/client/session';
 
@@ -14,6 +14,30 @@ function Stepper({ v, set, step, min, max }: { v: number; set: (n: number) => vo
   return <div className="limv"><button className="stp" aria-label="Less" onClick={() => set(Math.max(min, v - step))}><Minus size={20} strokeWidth={2.4} aria-hidden /></button><span>${v.toLocaleString('en-US')}</span><button className="stp" aria-label="More" onClick={() => set(Math.min(max, v + step))}><Plus size={20} strokeWidth={2.4} aria-hidden /></button></div>;
 }
 
+type Credits = { used: number; total: number; left: number; resets: string; ai: boolean; stt: boolean; cost: { chat: number; voice: number } };
+function CreditsMeter() {
+  const [c, setC] = useState<Credits | null>(null);
+  const [mem, setMem] = useState<{ id: string; text: string }[]>([]);
+  useEffect(() => { api<Credits>('/api/credits').then(setC).catch(() => {}); api<{ items: { id: string; text: string }[] }>('/api/memory').then((r) => setMem(r.items || [])).catch(() => {}); }, []);
+  const forget = async (id: string) => { try { await api('/api/memory', { delete: id }); setMem((m) => m.filter((x) => x.id !== id)); toast('Forgotten'); } catch (e) { toastErr(e); } };
+  const pct = c ? Math.min(100, Math.round((c.used / Math.max(1, c.total)) * 100)) : 0;
+  const reset = c ? new Date(c.resets).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+  return (<>
+    <div className="ghead"><b>AI credits</b><span>Free plan</span></div>
+    <section className="group">
+      <div className="cell credits"><div className="lft"><span className="ic"><Sparkles size={17} aria-hidden /></span><div style={{ flex: 1, minWidth: 0 }}>
+        <div className="ct">{c ? `${c.left.toLocaleString('en-US')} of ${c.total.toLocaleString('en-US')} left` : 'Loading credits'}</div>
+        <div className="meter" role="progressbar" aria-label="AI credits used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: pct + '%' }} /></div>
+        <div className="cs">{c ? `A chat reply uses about ${c.cost.chat}, a voice note about ${c.cost.voice}. Resets ${reset}. ${c.ai ? 'AI is on.' : 'AI is resting, so Pocket uses its built in helper for free.'}` : ' '}</div>
+      </div></div></div>
+    </section>
+    <div className="ghead"><b>What Pocket remembers</b><span>{mem.length}</span></div>
+    <section className="group">
+      {mem.length === 0 ? <div className="cell"><div className="lft"><span className="ic"><Brain size={17} aria-hidden /></span><div><div className="ct">Nothing yet</div><div className="cs">Tell Pocket things like &quot;I get paid on the 25th&quot; and it will remember</div></div></div></div>
+        : mem.map((m) => <div className="cell" key={m.id}><div className="lft"><span className="ic"><Brain size={17} aria-hidden /></span><div className="ct" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{m.text}</div></div><button className="lnk" onClick={() => forget(m.id)}>Forget</button></div>)}
+    </section>
+  </>);
+}
 function SettingsInner() {
   const s = useSession()!; const p = useProfile(); const rules = useRules(); const contacts = useContacts();
   const b = useBalances();
@@ -63,6 +87,7 @@ function SettingsInner() {
           {cell(PiggyBank, 'Always keep', rules.keep ? `$${rules.keep.toLocaleString('en-US')}` : 'Off', () => setSheet('keep'))}
           <button className="cell" onClick={togglePk}><div className="lft"><span className="ic"><ScanFace size={17} aria-hidden /></span><div><div className="ct">Approve with passkey</div><div className="cs">Face, fingerprint or screen lock on this device</div></div></div><span className="toggle" role="switch" aria-checked={rules.passkey} aria-label="Approve with passkey" /></button>
         </section>
+        <CreditsMeter />
         <div className="ghead"><b>Sending</b></div>
         <section className="group"><Link className="cell" href="/contacts"><div className="lft"><span className="ic"><BookUser size={17} aria-hidden /></span><div className="ct">Contacts and saved addresses</div></div><span className="cv">{contacts.length} <ChevronRight size={16} aria-hidden /></span></Link>{cell(Globe, 'Network', 'NEAR testnet', () => setSheet('network'))}</section>
         <div className="ghead"><b>Appearance</b><span>Showing {eff === 'black' ? 'black' : 'light'}</span></div>
