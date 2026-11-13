@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "setup": "node scripts/setup.mjs",
+    "bootstrap": "node scripts/bootstrap-testnet.mjs",
+    "judge": "node --conditions=react-server --env-file=.env.local --import tsx scripts/judge.mts",
+    "e2e": "node tests/e2e/ui-flow.mjs",
+    "e2e:responsive": "node tests/e2e/responsive.mjs"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",

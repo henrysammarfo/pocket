@@ -18,7 +18,7 @@ const NETWORK = 'testnet';
 if (process.env.NEAR_NETWORK && process.env.NEAR_NETWORK !== 'testnet') throw new Error('Pocket is testnet only');
 const ROOT = process.env.ROOT || 'pocketnear.testnet';
 if (!ROOT.endsWith('.testnet')) throw new Error('ROOT must be a .testnet account');
-const RPC = process.env.NEAR_RPC_URL || 'https://rpc.testnet.near.org';
+const RPC = process.env.NEAR_RPC_URL || 'https://test.rpc.fastnear.com';
 const SECRETS = path.resolve(process.env.POCKET_SECRETS_DIR || '.secrets');
 fs.mkdirSync(SECRETS, { recursive: true, mode: 0o700 });
 const here = path.dirname(new URL(import.meta.url).pathname);
