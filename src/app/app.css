@@ -57,3 +57,14 @@ a{color:inherit;text-decoration:none}
 .toggle[aria-checked=false]{background:var(--surface-3)}.toggle[aria-checked=false]::after{right:auto;left:2px}
 .toggle{transition:background .2s}.toggle::after{transition:left .2s,right .2s}
 .composer textarea.inp{resize:none;min-height:1.6rem;max-height:8rem;font-size:1rem}
+.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.1rem 0 .2rem}
+.chipbtn{padding:.55rem .9rem;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);font-weight:600;font-size:.875rem;box-shadow:inset 0 0 0 1px var(--sep)}
+.chipbtn:first-child{background:var(--accent);color:var(--on-accent,#fff)}
+.composer.rec{background:var(--accent-soft)}
+.recline{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;min-height:1.6rem;font-size:.9375rem}
+.recline .rechint{flex-basis:100%;color:var(--ink-2);font-size:.875rem;overflow-wrap:anywhere}
+.recdot{width:.6rem;height:.6rem;border-radius:9px;background:var(--danger);animation:recp 1s ease-in-out infinite}
+@keyframes recp{50%{opacity:.3;transform:scale(.8)}}
+@media (prefers-reduced-motion:reduce){.recdot{animation:none}}
+.cfoot{font-size:.6875rem;color:var(--ink-3);text-align:center;margin-top:.4rem;line-height:1.35}
+.composer .mic{touch-action:none;-webkit-user-select:none;user-select:none}

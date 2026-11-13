@@ -11,8 +11,29 @@ import { PUSD, ROOT, USDC, USDC_DECIMALS, VERIFIER, tokenBySymbol } from '../sha
 import { toUnits, nearToYocto } from '../shared/units';
 import { addLocalActivity, bumpContact, getSession, seedOf, setSession, setRules, refreshAll, type Session } from './session';
 
-export async function api<T = any>(path: string, body?: unknown): Promise<T> {
-  const r = await fetch(path, body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+// A signed session proves to the server which account is asking (for memory, chat history, credits).
+// Made with the device key, valid 24 h, kept in sessionStorage. It cannot move money.
+export function sessionToken(): string | null {
+  const s = getSession(); if (!s) return null;
+  try {
+    const c = JSON.parse(sessionStorage.getItem('pocket-st') || 'null');
+    if (c && c.account === s.account && c.exp > Date.now() + 3600e3) return c.token;
+  } catch { /* new one */ }
+  const exp = Date.now() + 24 * 3600e3;
+  const signed = signNep413({ message: JSON.stringify({ action: 'pocket.session', account: s.account, exp }), nonce: randomNonce(), recipient: 'pocket' }, seedOf(s));
+  const token = btoa(JSON.stringify(signed));
+  try { sessionStorage.setItem('pocket-st', JSON.stringify({ account: s.account, exp, token })); } catch { /* private mode */ }
+  return token;
+}
+const authHeaders = (): Record<string, string> => { const t = typeof window !== 'undefined' ? sessionToken() : null; return t ? { 'x-pocket-session': t } : {}; };
+export async function apiForm<T = any>(path: string, form: FormData): Promise<T> {
+  const r = await fetch(path, { method: 'POST', headers: authHeaders(), body: form });
+  const j = await r.json().catch(() => ({ error: `Server error ${r.status}` }));
+  if (!r.ok || j.error) throw new Error(j.error || `Server error ${r.status}`);
+  return j as T;
+}
+export async function api<T = any>(path: string, body?: unknown, method?: string): Promise<T> {
+  const r = await fetch(path, body === undefined && !method ? { cache: 'no-store', headers: authHeaders() } : { method: method || 'POST', headers: { 'content-type': 'application/json', ...authHeaders() }, body: body === undefined ? undefined : JSON.stringify(body) });
   const j = await r.json().catch(() => ({ error: `Server error ${r.status}` }));
   if (!r.ok || j.error) throw new Error(j.error || `Server error ${r.status}`);
   return j as T;

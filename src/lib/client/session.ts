@@ -7,7 +7,7 @@ import { keyFromString } from '../shared/nep413';
 export type Session = { account: string; username: string; secretKey: string; publicKey: string; createdAt: number };
 export type Profile = { name: string; email: string; avatar: string };
 export type Contact = { id: string; name: string; address: string; network: 'near' | 'sol' | 'eth' | 'pol'; kind: 'pocket' | 'wallet'; sends?: number; lastAt?: number };
-export type Rules = { keep: number; limit: number; passkey: boolean; passkeyId?: string };
+export type Rules = { keep: number; limit: number; passkey: boolean; passkeyId?: string; speak?: boolean };
 
 const K = { session: 'pocket-session', profile: 'pocket-profile', contacts: 'pocket-contacts', rules: 'pocket-rules', activity: 'pocket-activity', chat: 'pocket-chat' };
 const listeners = new Set<() => void>();
@@ -56,8 +56,9 @@ export type LocalActivity = { tx: string; kind: string; data: Record<string, unk
 export const useLocalActivity = () => useLS<LocalActivity[]>(K.activity, []);
 export const addLocalActivity = (a: LocalActivity) => write(K.activity, [a, ...read<LocalActivity[]>(K.activity, []).filter((x) => x.tx !== a.tx || x.kind !== a.kind)].slice(0, 200));
 
-export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[] };
+export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[]; confirm?: unknown; chips?: string[]; voice?: boolean; done?: boolean };
 export const useChat = () => useLS<ChatMsg[]>(K.chat, []);
+export const getChat = () => read<ChatMsg[]>(K.chat, []);
 export const setChat = (m: ChatMsg[]) => write(K.chat, m.slice(-60));
 
 export function useLive<T>(fn: () => Promise<T>, deps: unknown[], everyMs = 0) {

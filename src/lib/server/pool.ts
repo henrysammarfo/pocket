@@ -53,7 +53,7 @@ async function executeIntents(signed: SignedNep413[]): Promise<TxResult> {
   return r;
 }
 
-async function assertKeyOf(account: string, publicKey: string) {
+export async function assertKeyOf(account: string, publicKey: string) {
   const ak = await viewAccessKey(account, publicKey);
   if (!ak || ak.permission !== 'FullAccess') throw new HttpError(403, 'That key does not belong to this account.');
 }
