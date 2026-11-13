@@ -18,6 +18,8 @@ function Welcome() {
   const [err, setErr] = useState('');
   const [theme, setTheme] = useState('light');
   const [restore, setRestore] = useState(false);
+  const [ro, setRo] = useState(false);
+  useEffect(() => { fetch('/api/health').then((r) => r.json()).then((h) => setRo(!h?.services?.sponsor)).catch(() => {}); }, []);
   const [bk, setBk] = useState('');
   const doRestore = async (e: React.FormEvent) => {
     e.preventDefault(); setErr('');
@@ -67,7 +69,8 @@ function Welcome() {
             <form id="start" className="welcome-form" onSubmit={go}>
               <label className="field focus"><span className="in" style={{ flex: '0 0 auto', color: 'var(--ink-2)' }}>@</span><input className="inp" aria-label="Pick a username" placeholder="pick a username" value={u} onChange={(e) => setU(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={32} /><span className="suffix">.{ROOT}</span></label>
               <label className="field"><input className="inp" aria-label="Your first name" placeholder="Your first name (optional)" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} /></label>
-              <button className="btn big" disabled={!!busy}>{busy || 'Create my Pocket'}</button>
+              {ro && <div className="note2"><span>This copy of Pocket is read only: its server keys are not set yet. Run your own with <b>npm run setup</b>, see the README.</span></div>}
+              <button className="btn big" disabled={!!busy || ro}>{busy || 'Create my Pocket'}</button>
               {err && <div className="errline" role="alert">{err}</div>}
               <button type="button" className="btn text" onClick={() => { setRestore(true); setErr(''); }}>I have a backup key</button>
               <div className="fine" style={{ fontSize: '.8125rem', color: 'var(--ink-3)', lineHeight: 1.45 }}>Your key is made in this browser and never leaves it. Pocket creates a NEAR testnet account for you, pays the gas, and gives you 1,000 test dollars. Nothing here has real value.</div>
