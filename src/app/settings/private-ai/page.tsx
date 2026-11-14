@@ -44,7 +44,7 @@ function Inner() {
   const passed = r ? r.models.reduce((n, m) => n + m.checks.filter((c) => c.ok).length, 0) : 0;
   const total = r ? r.models.reduce((n, m) => n + Math.max(m.checks.length, 1), 0) : 0;
   const state = busy ? 'wait' : r?.ok ? 'ok' : 'bad';
-  const when = r ? new Date(r.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  const when = r ? new Date(r.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) : '';
 
   return (
     <AppShell screen="settings" tab="wallet" side="settings" cls="vf">

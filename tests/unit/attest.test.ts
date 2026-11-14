@@ -39,3 +39,15 @@ describe('attestation grading', () => {
     expect(grade(e, nonce).checks.find((c) => c.id === 'key')!.ok).toBe(false);
   });
 });
+
+import { parseNear } from '@/lib/server/web';
+describe('NEAR AI web search parsing', () => {
+  it('splits answer, sources and products, and keeps only https links', () => {
+    const t = `TOZO T12 costs about $30 and lasts 55 hours.\n\nSOURCES:\nBest cheap earbuds - CNET | https://www.cnet.com/tech/mobile/best-cheap-budget-wireless-earbuds/\nBad | http://insecure.example.com\nPRODUCTS:\nTOZO T12 | $29.99 | Best Buy | https://www.bestbuy.com/product/tozo-t12/sku/10189370\n`;
+    const p = parseNear(t);
+    expect(p.body).toBe('TOZO T12 costs about $30 and lasts 55 hours.');
+    expect(p.sources).toEqual([{ title: 'Best cheap earbuds - CNET', url: 'https://www.cnet.com/tech/mobile/best-cheap-budget-wireless-earbuds/' }]);
+    expect(p.products).toEqual([{ title: 'TOZO T12', price: '$29.99', store: 'Best Buy', url: 'https://www.bestbuy.com/product/tozo-t12/sku/10189370' }]);
+  });
+  it('handles an answer with no lists', () => { expect(parseNear('Just text.')).toEqual({ body: 'Just text.', sources: [], products: [] }); });
+});
