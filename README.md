@@ -126,6 +126,17 @@ flowchart LR
 | privacy | Keep nothing server side | [src/app/api/chat/route.ts](src/app/api/chat/route.ts) stores nothing; history only in the browser | `npx vitest run tests/unit/privacy.test.ts` |
 | open | Chain abstraction | Names and pay links [src/lib/shared/address.ts](src/lib/shared/address.ts), gasless relayer, speech cleanup [src/lib/shared/speech.ts](src/lib/shared/speech.ts) | `BASE=<url> npm run e2e:hosted` |
 
+## What the TEE does and does not protect
+**What it protects.** Chat, photos and voice run on NEAR AI Cloud inside a trusted execution environment (Intel TDX for the CPU, NVIDIA confidential computing for the GPU). That keeps prompts hidden from the cloud host and the operator. Pocket does not just trust this: `npm run verify:tee` and `/api/attest` fetch a fresh attestation bound to a random nonce we pick, and check the enclave signing key before we rely on it.
+
+**What it does not protect.** A TEE cannot fix a bug in the inference software running inside it. On 8 Nov 2026 a remote code execution bug in SGLang let an attacker run code on one NEAR AI inference server and see requests being processed there, including confidential ones. NEAR AI fixed it on all servers and published a report: [NEAR AI Security Incident Report: SGLang Vulnerability](https://near.ai/blog/security-incident-report-sglang-vulnerability). So treat the TEE as strong protection against the host, not as a promise that nothing can ever leak.
+
+**How Pocket limits the damage if a prompt does leak.**
+* Pocket's server relays chat text to the model and stores none of it. Chat history lives only in your browser. Copies saved by older versions were deleted on 14 Nov 2026, so the `pocket_chat` table now has 0 rows.
+* The AI never holds keys, so a leaked or tampered prompt cannot move money. The model can only propose a plan card.
+* Every send is signed by the key on your own device after you hold to approve, and is checked against your server enforced daily limit and keep amount and the relayer allow list (allowed contracts and methods only, with a cap per send). Today that device key is a full access key on your own testnet account, not a function call key; see the known limit in [Security notes](#security-notes).
+* Web search queries go to Brave Search through NEAR AI, so a query does leave the enclave for the search provider. When NEAR AI returns no results with real links, that one search falls back to Groq, which is not private.
+
 ## What is stored, where
 | Data | Where it lives | Notes |
 | --- | --- | --- |
