@@ -29,16 +29,16 @@ try {
     const r2 = await say('split it with @admin, send them half'); const plan = await p.locator('.plan').count(); ok(plan > 0 || /11\.5/.test(r2), 'split: ' + r2.slice(0, 120)); await p.locator('.plan').last().scrollIntoViewIfNeeded().catch(() => {}); await shot('05-split-plan');
   });
   await step('drawer', async () => {
-    await p.click('button[aria-label="Chats"]'); await p.waitForTimeout(600); const rows = await p.locator('.tp-row').count(); ok(rows >= 1, 'drawer lists chats: ' + rows); await shot('06-drawer');
+    await p.click('button[aria-label="Open menu"]'); await p.waitForTimeout(600); const rows = await p.locator('.tp-row').count(); ok(rows >= 1, 'drawer lists chats: ' + rows); await shot('06-drawer');
     await p.click('.tp-new'); await p.waitForTimeout(400); ok((await p.locator('.thread .me').count()) === 0, 'new chat is empty');
-    await say('hello there'); await p.click('button[aria-label="Chats"]'); await p.waitForTimeout(500);
+    await say('hello there'); await p.click('button[aria-label="Open menu"]'); await p.waitForTimeout(500);
     ok((await p.locator('.tp-row').count()) >= 2, 'two chats listed');
     await p.locator('.tp-row').first().locator('button[aria-label^="Rename"]').click(); await p.fill('input[aria-label="Chat name"]', 'Greetings'); await p.keyboard.press('Enter');
     ok(await p.locator('.tp-t:has-text("Greetings")').count() === 1, 'renamed'); await shot('07-renamed');
     await p.locator('.tp-row').first().locator('button[aria-label^="Delete"]').click(); await p.click('.tp-del .danger'); await p.waitForTimeout(400);
     ok(await p.locator('.tp-t:has-text("Greetings")').count() === 0, 'deleted');
     const th = await p.evaluate(async () => { const s = JSON.parse(localStorage.getItem('pocket-session')); return 1; }); void th;
-    await p.click('button[aria-label="Chats"]'); await p.waitForTimeout(500); await p.locator('.tp-open').first().click(); await p.waitForTimeout(500); ok((await p.locator('.thread .me').count()) > 2, 'reopened the first chat');
+    await p.click('button[aria-label="Open menu"]'); await p.waitForTimeout(500); await p.locator('.tp-open').first().click(); await p.waitForTimeout(500); ok((await p.locator('.thread .me').count()) > 2, 'reopened the first chat');
   });
   ok(errs.length === 0, 'no page errors ' + errs.join(' | '));
 } finally { await b.close(); }
