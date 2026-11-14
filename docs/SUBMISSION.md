@@ -11,7 +11,7 @@ Every field the form takes, with what goes in it. There are no image, logo or vi
 | Lead name | 2 to 80 characters | **Henry fills in** (full name) |
 | Email | up to 160 characters, at most 2 submissions per email | henrysammarfo@gmail.com |
 | Team size | one of `1`, `2 - 4`, `4 - 6`, `6 - 8`, `8+` | **Henry picks** |
-| Tracks | one or more of the track ids | `realworld`, `security` |
+| Tracks | one or more of the track ids | `realworld`, `security`, `privacy` |
 | NEAR address (payout) | mainnet account, lowercase | henrysammarfo.near (checked on mainnet with a read only `view_account` call on 14 Nov 2026: the account exists) |
 | Project URL | public repo, not used by another entry | https://github.com/henrysammarfo/pocket |
 | Demo URL | link to a public X post with the video or screenshots, up to 300 characters, like `https://x.com/<handle>/status/<id>` | **Henry posts the video on X and pastes the post link** |
@@ -35,7 +35,7 @@ Pocket, the money app you talk to. Say or type "send Mum 50 dollars and put 25 i
 
 The AI never holds keys. It can only propose. Your browser holds an ed25519 key for a real NEAR testnet account made at sign up. Sends are gasless: pUSD moves as a NEP-413 signed intent in the NEAR Intents verifier, and USDC and NEAR move as NEP-366 meta transactions paid by a relayer that only accepts allowed calls. Paper stocks (TSLAon, NVDAon and more, live priced) settle atomically as two signed token_diff intents, yours and the market maker's, in one execute_intents call. Every move gets a public receipt rebuilt from the chain.
 
-Chat runs on any OpenAI compatible model: Groq's free tier by default, or NEAR AI Cloud's private models with one setting. Voice uses Whisper with a prompt tuned for Ghanaian English and Pidgin. Memory and AI credits are per account in Neon, behind a signed session, and the app keeps working without any AI key.
+Chat, photos and voice run privately on NEAR AI Cloud inside attested TEEs (Qwen3.6 35B for chat, Qwen3 VL for photos, Whisper for voice), with Groq as an automatic fallback. Voice uses Whisper with a prompt tuned for Ghanaian English and Pidgin. Memory and AI credits are per account in Neon, behind a signed session, and the app keeps working without any AI key.
 
 Live on testnet at https://pocket-zeta-lime.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
 

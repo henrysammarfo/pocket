@@ -2,7 +2,7 @@ import 'server-only';
 // Live web answers and product finds. Uses the provider's own web search tool (Groq browser_search
 // on gpt-oss), so no extra key is needed. Only links that came back from the real search are shown;
 // links the model writes itself are dropped, because models invent product URLs.
-import { AI } from './env';
+import { groq } from './llm';
 
 export type Source = { title: string; url: string };
 export type Product = { title: string; url: string; store: string; price?: string; rating?: string; image?: string };
@@ -10,7 +10,8 @@ export type WebOut = { reply: string; sources: Source[]; products: Product[]; us
 
 // A separate model for search keeps chat inside its own free tier token budget.
 export const SEARCH_MODEL = process.env.SEARCH_MODEL || 'openai/gpt-oss-20b';
-export const webUp = () => AI.provider === 'groq' && !!AI.apiKey && /gpt-oss/.test(AI.model) && process.env.WEB_SEARCH !== 'off';
+// Search runs on Groq's browser_search tool (search queries are not private; chats, photos and voice are).
+export const webUp = () => !!groq && process.env.WEB_SEARCH !== 'off';
 const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
 const okUrl = (u: string) => /^https:\/\/[^\s"'<>]+$/.test(u) && !/exa\.ai\/search/.test(u);
 
@@ -52,15 +53,16 @@ export async function webAnswer(query: string, kind: 'web' | 'product', now: str
   const sys = kind === 'product'
     ? `Today is ${now}. Find real products for the user with the search tool, then open the two or three best product pages so you can read their price. Reply in two to four short plain sentences naming the products and prices you actually read. No tables, no markdown, no links, no citation marks. Never use dashes as punctuation. Prices are for information only; Pocket cannot buy for the user.`
     : `Today is ${now}. Use the search tool for anything about current events, news, sports, weather, prices or facts that may have changed. Reply in two to four short plain sentences with what you found and when it happened. No tables, no markdown, no links, no citation marks. Never use dashes as punctuation.`;
-  const r = await fetch(AI.baseUrl.replace(/\/$/, '') + '/chat/completions', {
-    method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${AI.apiKey}` }, signal: AbortSignal.timeout(45000),
+  const r = await fetch(groq!.baseUrl + '/chat/completions', {
+    method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${groq!.key}` }, signal: AbortSignal.timeout(45000),
     body: JSON.stringify({ model: SEARCH_MODEL, reasoning_effort: 'low', max_tokens: 1200, tools: [{ type: 'browser_search' }], messages: [{ role: 'system', content: sys }, { role: 'user', content: query.slice(0, 400) }] }),
   });
   if (r.status === 429) throw new Error('search rate limited ' + (r.headers.get('retry-after') || ''));
   if (!r.ok) throw new Error('search ' + r.status + ' ' + (await r.text()).slice(0, 160));
   const j = await r.json();
   const m = j.choices?.[0]?.message || {};
-  const usd = ((j.usage?.prompt_tokens || 0) * AI.inUsd + (j.usage?.completion_tokens || 0) * AI.outUsd) / 1e6;
+  const usd = ((j.usage?.prompt_tokens || 0) * 0.075 + (j.usage?.completion_tokens || 0) * 0.3) / 1e6;
+  console.info(JSON.stringify({ ai: 'groq', model: SEARCH_MODEL, kind: 'search', tin: j.usage?.prompt_tokens || 0, tout: j.usage?.completion_tokens || 0 }));
   const { sources, products } = parseTools(m.executed_tools || []);
   const top = products.slice(0, 4);
   if (kind === 'product') await Promise.all(top.map(async (p) => { p.image = await ogImage(p.url); }));

@@ -3,7 +3,7 @@ import 'server-only';
 // money plans. It cannot sign or move money: there is no tool for that. Every plan is checked in
 // code (shared/plan.ts) before it is shown, and the user must hold to approve on their own device.
 import crypto from 'node:crypto';
-import { AI, aiState, aiUp } from './env';
+import { anyUp, complete } from './llm';
 import { checkPlan, parseCommand, tickerOf, type Ctx, type Plan, type Step } from '../shared/plan';
 import { cleanSpeech } from '../shared/speech';
 import { webAnswer, webUp, type Product, type Source } from './web';
@@ -13,7 +13,7 @@ export type Msg = { role: 'user' | 'assistant'; content: string };
 export type ChatCtx = Ctx & { name?: string; contacts?: { name: string; address: string }[]; tz?: string };
 export type ChatIn = { messages: Msg[]; ctx: ChatCtx; voice?: boolean; memories?: string[]; offline?: boolean };
 export type Confirm = { summary: string; steps: Step[] };
-export type ChatOut = { reply: string; plan?: Plan; check?: ReturnType<typeof checkPlan>; confirm?: Confirm; chips?: string[]; remembered?: string[]; source: 'ai' | 'rules' | 'off'; model?: string; usd?: number; sources?: Source[]; products?: Product[]; searched?: boolean };
+export type ChatOut = { reply: string; plan?: Plan; check?: ReturnType<typeof checkPlan>; confirm?: Confirm; chips?: string[]; remembered?: string[]; source: 'ai' | 'rules' | 'off'; model?: string; provider?: string; private?: boolean; usd?: number; sources?: Source[]; products?: Product[]; searched?: boolean };
 
 // Today's date and time in the user's own time zone (from their browser), so "what is the date" is right.
 export function nowText(tz?: string) {
@@ -67,7 +67,7 @@ const plan = (steps: Step[], summary: string): Plan => ({ id: crypto.randomUUID(
 export function normalizeSteps(raw: any[]): Step[] {
   const out: Step[] = [];
   for (const s of Array.isArray(raw) ? raw.slice(0, 5) : []) {
-    if (s?.type === 'send' && s.to && Number(s.amount) > 0) out.push({ type: 'send', to: String(s.to).trim().slice(0, 64), toLabel: String(s.to).trim().slice(0, 64), amount: Math.round(Number(s.amount) * 100) / 100, asset: 'auto', note: s.note ? String(s.note).slice(0, 80) : undefined });
+    if (s?.type === 'send' && s.to && Number(s.amount ?? s.usd) > 0) out.push({ type: 'send', to: String(s.to).trim().slice(0, 64), toLabel: String(s.to).trim().slice(0, 64), amount: Math.round(Number(s.amount ?? s.usd) * 100) / 100, asset: 'auto', note: s.note ? String(s.note).slice(0, 80) : undefined });
     else if ((s?.type === 'buy' || s?.type === 'sell') && tickerOf(String(s.ticker || '')) && Number(s.usd) > 0) out.push({ type: s.type, ticker: tickerOf(String(s.ticker))!, usd: Math.round(Number(s.usd) * 100) / 100 });
   }
   return out;
@@ -104,32 +104,19 @@ function rules(input: ChatIn, why: 'off' | 'down'): ChatOut {
 }
 
 export async function chat(input: ChatIn): Promise<ChatOut> {
-  if (!aiUp() || input.offline) return rules(input, 'off');
+  if (!anyUp() || input.offline) return rules(input, 'off');
   const ctx = input.ctx;
   try {
     const msgs = input.messages.slice(-10).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
-    const ask = () => fetch(AI.baseUrl.replace(/\/$/, '') + '/chat/completions', {
-      method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${AI.apiKey}` }, signal: AbortSignal.timeout(40000),
-      body: JSON.stringify({ model: AI.model, temperature: 0.5, max_tokens: 900, ...(/gpt-oss/.test(AI.model) ? { reasoning_effort: 'low' } : {}), tools: webUp() ? [...TOOLS, WEB_TOOL] : TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice) }, ...msgs] }),
-    });
-    // Two tries: models on free tiers sometimes return an empty message.
+    const body = { temperature: 0.5, max_tokens: 900, tools: webUp() ? [...TOOLS, WEB_TOOL] : TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice) }, ...msgs] };
+    // Two tries: models sometimes return an empty message.
     for (let attempt = 0; attempt < 2; attempt++) {
-    let r = await ask();
-    // Models sometimes write a malformed tool call (Groq answers 400 tool_use_failed); one retry fixes most.
-    if (r.status === 400) { const t = await r.clone().text(); if (/tool_use_failed|failed_generation/.test(t)) r = await ask(); }
-    // Token per minute limits clear in seconds: wait once if the provider says it is short.
-    if (r.status === 429) { const w = Number(r.headers.get('retry-after')) || 0; if (w > 0 && w <= 6) { await new Promise((ok) => setTimeout(ok, w * 1000 + 300)); r = await ask(); } }
-    if (r.status === 401 || r.status === 402 || r.status === 403) { aiState.downUntil = Date.now() + 10 * 60e3; aiState.reason = `provider said ${r.status}`; }
-    // Free tiers rate limit (Groq free: 30 a minute, 1K a day). Rest for as long as the provider asks, max 2 minutes.
-    if (r.status === 429) { const s = Number(r.headers.get('retry-after')) || 20; aiState.downUntil = Date.now() + Math.min(120, s) * 1000; aiState.reason = 'provider busy (rate limit)'; }
-    if (!r.ok) throw new Error(`AI ${r.status} ${(await r.text()).slice(0, 300)}`);
-    const j = await r.json();
-    const usd = ((j.usage?.prompt_tokens || 0) * AI.inUsd + (j.usage?.completion_tokens || 0) * AI.outUsd) / 1e6;
+    const { j, prov, model, usd } = await complete(body);
     const msg = j.choices?.[0]?.message || {};
     const calls: any[] = msg.tool_calls || [];
     const args = (n: string) => { const c = calls.find((t) => t.function?.name === n); if (!c) return null; try { return JSON.parse(c.function.arguments || '{}'); } catch { return {}; } };
     const remembered = (args('remember')?.facts || []).map((f: unknown) => String(f).slice(0, 200)).filter((f: string) => f && !/(seed|private key|password|secret)/i.test(f));
-    const base = { source: 'ai' as const, model: AI.model, usd, remembered: remembered.length ? remembered : undefined };
+    const base = { source: 'ai' as const, model, provider: prov.label, private: prov.private, usd, remembered: remembered.length ? remembered : undefined };
     const ws = args('web_search');
     if (ws?.query && webUp()) {
       try {
