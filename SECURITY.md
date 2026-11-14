@@ -9,7 +9,7 @@ Pocket is a **testnet demo**. Tokens have no value. It never connects to NEAR ma
 | Sponsor (root) | Server env `SPONSOR_PRIVATE_KEY` | Create user sub accounts with 0.05 NEAR |
 | Relayer | Server env | Pay gas for NEP-366 delegate actions and `execute_intents` |
 | Maker | Server env | Sign the counter side of trades at the quoted price |
-| Faucet | Server env | Send 1,000 pUSD per account per day |
+| Faucet | Server env | Send 1,000 pUSD to Pocket accounts only, up to 3 times a day per account and 5 an hour per IP |
 
 No key is ever committed, logged or sent to the client. `.env*` and `.secrets/` are gitignored.
 
@@ -20,6 +20,7 @@ No key is ever committed, logged or sent to the client. `.env*` and `.secrets/` 
 * **Quotes** are HMAC signed, expire in 60 s, and are refused if the price is older than `MAX_PRICE_AGE_SEC`. The maker signs the exact token diff the user signed.
 * **Daily limit** is checked on the server for every send. Changing it needs a NEP-413 message signed by the device key; raising it also asks for the passkey when that is on.
 * **Rate limits** per IP and per account on signup, faucet and chat.
+* **Attack checks** in `tests/attack.mjs` (`npm run attack -- <url>`): a relayer call outside the allow list, a forged signature, a service account as sender, a NEAR send above the cap, the faucet for a stranger, a limit change without a signature, and a prompt injected plan. All are refused.
 * Tokens are fixed supply with no mint and no force unregister.
 
 ## Known limits, said plainly

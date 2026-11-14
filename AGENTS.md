@@ -23,6 +23,7 @@ Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROO
 | Responsive matrix 320 to 1440 px, 50 to 100% zoom, light and black | `BASE=http://localhost:3000 npm run e2e:responsive` |
 | Chat and voice in a real browser, phone or desktop (`W=1440 H=900`) | `BASE=http://localhost:3000 npm run e2e:chat` |
 | Smoke test any running copy | `npm run smoke -- https://your-url` |
+| Attack checks against any running copy (all must be refused) | `npm run attack -- https://your-url` |
 | Deployed contracts, verifier hash, AI provider and model | `GET /api/health` |
 
 ## AI and voice (optional)

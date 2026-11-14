@@ -20,7 +20,9 @@
     "build:vercel": "vitest run --reporter=dot && next build",
     "report": "node scripts/report.mjs",
     "vercel:env": "python3 scripts/vercel-env.py",
-    "e2e:hosted": "node tests/e2e/hosted.mjs"
+    "e2e:hosted": "node tests/e2e/hosted.mjs",
+    "attack": "node tests/attack.mjs",
+    "video": "bash scripts/video/make.sh"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",
