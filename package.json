@@ -14,6 +14,7 @@
     "bootstrap": "node scripts/bootstrap-testnet.mjs",
     "judge": "node scripts/judge-run.mjs",
     "verify:chain": "node scripts/verify-chain.mjs",
+    "verify:tee": "node scripts/verify-tee.mjs",
     "e2e": "node tests/e2e/ui-flow.mjs",
     "e2e:responsive": "node tests/e2e/responsive.mjs",
     "test:all": "node scripts/test-all.mjs",
