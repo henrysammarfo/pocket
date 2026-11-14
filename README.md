@@ -4,13 +4,21 @@
 
 *Live on NEAR testnet. Open source, MIT.*
 
-**The problem:** sending money abroad, buying a stock or holding dollars still means five apps, fees you only see later, and screens that assume you already know finance. AI can help, but nobody should give an AI their keys.
+**The problem.** Sending money home, holding dollars or buying a stock usually means several apps, fees you only see later, and screens that assume you already know finance. AI could help, but nobody should hand an AI their keys.
 
-**What it does.** You say *"Send Mum 50 dollars and put 25 in Tesla"*. Pocket turns it into a plan card, checks it against your rules in code, and nothing moves until you **hold to approve** on your own device. Sends are gasless, trades settle in one atomic call to the **NEAR Intents verifier**, and every move gets a public receipt rebuilt from the chain.
+**What Pocket does.** You talk to it like a friend: *"Send Mum 50 dollars and put 25 in Tesla"*. Pocket tells you what it understood and shows one simple plan card. It checks the plan against your own rules, and nothing moves until you **press and hold to approve** on your own device. You never pay network fees, and every payment gets a receipt you can check on the public NEAR record.
 
-**Live demo: https://pocket-zeta-lime.vercel.app** (NEAR testnet. Chat, photo reading, voice and web search run on NEAR AI Cloud private models in a TEE; the server keeps no chat text). Latest test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Demo video: linked from the X post in the submission; rebuild it with `npm run video` ([scripts/video](scripts/video)). Hackathon diff: [near-baseline...main](https://github.com/henrysammarfo/pocket/compare/near-baseline...main).
+**Try it in two minutes: https://pocket-zeta-lime.vercel.app**
+1. Tap **Get started**. Pocket makes you a free testnet account and adds 1,000 test dollars.
+2. Type or say *"send @admin 2 dollars"*. You see one plan card.
+3. Press and hold to approve. You see a receipt with a link to the public record.
+4. Ask for today's news or the Tesla price, or add a receipt photo and ask Pocket to split the bill.
 
-**Testnet only. No mainnet, no real money.** Test dollars (pUSD), Circle testnet USDC, and paper stock tokens (TSLAon, NVDAon, AAPLon, SPYon, QQQon) priced live.
+**Safe by design.** The AI never holds your keys and can only suggest. Your rules (a daily limit and an amount to always keep) are checked in code, and your device signs every payment.
+
+**Private by design.** Chats, photos and voice notes are read by AI running in sealed, checkable hardware on NEAR AI Cloud. Pocket's server keeps no chat text; your history stays in your browser. What this does and does not protect is written down plainly in [What the TEE does and does not protect](#what-the-tee-does-and-does-not-protect).
+
+**Testnet only. No real money.** Test dollars (pUSD), Circle testnet USDC and paper stocks (TSLAon, NVDAon, AAPLon, SPYon, QQQon) with live prices. Test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Hackathon diff: [near-baseline...main](https://github.com/henrysammarfo/pocket/compare/near-baseline...main). Technical detail for reviewers and AI judges starts below.
 
 ## How it works
 
