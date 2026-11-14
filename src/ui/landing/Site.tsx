@@ -26,7 +26,7 @@ export function SiteFooter() {
           <p>The money app you talk to. Built on NEAR.</p>
           <div className="ft-social">
             <a href={REPO} aria-label="Pocket on GitHub"><GitHubMark /></a>
-            <a href="https://x.com/henrysammarfo" aria-label="Henry on X (@henrysammarfo)"><XMark /></a>
+            <a href="https://x.com/henrysammarfo_2" aria-label="Henry on X (@henrysammarfo_2)"><XMark /></a>
           </div>
         </div>
         <nav aria-label="Product"><h2>Product</h2><Link href="/welcome">Create your Pocket</Link><Link href="/#how">How it works</Link><Link href="/#features">Features</Link><Link href="/#security">Security</Link><Link href="/#faq">FAQ</Link></nav>
