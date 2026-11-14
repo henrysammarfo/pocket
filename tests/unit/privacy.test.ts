@@ -28,7 +28,7 @@ describe('chat privacy: no chat text on the server', () => {
     // Watch every store method. Rate limit counters (incr/get) and saved memories are allowed; anything else is not.
     for (const k of Object.getOwnPropertyNames(Object.getPrototypeOf(store))) {
       const f = (store as unknown as Record<string, unknown>)[k];
-      if (typeof f === 'function' && k !== 'constructor') vi.spyOn(store as never, k as never).mockImplementation(((...a: unknown[]) => { calls.push(k + ' ' + JSON.stringify(a)); return (f as (...x: unknown[]) => unknown).apply(store, a); }) as never);
+      if (typeof f === 'function' && k !== 'constructor') (store as unknown as Record<string, unknown>)[k] = (...a: unknown[]) => { calls.push(k + ' ' + JSON.stringify(a)); return (f as (...x: unknown[]) => unknown).apply(store, a); };
     }
     const { POST } = await import('@/app/api/chat/route');
     const r = await POST(req('/api/chat', { method: 'POST', body: JSON.stringify({ messages: [{ role: 'user', content: SECRET }], ctx: { dollars: 100 }, thread: 'abc' }) }));
