@@ -13,15 +13,17 @@ export const tickerOf = (s: string) => TICKERS[s.toLowerCase().trim()] || null;
 // Rules are enforced in code, here and again on the server for sends.
 export function checkPlan(p: Plan, c: Ctx): Check {
   const reasons: string[] = [];
-  let sendTotal = 0, buyTotal = 0, sellTotal = 0;
+  let sendTotal = 0, nearTotal = 0, buyTotal = 0, sellTotal = 0;
   for (const s of p.steps) {
     if (s.type === 'send') {
-      if (!(s.amount > 0)) reasons.push('A send needs an amount above zero.');
-      if (s.asset !== 'NEAR') sendTotal += s.amount;
+      if (!(s.amount > 0) || !Number.isFinite(s.amount)) reasons.push('A send needs an amount above zero.');
+      else if (s.asset !== 'NEAR' && s.amount < 0.01) reasons.push('Dollar sends start at one cent.');
+      else if (s.asset === 'NEAR' && s.amount < 0.00001) reasons.push('NEAR sends start at 0.00001 NEAR.');
+      if (s.asset !== 'NEAR') sendTotal += s.amount; else nearTotal += s.amount;
     } else {
       const px = c.prices[s.ticker] || 0;
       const usd = s.usd ?? (s.qty ?? 0) * px;
-      if (!(usd > 0)) reasons.push(`The ${s.ticker} trade needs an amount.`);
+      if (!(usd >= 0.01) || !Number.isFinite(usd)) reasons.push(`The ${s.ticker} trade needs an amount of at least one cent.`);
       if (usd > 1000) reasons.push(`Paper trades are capped at $1,000 each. ${s.ticker} asks for $${usd.toFixed(2)}.`);
       if (s.type === 'buy') buyTotal += usd; else {
         sellTotal += usd;
@@ -33,6 +35,8 @@ export function checkPlan(p: Plan, c: Ctx): Check {
   const after = c.dollars - sendTotal - buyTotal + sellTotal;
   if (after < c.keep - 1e-9) reasons.push(`Your rule keeps $${c.keep.toFixed(0)}. This plan would leave $${Math.max(after, 0).toFixed(2)}.`);
   if (after < -1e-9) reasons.push(`You have $${c.dollars.toFixed(2)}, and this plan needs $${(sendTotal + buyTotal - sellTotal).toFixed(2)}.`);
+  if (nearTotal > 0 && nearTotal > c.near + 1e-12) reasons.push(`You have ${c.near} NEAR, and this plan sends ${nearTotal} NEAR.`);
+  if (nearTotal > 5) reasons.push('NEAR sends are capped at 5 NEAR on testnet.');
   const left = Math.max(0, c.limit - c.usedToday);
   if (sendTotal > left + 1e-9) reasons.push(`Your daily send limit is $${c.limit.toFixed(0)}, and $${left.toFixed(2)} is left today.`);
   return { ok: reasons.length === 0, reasons, after, sendTotal, tradeTotal: buyTotal + sellTotal };

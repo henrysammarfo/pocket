@@ -8,6 +8,7 @@ git clone https://github.com/henrysammarfo/pocket && cd pocket
 npm ci
 npm run setup     # needs near CLI (near-cli-rs) and cargo-near; creates a testnet root, deploys, writes .env.local
 npm run judge     # end to end on testnet: signup, faucet, gasless sends, trade, receipts. Prints PASS
+                  # (no .env.local yet? it runs verify:chain, smoke and attack on the live site instead)
 npm run dev       # http://localhost:3000
 ```
 Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROOT=you.testnet npm run setup`.
@@ -16,7 +17,9 @@ Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROO
 | What | Command |
 | --- | --- |
 | Everything, from a clean state, with a report in test-results/summary.md | `npm run test:all` (add `SMOKE_URL=<hosted url>` for the hosted smoke test) |
-| Unit tests (NEP-413, plan rules, address rules, units, messy speech) | `npm test` |
+| Unit, property based and fuzz tests (NEP-413, relayer policy, daily limit races, plan rules, address rules, units, messy speech) | `npm test` |
+| Deployed contracts are exactly the code in `vendor/` (code_hash check, no keys) | `npm run verify:chain` |
+| Every rule, the code that enforces it and its test | [docs/POLICY.md](docs/POLICY.md) |
 | Types and lint | `npm run typecheck && npm run lint` |
 | Full testnet flow (server side) | `npm run judge` |
 | UI flow in a browser (needs a running server) | `BASE=http://localhost:3000 npm run e2e` |
