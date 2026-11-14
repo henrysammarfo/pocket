@@ -1,6 +1,6 @@
-# Submission kit (draft, not submitted)
+# Submission kit
 
-Nothing here has been submitted or posted. Henry submits and posts himself.
+Henry posted the hackathon post on X himself (link below). The form itself is submitted by Henry.
 
 ## Form fields (nearhackathon.com submit form)
 Every field the form takes, with what goes in it. There are no image, logo or video upload fields; the video goes in the X post.
@@ -14,7 +14,7 @@ Every field the form takes, with what goes in it. There are no image, logo or vi
 | Tracks | one or more of the track ids | `realworld`, `privacy`, `security`, `open` |
 | NEAR address (payout) | mainnet account, lowercase | henrysammarfo.near (checked on mainnet with a read only `view_account` call on 14 Nov 2026: the account exists) |
 | Project URL | public repo, not used by another entry | https://github.com/henrysammarfo/pocket |
-| Demo URL | link to a public X post with the video or screenshots, up to 300 characters, like `https://x.com/<handle>/status/<id>` | **Henry posts the video on X and pastes the post link** |
+| Demo URL | link to a public X post with the video or screenshots, up to 300 characters, like `https://x.com/<handle>/status/<id>` | https://x.com/henrysammarfo_2/status/2121721131677704280 (Henry's hackathon post on X, @henrysammarfo_2) |
 | Idea | 20 to 2,000 characters | the "What we built" text below (about 1,900 characters) |
 | Consent | must be ticked | **Henry ticks** |
 
@@ -53,7 +53,10 @@ Saved results: docs/TEST_REPORT.md
 ## Demo video
 `video/pocket-demo.mp4`, about 1 min 38 s: title card, the problem, sign up, wallet, a chat question, a messy voice note heard back cleanly, the plan card (zoomed), hold to approve, the receipt from chain, Settings with credits and memory, the desktop Invest view, the NEAR stack card, the tests card, end card. English voiceover, captions, no music. Rebuild with `npm run video`; scenes and lines are in [scripts/video/script.json](../scripts/video/script.json).
 
-## X post draft (Henry posts it)
+## X post (posted by Henry)
+Posted by Henry on X as @henrysammarfo_2: https://x.com/henrysammarfo_2/status/2121721131677704280
+
+Drafts kept for reference:
 Short post, 87 characters, with the demo video attached:
 > Pocket, the money app you talk to. Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
