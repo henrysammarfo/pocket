@@ -52,3 +52,6 @@ Hosted preview smoke test (https://pocket-2cmwsja7v-teamtitanlink.vercel.app): p
 - Whisper turned a non speech tone into "you", and the model then guessed a send from the chat context. Fixed by dropping segments Whisper marks as no speech, plus a short list of known hallucinations.
 - The model asked for a confirmation on clear typed requests, which broke the money flow test. Typed requests with a clear person, amount and asset now go straight to a plan card; voice always confirms.
 - The welcome page showed overflow when an old build was served; the runner now always deletes `.next` and builds fresh.
+
+## CI status
+The workflow is in place, but GitHub did not start the job: "The job was not started because your account is locked due to a billing issue." Once the GitHub account's billing is sorted, every push runs `npm run test:all`. Add the testnet keys and `GROQ_API_KEY` as repository secrets for the full run; without them the testnet and browser money steps are skipped.
