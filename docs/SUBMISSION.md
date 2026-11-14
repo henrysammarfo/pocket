@@ -15,7 +15,7 @@ Every field the form takes, with what goes in it. There are no image, logo or vi
 | NEAR address (payout) | mainnet account, lowercase | henrysammarfo.near (checked on mainnet with a read only `view_account` call on 14 Nov 2026: the account exists) |
 | Project URL | public repo, not used by another entry | https://github.com/henrysammarfo/pocket |
 | Demo URL | link to a public X post with the video or screenshots, up to 300 characters, like `https://x.com/<handle>/status/<id>` | **Henry posts the video on X and pastes the post link** |
-| Idea | 20 to 2,000 characters | the "What we built" text below (about 1,800 characters) |
+| Idea | 20 to 2,000 characters | the "What we built" text below (about 1,900 characters) |
 | Consent | must be ticked | **Henry ticks** |
 
 Live app for judges: https://pocket-zeta-lime.vercel.app (NEAR testnet, stays up through 25 Nov). Video file to attach to the X post: `video/pocket-demo.mp4` (1920x1080 H.264, about 1 min 38 s, under the 2 min 20 s X limit), poster `docs/shots/poster.png` (1280x720).
@@ -30,14 +30,25 @@ Live app for judges: https://pocket-zeta-lime.vercel.app (NEAR testnet, stays up
 | Sustainability | 6 | 6 | Metered credits and a business model doc; no paying users yet |
 | **Average** | **7.2** | **6.8** | |
 
-## What we built (under 2,000 characters)
-Pocket, the money app you talk to. Say or type "send Mum 50 dollars and put 25 in Tesla", even messy, with ums, repeats or Pidgin, and Pocket says back what it understood, then shows one plan card. The plan is checked in code against your own rules (daily limit, always keep, trade cap). Nothing moves until you hold to approve on your own device, and raising your limit needs your passkey.
+## What we built (paste this into the Idea field, under 2,000 characters)
+Pocket is a money app you simply talk to.
 
-The AI never holds keys. It can only propose. Your browser holds an ed25519 key for a real NEAR testnet account made at sign up. Sends are gasless: pUSD moves as a NEP-413 signed intent in the NEAR Intents verifier, and USDC and NEAR move as NEP-366 meta transactions paid by a relayer that only accepts allowed calls. Paper stocks (TSLAon, NVDAon and more, live priced) settle atomically as two signed token_diff intents, yours and the market maker's, in one execute_intents call. Every move gets a public receipt rebuilt from the chain.
+Try it in two minutes. Open https://pocket-zeta-lime.vercel.app and tap Get started. Pocket makes you a free NEAR testnet account and adds 1,000 test dollars. No seed phrase, no fees to think about.
 
-Private by design: chats, receipt photos, voice notes and web searches run on private models on NEAR AI Cloud inside attested TEEs (Intel TDX with NVIDIA confidential GPUs). Qwen3.6 35B handles chat, plans and search (store: false), Qwen3 VL reads receipts, Whisper hears voice notes tuned for Ghanaian English and Pidgin. The server keeps no chat text; history stays in your browser. Settings shows a Verified screen that checks fresh attestation live, and anyone can run npm run verify:tee. If NEAR AI is down or at its daily cap, Groq takes over.
+Now type or say something like "send Mum 50 dollars and put 25 in Tesla". It is fine to be messy, with ums, repeats or Pidgin. Pocket tells you what it understood and shows one simple card with the plan. Nothing happens until you press and hold to approve. Then you get a receipt you can check on the public NEAR record.
 
-Live on testnet at https://pocket-zeta-lime.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
+Why it is safe. The AI never holds your keys. It can only suggest a plan. Pocket checks every plan against your own rules, like a daily limit and an amount to always keep, and blocks anything that breaks them. Your own device signs every payment, and raising your limit needs your passkey. We tried to trick the AI into sending everything, and the rules stopped it.
+
+Why it is private. Your chats, receipt photos and voice notes are read by AI running inside sealed, checkable hardware on NEAR AI Cloud, which keeps them hidden from the company running the servers. Pocket keeps no chat text on its server; your history stays in your browser. You can check the seal yourself in Settings. If the private AI is busy, a backup that is not private steps in; the README is open about this and other limits.
+
+What is real. Everything runs on NEAR testnet with test money only. Payments cost you nothing because Pocket covers the network fees. A paper stock trade either happens in full or not at all, settled by NEAR Intents.
+
+For judges. Code: https://github.com/henrysammarfo/pocket
+1. Run npm ci, then export BASE=https://pocket-zeta-lime.vercel.app
+2. Run npm run smoke and see ALL PASS.
+3. Run npm run attack and see every attack refused.
+4. Run npm run verify:tee and see the hardware check pass.
+Saved results: docs/TEST_REPORT.md
 
 ## Demo video
 `video/pocket-demo.mp4`, about 1 min 38 s: title card, the problem, sign up, wallet, a chat question, a messy voice note heard back cleanly, the plan card (zoomed), hold to approve, the receipt from chain, Settings with credits and memory, the desktop Invest view, the NEAR stack card, the tests card, end card. English voiceover, captions, no music. Rebuild with `npm run video`; scenes and lines are in [scripts/video/script.json](../scripts/video/script.json).
