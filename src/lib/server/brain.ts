@@ -120,13 +120,13 @@ export async function chat(input: ChatIn): Promise<ChatOut> {
     const ws = args('web_search');
     if (ws?.query && webUp()) {
       try {
-        // Groq's free tier allows about 8K tokens a minute per model and one search uses about 6K, so share it fairly.
-        await limit('web:all:min', Number(process.env.WEB_GLOBAL_PER_MIN || 3), 60);
+        // Server wide guard on searches; the Groq fallback has its own tighter free tier limit in web.ts.
+        await limit('web:all:min', Number(process.env.WEB_ALL_PER_MIN || 12), 60);
         const w = await webAnswer(String(ws.query), ws.kind === 'product' ? 'product' : 'web', nowText(ctx.tz));
-        return { ...base, usd: usd + w.usd, reply: w.reply, sources: w.sources, products: w.products, searched: true };
+        return { ...base, usd: usd + w.usd, reply: w.reply, sources: w.sources, products: w.products, searched: true, private: !!base.private && w.private };
       } catch (e) {
         console.error('web search failed:', e instanceof Error ? e.message : String(e));
-        return { ...base, reply: 'Live web search is busy right now because it runs on a free tier. Ask me again in a minute.' };
+        return { ...base, reply: 'Live web search is busy right now. Ask me again in a minute.' };
       }
     }
     const ci = args('confirm_intent');

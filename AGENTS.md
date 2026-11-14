@@ -21,6 +21,8 @@ Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROO
 | Deployed contracts are exactly the code in `vendor/` (code_hash check, no keys) | `npm run verify:chain` |
 | Every rule, the code that enforces it and its test | [docs/POLICY.md](docs/POLICY.md) |
 | The NEAR AI Cloud model runs in an attested TEE (fresh Intel TDX and NVIDIA evidence, nonce bound) | `npm run verify:tee` |
+| The same attestation checks, run by any deployed copy (new nonce per model) | `curl <url>/api/attest` |
+| The server never stores chat text | `npx vitest run tests/unit/privacy.test.ts` |
 | Types and lint | `npm run typecheck && npm run lint` |
 | Full testnet flow (server side) | `npm run judge` |
 | UI flow in a browser (needs a running server) | `BASE=http://localhost:3000 npm run e2e` |
