@@ -3,7 +3,7 @@ import { chat, planFrom, type ChatIn, type Confirm } from '@/lib/server/brain';
 import { limit, store, HttpError } from '@/lib/server/store';
 import { sessionOf } from '@/lib/server/auth';
 import { COST, creditsOf, refund, settleUsage, spend } from '@/lib/server/credits';
-import { aiUp } from '@/lib/server/env';
+import { anyUp as aiUp } from '@/lib/server/llm';
 import { okImage, readImage, visionUp } from '@/lib/server/vision';
 
 export const POST = handler(async (req) => {

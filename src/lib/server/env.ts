@@ -11,7 +11,7 @@ export const has = (name: KeyName) => secretKey(name) !== null;
 const E = process.env;
 const PRESETS = {
   groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b', inUsd: 0.15, outUsd: 0.6, stt: 'whisper-large-v3', key: E.GROQ_API_KEY },
-  nearai: { baseUrl: 'https://cloud-api.near.ai/v1', model: 'z-ai/glm-5.3-flash', inUsd: 0.08, outUsd: 0.5, stt: 'openai/whisper-large-v3', key: E.NEARAI_API_KEY },
+  nearai: { baseUrl: 'https://cloud-api.near.ai/v1', model: 'Qwen/Qwen3.6-35B-A3B-FP8', inUsd: 0.08, outUsd: 0.5, stt: 'openai/whisper-large-v3', key: E.NEARAI_API_KEY },
 } as const;
 export const PROVIDER: keyof typeof PRESETS = (E.AI_PROVIDER as keyof typeof PRESETS) in PRESETS ? (E.AI_PROVIDER as keyof typeof PRESETS) : E.GROQ_API_KEY ? 'groq' : E.NEARAI_API_KEY ? 'nearai' : 'groq';
 const P = PRESETS[PROVIDER];

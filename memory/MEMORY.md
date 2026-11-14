@@ -8,3 +8,4 @@
 * Server wide caps AI_GLOBAL_PER_MIN=25, AI_GLOBAL_PER_DAY=900, VOICE_GLOBAL_PER_MIN=18; over the cap Chat falls back to the built in helper.
 * Hackathon facts (nearhackathon.com/HACKATHON.md): deadline 2026-11-14 23:59 UTC; repo public; README for AI judges with do X, see Y steps; LICENSE; X demo post by the human; hosted demo kept up to 18 Nov, ideally 25 Nov. Best tracks: realworld, security.
 * Submission form fields: projectName, leadName, email (henrysammarfo@gmail.com), size, tracks (realworld, security), nearAddress (henrysammarfo.near, exists on mainnet), projectUrl (repo), demoUrl (X post link), idea (20 to 2,000 chars), consent. No image fields. Henry submits and posts; Pip never does.
+- AI: NEAR AI Cloud TEE is primary (llm.ts), Groq is fallback and web search. Credits $10 must last to 25 Nov; cap NEARAI_USD_PER_DAY=0.8. Qwen needs chat_template_kwargs enable_thinking false; Qwen may send `usd` for send amounts (normalizeSteps accepts it).

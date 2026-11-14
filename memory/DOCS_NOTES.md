@@ -7,3 +7,4 @@
 * Eth implicit accounts (`0x` + 40 hex) are valid NEAR accounts; Pocket asks the network for 0x and never guesses.
 * Groq docs (console.groq.com/docs): production models gpt-oss-120b, gpt-oss-20b, whisper-large-v3 (+turbo); llama 3.x deprecated Aug 2026. Whisper bills at least 10 s per request, max 25 MB on free tier, verbose_json gives no_speech_prob per segment (used to drop hallucinated words). 429 returns retry-after.
 * Video: headless Chromium ignores deviceScaleFactor in screencasts; use a wide viewport with CSS zoom 2 and halve dvh heights. Pointer holds drift under CSS zoom; hold with the keyboard (Space). X standard video limit is about 2:20.
+- NEAR AI Cloud: base https://cloud-api.near.ai/v1, OpenAI compatible incl. /audio/transcriptions. Private models have owned_by nearai. Attestation: /attestation/report?model=&nonce=&signing_algo=ecdsa. Docs https://docs.near.ai/cloud/private-inference/
