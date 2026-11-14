@@ -73,7 +73,7 @@ function Welcome() {
               <button className="btn big" disabled={!!busy || ro}>{busy || 'Create my Pocket'}</button>
               {err && <div className="errline" role="alert">{err}</div>}
               <button type="button" className="btn text" onClick={() => { setRestore(true); setErr(''); }}>I have a backup key</button>
-              <div className="fine" style={{ fontSize: '.8125rem', color: 'var(--ink-3)', lineHeight: 1.45 }}>Your key is made in this browser and never leaves it. Pocket creates a NEAR testnet account for you, pays the gas, and gives you 1,000 test dollars. Nothing here has real value.</div>
+              <div className="fine" style={{ fontSize: '.8125rem', color: 'var(--ink-3)', lineHeight: 1.45 }}>No email, password or seed phrase. Pocket makes a private key in this browser that never leaves it, creates your NEAR testnet account, pays the gas and adds 1,000 test dollars. Add a passkey (Face ID or fingerprint) in Settings to guard approvals, and back up your key from Profile. Nothing here has real value.</div>
             </form>
           )}
           <div className="checks">{['Runs on NEAR testnet', 'Fee $0 on sends', 'You sign every move'].map((t) => <span key={t}><Check size={16} strokeWidth={2.2} aria-hidden />{t}</span>)}</div>

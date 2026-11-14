@@ -56,10 +56,30 @@ export type LocalActivity = { tx: string; kind: string; data: Record<string, unk
 export const useLocalActivity = () => useLS<LocalActivity[]>(K.activity, []);
 export const addLocalActivity = (a: LocalActivity) => write(K.activity, [a, ...read<LocalActivity[]>(K.activity, []).filter((x) => x.tx !== a.tx || x.kind !== a.kind)].slice(0, 200));
 
-export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[]; confirm?: unknown; chips?: string[]; voice?: boolean; done?: boolean };
-export const useChat = () => useLS<ChatMsg[]>(K.chat, []);
-export const getChat = () => read<ChatMsg[]>(K.chat, []);
-export const setChat = (m: ChatMsg[]) => write(K.chat, m.slice(-60));
+export type WebSource = { title: string; url: string };
+export type WebProduct = { title: string; url: string; store: string; price?: string; rating?: string; image?: string };
+export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[]; confirm?: unknown; chips?: string[]; voice?: boolean; photo?: string; done?: boolean; sources?: WebSource[]; products?: WebProduct[] };
+// Many chats, like ChatGPT. 'main' keeps the old single chat. Each chat's messages live under their own key.
+export type ThreadInfo = { id: string; title: string; at: number };
+const TK = { cur: 'pocket-thread', list: 'pocket-threads' };
+const chatKey = (id: string) => (id === 'main' ? K.chat : K.chat + ':' + id);
+export const useThreadId = () => useLS<string>(TK.cur, 'main');
+export const getThreadId = () => read<string>(TK.cur, 'main');
+export const setThreadId = (id: string) => write(TK.cur, id);
+export const useThreads = () => useLS<ThreadInfo[]>(TK.list, []);
+export const getThreads = () => read<ThreadInfo[]>(TK.list, []);
+export const setThreads = (t: ThreadInfo[]) => write(TK.list, t.slice(0, 60));
+export const newThreadId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+export function touchThread(id: string, title?: string) {
+  const list = getThreads(); const old = list.find((t) => t.id === id);
+  setThreads([{ id, title: old?.title || (title || 'New chat').replace(/\s+/g, ' ').trim().slice(0, 48), at: Date.now() }, ...list.filter((t) => t.id !== id)]);
+}
+export function dropThread(id: string) { localStorage.removeItem(chatKey(id)); setThreads(getThreads().filter((t) => t.id !== id)); }
+export function renameThreadLocal(id: string, title: string) { setThreads(getThreads().map((t) => (t.id === id ? { ...t, title: title.trim().slice(0, 48) || t.title } : t))); }
+export function clearChats() { for (const t of getThreads()) localStorage.removeItem(chatKey(t.id)); localStorage.removeItem(K.chat); localStorage.removeItem(TK.list); localStorage.removeItem(TK.cur); cacheBust++; emit(); }
+export function useChat() { const id = useThreadId(); return useLS<ChatMsg[]>(chatKey(id), []); }
+export const getChat = () => read<ChatMsg[]>(chatKey(getThreadId()), []);
+export const setChat = (m: ChatMsg[], id = getThreadId()) => write(chatKey(id), m.slice(-60));
 
 export function useLive<T>(fn: () => Promise<T>, deps: unknown[], everyMs = 0) {
   const [s, setS] = useState<{ data: T | null; error: string | null; at: number }>({ data: null, error: null, at: 0 });

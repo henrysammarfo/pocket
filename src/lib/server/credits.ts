@@ -5,7 +5,7 @@ import 'server-only';
 import { store, HttpError } from './store';
 
 export const FREE_CREDITS = Number(process.env.FREE_CREDITS_PER_MONTH || 1000);
-export const COST = { chat: 2, voice: 3, memory: 0 } as const;
+export const COST = { chat: 2, voice: 3, photo: 4, memory: 0 } as const;
 const month = () => new Date().toISOString().slice(0, 7);
 const key = (a: string) => `credits:${a}:${month()}`;
 const ttl = () => { const d = new Date(); const next = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1); return Math.ceil((next - Date.now()) / 1000) + 60; };

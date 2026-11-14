@@ -2,14 +2,15 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUp, Lock, Mic, Paperclip, ShieldCheck, Square, Trash2, X } from 'lucide-react';
+import { ArrowUp, ExternalLink, Globe, Lock, Mic, PanelLeft, Paperclip, Pencil, ShieldCheck, Square, SquarePen, Trash2, X } from 'lucide-react';
 import { AppShell, Brand, fmt, Sheet, toast, toastErr } from '@/ui/kit';
 import { speak, useVoice } from '@/ui/useVoice';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
 import { api } from '@/lib/client/api';
 import { summary, useBalances, useQuotes } from '@/lib/client/data';
-import { getChat, getRules, setChat, useChat, useContacts, useProfile, useRules, useSession, type ChatMsg } from '@/lib/client/session';
+import { dropThread, getChat, getRules, getThreadId, getThreads, newThreadId, renameThreadLocal, setChat, setThreadId, setThreads, touchThread, useChat, useContacts, useProfile, useRules, useSession, useThreadId, useThreads, type ChatMsg, type WebProduct, type WebSource } from '@/lib/client/session';
+import type { Balances } from '@/lib/client/data';
 import type { Check, Plan, Step } from '@/lib/shared/plan';
 
 const stepTitle = (s: Step) => (s.type === 'send' ? `Send to ${s.toLabel}` : `${s.type === 'buy' ? 'Buy' : 'Sell'} ${s.ticker}on`);
@@ -28,6 +29,68 @@ function PlanCard({ plan, check, keep, onReview, onChange }: { plan: Plan; check
   );
 }
 
+const ago = (t: number) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; };
+
+function Threads({ open, onClose, onNew, onPick }: { open: boolean; onClose: () => void; onNew: () => void; onPick: (id: string) => void }) {
+  const list = useThreads(); const cur = useThreadId();
+  const [edit, setEdit] = useState(''); const [name, setName] = useState(''); const [del, setDel] = useState('');
+  const save = (id: string) => { const t = name.trim(); setEdit(''); if (!t) return; renameThreadLocal(id, t); api('/api/chat/threads', { id, title: t }, 'PATCH').catch(() => {}); };
+  const remove = (id: string) => { setDel(''); dropThread(id); api('/api/chat/history?thread=' + id, undefined, 'DELETE').catch(() => {}); if (id === cur) onNew(); };
+  return (
+    <>
+      <div className={'tscrim' + (open ? ' on' : '')} onClick={onClose} aria-hidden />
+      <aside className={'tpanel' + (open ? ' open' : '')} aria-label="Your chats">
+        <div className="tp-h"><b>Chats</b><button className="nb tp-x" aria-label="Close chats" onClick={onClose}><X size={20} aria-hidden /></button></div>
+        <button className="btn tp-new" onClick={onNew}><SquarePen size={18} aria-hidden />New chat</button>
+        <div className="tp-list">
+          {!list.length && <div className="tp-empty">Your chats show up here. Start one and it is saved to your account.</div>}
+          {list.map((t) => (
+            <div key={t.id} className={'tp-row' + (t.id === cur ? ' on' : '')}>
+              {edit === t.id ? (
+                <form className="tp-edit" onSubmit={(e) => { e.preventDefault(); save(t.id); }}><input autoFocus aria-label="Chat name" value={name} maxLength={48} onChange={(e) => setName(e.target.value)} onBlur={() => save(t.id)} /></form>
+              ) : del === t.id ? (
+                <div className="tp-del"><span>Delete this chat?</span><button onClick={() => setDel('')}>Cancel</button><button className="danger" onClick={() => remove(t.id)}>Delete</button></div>
+              ) : (
+                <>
+                  <button className="tp-open" onClick={() => onPick(t.id)}><span className="tp-t">{t.title}</span><span className="tp-a">{ago(t.at)}</span></button>
+                  <button className="tp-ic" aria-label={'Rename ' + t.title} onClick={() => { setEdit(t.id); setName(t.title); }}><Pencil size={15} aria-hidden /></button>
+                  <button className="tp-ic" aria-label={'Delete ' + t.title} onClick={() => setDel(t.id)}><Trash2 size={15} aria-hidden /></button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="tp-foot">Chats are saved to your Pocket account behind a signed session. Keys and passwords are never stored.</div>
+      </aside>
+    </>
+  );
+}
+
+// Shrink a photo in the browser before it leaves the device: max 1280 px, JPEG.
+async function shrink(f: File, max = 1280, q = 0.82): Promise<string> {
+  const url = URL.createObjectURL(f);
+  try {
+    const img = await new Promise<HTMLImageElement>((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new Error('That file is not a photo I can read.')); i.src = url; });
+    const k = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', q);
+  } finally { URL.revokeObjectURL(url); }
+}
+
+function Found({ sources, products }: { sources?: WebSource[]; products?: WebProduct[] }) {
+  if (!sources?.length && !products?.length) return null;
+  return (
+    <div className="found">
+      {!!products?.length && <div className="prods">{products.map((p) => (
+        <a key={p.url} className="prod" href={p.url} target="_blank" rel="noopener noreferrer">
+          <span className="pimg">{p.image ? <img src={p.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} /> : null}<span className="pfb">{p.store.slice(0, 1).toUpperCase()}</span></span>
+          <span className="pt">{p.title}</span><span className="pp">{p.price || 'See price'}</span><span className="ps">{p.store}{p.rating ? ' · ' + p.rating.split(' from ')[0] + ' stars' : ''}</span>
+        </a>))}</div>}
+      {!!sources?.length && <div className="srcs"><Globe size={13} aria-hidden /><span>Sources</span>{sources.map((x) => { let h = x.url; try { h = new URL(x.url).hostname.replace(/^www\./, ''); } catch {} return <a key={x.url} href={x.url} target="_blank" rel="noopener noreferrer" title={x.title}>{h}<ExternalLink size={11} aria-hidden /></a>; })}</div>}
+    </div>
+  );
+}
+
 function ChatInner() {
   const s = useSession()!;
   const msgs = useChat();
@@ -40,43 +103,65 @@ function ChatInner() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [blocked, setBlocked] = useState<{ reasons: string[] } | null>(null);
-  const [svc, setSvc] = useState<{ ai: boolean; voice: boolean }>({ ai: false, voice: false });
+  const [svc, setSvc] = useState<{ ai: boolean; voice: boolean; vision: boolean }>({ ai: false, voice: false, vision: false });
+  const [drawer, setDrawer] = useState(false);
+  const [photo, setPhoto] = useState('');
+  const thread = useThreadId();
   const body = useRef<HTMLElement>(null);
   const ta = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const router = useRouter();
   useEffect(() => { body.current?.scrollTo({ top: 1e6 }); }, [msgs.length, busy]);
-  useEffect(() => { fetch('/api/health').then((r) => r.json()).then((h) => setSvc({ ai: !!h?.services?.ai, voice: !!h?.services?.voice })).catch(() => {}); }, []);
-  // A new device: pull past chats from the server (Neon) so the conversation carries on.
+  useEffect(() => { fetch('/api/health').then((r) => r.json()).then((h) => setSvc({ ai: !!h?.services?.ai, voice: !!h?.services?.voice, vision: !!h?.services?.vision })).catch(() => {}); }, []);
+  // Past chats live on the server (Neon) too, so a new device carries on: the list, then the open chat.
+  useEffect(() => {
+    api<{ items: { id: string; title: string; at: number }[] }>('/api/chat/threads').then((r) => {
+      const local = getThreads(); const ids = new Set(local.map((t) => t.id));
+      const merged = [...local, ...(r.items || []).filter((t) => !ids.has(t.id))].sort((a, b) => b.at - a.at);
+      if (merged.length !== local.length) setThreads(merged);
+    }).catch(() => {});
+  }, []);
   useEffect(() => {
     if (msgs.length) return;
-    api<{ items: { role: 'user' | 'assistant'; content: string; at: number; meta?: { plan?: Plan; check?: Check; voice?: boolean } | null }[] }>('/api/chat/history')
-      .then((r) => { if (r.items?.length && !getChat().length) setChat(r.items.map((x) => ({ role: x.role, content: x.content, at: x.at, voice: !!x.meta?.voice, plan: x.meta?.plan ? { plan: x.meta.plan, check: x.meta.check } : undefined }))); })
+    const id = thread;
+    api<{ items: { role: 'user' | 'assistant'; content: string; at: number; meta?: { plan?: Plan; check?: Check; voice?: boolean; photo?: boolean; sources?: WebSource[]; products?: WebProduct[] } | null }[] }>('/api/chat/history?thread=' + id)
+      .then((r) => { if (r.items?.length && getThreadId() === id && !getChat().length) setChat(r.items.map((x) => ({ role: x.role, content: x.content, at: x.at, voice: !!x.meta?.voice, sources: x.meta?.sources, products: x.meta?.products, plan: x.meta?.plan ? { plan: x.meta.plan, check: x.meta.check } : undefined })), id); })
       .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [thread]); // eslint-disable-line react-hooks/exhaustive-deps
+  const newChat = () => { setThreadId(newThreadId()); setDrawer(false); setText(''); setPhoto(''); setTimeout(() => ta.current?.focus(), 50); };
+  const pick = (id: string) => { setThreadId(id); setDrawer(false); };
 
-  const ctx = () => ({ dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, prices: sm.prices, name: profile.name || s.username, contacts: contacts.map((c) => ({ name: c.name, address: c.address })) });
+  // Balances may still be loading right after sign up; read them first so the plan is checked against real money.
+  const ctxNow = async () => {
+    if (b.data) return ctx();
+    try { const fresh = await api<Balances>(`/api/balances?account=${encodeURIComponent(s.account)}`); const f = summary(fresh, q.data); return { ...ctx(), dollars: f.dollars, pusd: f.pusd, usdc: f.usdc, near: f.near, holdings: f.holdings, limit: fresh.limit ?? rules.limit, usedToday: fresh.usedToday ?? 0 }; } catch { return ctx(); }
+  };
+  const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; } };
+  const ctx = () => ({ tz: tz(), dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, prices: sm.prices, name: profile.name || s.username, contacts: contacts.map((c) => ({ name: c.name, address: c.address })) });
   const metaOf = (r: { source: string; model?: string; plan?: unknown; check?: Check }, voice?: boolean) => [
     ...(voice ? ['Heard your voice'] : []),
     r.source === 'ai' ? (r.model ? 'AI: ' + r.model.split('/').pop() : 'AI') : r.source === 'rules' ? 'Pocket rules parser' : 'AI is off',
     ...(r.plan ? [r.check?.ok ? 'Safety check passed' : 'Blocked by your rules', 'Prices read'] : []),
   ];
-  type Out = { reply: string; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string };
-  const land = (next: ChatMsg[], r: Out, voice?: boolean) => {
-    setChat([...next, { role: 'assistant', content: r.reply, at: Date.now(), plan: r.plan ? { plan: r.plan, check: r.check } : undefined, confirm: r.confirm, chips: r.chips, meta: [...metaOf(r, voice), ...(r.remembered?.length ? ['Saved to memory'] : [])] }]);
+  type Out = { reply: string; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean };
+  const land = (next: ChatMsg[], r: Out, voice?: boolean, id = getThreadId()) => {
+    setChat([...next, { role: 'assistant', content: r.reply, at: Date.now(), plan: r.plan ? { plan: r.plan, check: r.check } : undefined, confirm: r.confirm, chips: r.chips, sources: r.sources, products: r.products, meta: [...metaOf(r, voice), ...(r.searched ? ['Searched the web'] : []), ...(r.remembered?.length ? ['Saved to memory'] : [])] }], id);
     if (r.check && !r.check.ok) setBlocked({ reasons: r.check.reasons });
     if (getRules().speak) speak(r.reply);
   };
   const sendMsg = async (t: string, voice = false) => {
-    const content = t.trim();
+    const pic = photo;
+    const content = t.trim() || (pic ? 'What is in this photo?' : '');
     if (!content || busy) return;
-    const next: ChatMsg[] = [...getChat().map((m) => (m.chips ? { ...m, chips: undefined } : m)), { role: 'user', content, at: Date.now(), voice }];
-    setChat(next); setText(''); setBusy(true);
+    const id = getThreadId();
+    const thumb = pic ? await shrink(await (await fetch(pic)).blob() as File, 360, 0.6).catch(() => '') : '';
+    const next: ChatMsg[] = [...getChat().map((m) => (m.chips ? { ...m, chips: undefined } : m)), { role: 'user', content, at: Date.now(), voice, photo: thumb || undefined }];
+    setChat(next, id); touchThread(id, content); setText(''); setPhoto(''); setBusy(true);
     try {
-      const r = await api<Out>('/api/chat', { messages: next.slice(-16).map((m) => ({ role: m.role, content: m.content })), ctx: ctx(), voice });
-      land(next, r, voice);
+      const r = await api<Out>('/api/chat', { messages: next.slice(-16).map((m) => ({ role: m.role, content: m.content })), ctx: await ctxNow(), voice, thread: id, ...(pic ? { image: pic } : {}) });
+      land(next, r, voice, id); touchThread(id);
     } catch (e) {
-      setChat([...next, { role: 'assistant', content: 'I could not reach Pocket just now. ' + (e instanceof Error ? e.message : ''), at: Date.now() }]);
+      setChat([...next, { role: 'assistant', content: 'I could not reach Pocket just now. ' + (e instanceof Error ? e.message : ''), at: Date.now() }], id);
     } finally { setBusy(false); }
   };
   const chip = async (i: number, label: string) => {
@@ -84,7 +169,7 @@ function ChatInner() {
     const next: ChatMsg[] = getChat().map((x, k) => (k === i ? { ...x, chips: undefined } : x));
     if (/^yes/i.test(label) && m?.confirm) {
       next.push({ role: 'user', content: label, at: Date.now() }); setChat(next); setBusy(true);
-      try { land(next, await api<Out>('/api/chat', { confirm: m.confirm, ctx: ctx() })); } catch (e) { toastErr(e); } finally { setBusy(false); }
+      try { land(next, await api<Out>('/api/chat', { confirm: m.confirm, ctx: await ctxNow(), thread: getThreadId() })); } catch (e) { toastErr(e); } finally { setBusy(false); }
       return;
     }
     if (/^no/i.test(label)) { setChat([...next, { role: 'user', content: label, at: Date.now() }, { role: 'assistant', content: 'No problem. Say it again, or type it, and I will listen.', at: Date.now() }]); return; }
@@ -97,6 +182,11 @@ function ChatInner() {
   const micClick = () => { if (voice.state === 'rec' && Date.now() - pressT.current <= 700) return; if (voice.state === 'rec') voice.stop(); };
   const onFile = async (f?: File | null) => {
     if (!f) return;
+    if (f.type.startsWith('image/')) {
+      if (!svc.vision) { toast('Reading photos needs the AI, which is not available right now.'); return; }
+      try { setPhoto(await shrink(f)); ta.current?.focus(); } catch (e) { toastErr(e); }
+      return;
+    }
     if (!svc.voice) { toast('Voice notes need the speech service, which is not set up here yet. Use the mic instead.'); return; }
     await voice.transcribe(f, f.name || 'note.m4a');
   };
@@ -104,8 +194,7 @@ function ChatInner() {
     if (!p.check?.ok) { setBlocked({ reasons: p.check?.reasons || [] }); return; }
     router.push('/review?plan=' + p.plan.id);
   };
-  const clear = () => { setChat([]); api('/api/chat/history', undefined, 'DELETE').catch(() => {}); };
-  const greet = `Hi ${profile.name || '@' + s.username}. Your balance is $${fmt(sm.dollars)} in test dollars. Ask me anything, or tell me what your money should do. You can also hold the mic and just talk.`;
+  const greet = `Hi ${profile.name || '@' + s.username}. Your balance is $${fmt(sm.dollars)} in test dollars. Ask me anything, or tell me what your money should do. You can also hold the mic and just talk, or share a photo of a bill.`;
   return (
     <AppShell screen="chat" tab="chat" overlay={
       <Sheet open={!!blocked} onClose={() => setBlocked(null)} label="Blocked by your rules" cls="sheet">
@@ -115,14 +204,17 @@ function ChatInner() {
         <button className="btn big" onClick={() => setBlocked(null)}>Go back</button><Link className="btn text" href="/settings">See your rules</Link>
       </Sheet>
     }>
-      <header className="nav"><button className="nb" aria-label="Clear chat" onClick={clear}><Trash2 size={20} aria-hidden /></button><Brand /><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></header>
+      <Threads open={drawer} onClose={() => setDrawer(false)} onNew={newChat} onPick={pick} />
+      <header className="nav"><button className="nb" aria-label="Chats" onClick={() => setDrawer(true)}><PanelLeft size={21} aria-hidden /></button><Brand /><span className="nav-r"><button className="nb" aria-label="New chat" onClick={newChat}><SquarePen size={20} aria-hidden /></button><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></span></header>
       <main className="body chat" ref={body}>
         <div className="thread">
           <div className="when">Today</div>
           <div className="ai">{b.data || b.error ? greet : <span className="typing" aria-label="Loading"><i /><i /><i /></span>}</div>
           {msgs.map((m, i) => (
             <div key={i} style={{ display: 'contents' }}>
+              {m.photo && <img className="mephoto" src={m.photo} alt="Photo you shared" />}
               <div className={m.role === 'user' ? 'me' : 'ai'}>{m.voice && <Mic size={13} aria-label="Said by voice" style={{ marginRight: '.3rem', verticalAlign: '-2px', opacity: 0.7 }} />}{m.content}</div>
+              {m.role === 'assistant' && <Found sources={m.sources} products={m.products} />}
               {m.plan ? <PlanCard plan={(m.plan as { plan: Plan }).plan} check={(m.plan as { check?: Check }).check} keep={rules.keep} onReview={() => review(m.plan as { plan: Plan; check?: Check })} onChange={() => { setText((msgs[i - 1]?.content) || ''); ta.current?.focus(); }} /> : null}
               {m.chips && <div className="chips">{m.chips.map((c) => <button key={c} className="chipbtn" onClick={() => chip(i, c)}>{c}</button>)}</div>}
               {m.meta && <div className="strip">{m.meta.map((x) => <span key={x} className={'chip' + (/passed|read|Heard|Saved/.test(x) ? ' ok' : '')}>{x}</span>)}</div>}
@@ -140,13 +232,16 @@ function ChatInner() {
           </div>
         ) : (
           <form className="composer" onSubmit={(e) => { e.preventDefault(); sendMsg(text); }}>
+            {photo && <div className="cphoto"><img src={photo} alt="Photo to send" /><span>Photo ready. Ask about it, or say who to split it with.</span><button type="button" aria-label="Remove photo" onClick={() => setPhoto('')}><X size={16} aria-hidden /></button></div>}
             <textarea ref={ta} className="inp" rows={1} aria-label="Message Pocket" placeholder="Talk to Pocket about anything" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(text); } }} />
             <span className="cbtns">
-              <input ref={file} type="file" accept="audio/*,.m4a,.mp3,.ogg,.opus,.wav,.webm" hidden onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
-              <button type="button" className="mic" aria-label="Upload a voice note" onClick={() => file.current?.click()} disabled={voice.state !== 'idle'}><Paperclip size={18} aria-hidden /></button>
-              <button type="button" className="mic" aria-label={voice.available ? 'Hold or tap to talk' : 'Voice not available in this browser'} disabled={!voice.available || voice.state !== 'idle' || busy}
-                onPointerDown={micDown} onPointerUp={micUp} onClick={micClick} onContextMenu={(e) => e.preventDefault()}><Mic size={18} aria-hidden /></button>
-              <button className="sendb" aria-label="Send" disabled={busy || !text.trim()}><ArrowUp size={18} strokeWidth={2.4} aria-hidden /></button>
+              <input ref={file} type="file" accept="image/jpeg,image/png,image/webp,audio/*,.m4a,.mp3,.ogg,.opus,.wav,.webm" hidden onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
+              <button type="button" className="mic" aria-label="Attach a photo or voice note" onClick={() => file.current?.click()} disabled={voice.state !== 'idle'}><Paperclip size={18} aria-hidden /></button>
+              <span className="cright">
+                <button type="button" className="mic" aria-label={voice.available ? 'Hold or tap to talk' : 'Voice not available in this browser'} disabled={!voice.available || voice.state !== 'idle' || busy}
+                  onPointerDown={micDown} onPointerUp={micUp} onClick={micClick} onContextMenu={(e) => e.preventDefault()}><Mic size={18} aria-hidden /></button>
+                <button className="sendb" aria-label="Send" disabled={busy || (!text.trim() && !photo)}><ArrowUp size={18} strokeWidth={2.4} aria-hidden /></button>
+              </span>
             </span>
           </form>
         )}

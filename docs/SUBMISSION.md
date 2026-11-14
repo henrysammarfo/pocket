@@ -18,7 +18,7 @@ Every field the form takes, with what goes in it. There are no image, logo or vi
 | Idea | 20 to 2,000 characters | the "What we built" text below (about 1,500 characters) |
 | Consent | must be ticked | **Henry ticks** |
 
-Live app for judges: https://pocket-teamtitanlink.vercel.app (NEAR testnet, stays up through 25 Nov). Video file to attach to the X post: `video/pocket-demo.mp4` (1920x1080 H.264, about 1 min 38 s, under the 2 min 20 s X limit), poster `docs/shots/poster.png` (1280x720).
+Live app for judges: https://pocket-zeta-lime.vercel.app (NEAR testnet, stays up through 25 Nov). Video file to attach to the X post: `video/pocket-demo.mp4` (1920x1080 H.264, about 1 min 38 s, under the 2 min 20 s X limit), poster `docs/shots/poster.png` (1280x720).
 
 ## Self score against the judging criteria (honest, out of 10)
 | Criterion | realworld | security | Why, and the gap |
@@ -37,13 +37,13 @@ The AI never holds keys. It can only propose. Your browser holds an ed25519 key 
 
 Chat runs on any OpenAI compatible model: Groq's free tier by default, or NEAR AI Cloud's private models with one setting. Voice uses Whisper with a prompt tuned for Ghanaian English and Pidgin. Memory and AI credits are per account in Neon, behind a signed session, and the app keeps working without any AI key.
 
-Live on testnet at https://pocket-teamtitanlink.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
+Live on testnet at https://pocket-zeta-lime.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
 
 ## Demo video
 `video/pocket-demo.mp4`, about 1 min 38 s: title card, the problem, sign up, wallet, a chat question, a messy voice note heard back cleanly, the plan card (zoomed), hold to approve, the receipt from chain, Settings with credits and memory, the desktop Invest view, the NEAR stack card, the tests card, end card. English voiceover, captions, no music. Rebuild with `npm run video`; scenes and lines are in [scripts/video/script.json](../scripts/video/script.json).
 
 ## X post draft (Henry posts it)
-> Pocket: a money app you just talk to, on @NEARProtocol, #NEARHackathon. Say "send Mum 50 and put 25 in Tesla", get one plan, hold to approve. Gasless sends, atomic trades via NEAR Intents, and the AI never holds your keys. Testnet. https://pocket-teamtitanlink.vercel.app https://github.com/henrysammarfo/pocket
+> Pocket: a money app you just talk to, on @NEARProtocol, #NEARHackathon. Say "send Mum 50 and put 25 in Tesla", get one plan, hold to approve. Gasless sends, atomic trades via NEAR Intents, and the AI never holds your keys. Testnet. https://pocket-zeta-lime.vercel.app https://github.com/henrysammarfo/pocket
 
 ## Why it stands out
 - A normal person can use it: one plan card, one hold, plain words, no seed phrase, no gas.

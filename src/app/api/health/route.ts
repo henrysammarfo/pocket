@@ -1,4 +1,6 @@
 import { handler } from '@/lib/server/http';
+import { webUp } from '@/lib/server/web';
+import { visionUp } from '@/lib/server/vision';
 import { chainInfo } from '@/lib/server/pool';
 import { has, AI, aiUp, sttUp, probeAI } from '@/lib/server/env';
 import { storeKind } from '@/lib/server/store';
@@ -9,7 +11,7 @@ export const GET = handler(async () => {
   return {
     ok: true, network: 'testnet', root: ROOT, ...c, verifierWasmSha256: VERIFIER_SHA256, verifierRelease: VERIFIER_RELEASE,
     tokens: TOKENS.map((t) => t.contract), store: storeKind,
-    services: { sponsor: has('SPONSOR'), relayer: has('RELAYER'), maker: has('MAKER'), faucet: has('FAUCET'), ai: aiUp(), voice: sttUp(), aiConfigured: !!AI.apiKey, aiNote: aiUp() ? null : AI.apiKey ? 'The AI provider is not accepting calls right now (no credit or bad key). Pocket uses its built in parser and browser speech.' : 'No AI key set. Pocket uses its built in parser and browser speech.' },
+    services: { sponsor: has('SPONSOR'), relayer: has('RELAYER'), maker: has('MAKER'), faucet: has('FAUCET'), ai: aiUp(), voice: sttUp(), web: webUp() && aiUp(), vision: visionUp() && aiUp(), aiConfigured: !!AI.apiKey, aiNote: aiUp() ? null : AI.apiKey ? 'The AI provider is not accepting calls right now (no credit or bad key). Pocket uses its built in parser and browser speech.' : 'No AI key set. Pocket uses its built in parser and browser speech.' },
     aiModel: AI.apiKey ? AI.model : null, aiProvider: AI.apiKey ? AI.label : null, sttModel: AI.sttKey ? AI.sttModel : null,
   };
 });

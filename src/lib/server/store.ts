@@ -16,11 +16,15 @@ interface Store {
   memories(account: string): Promise<Memo[]>;
   deleteMemory(account: string, id: string): Promise<void>;
   addChat(account: string, m: ChatRow): Promise<void>;
-  chats(account: string, limit?: number): Promise<ChatRow[]>;
-  clearChat(account: string): Promise<void>;
+  chats(account: string, limit?: number, thread?: string): Promise<ChatRow[]>;
+  clearChat(account: string, thread?: string): Promise<void>;
+  threads(account: string): Promise<Thread[]>;
+  renameThread(account: string, thread: string, title: string): Promise<void>;
 }
 export type Memo = { id: string; text: string; at: number };
-export type ChatRow = { role: 'user' | 'assistant'; content: string; at: number; meta?: Record<string, unknown> | null };
+export type ChatRow = { role: 'user' | 'assistant'; content: string; at: number; meta?: Record<string, unknown> | null; thread?: string };
+export type Thread = { id: string; title: string; at: number; n: number };
+const titleOf = (t: string) => t.replace(/\s+/g, ' ').trim().slice(0, 48) || 'New chat';
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
 class Memory implements Store {
@@ -41,9 +45,16 @@ class Memory implements Store {
   async addMemory(account: string, text: string) { const m = { id: rid(), text, at: Date.now() }; this.mem.set(account, [...(this.mem.get(account) || []), m].slice(-50)); return m; }
   async memories(account: string) { return this.mem.get(account) || []; }
   async deleteMemory(account: string, id: string) { this.mem.set(account, (this.mem.get(account) || []).filter((m) => m.id !== id)); }
-  async addChat(account: string, m: ChatRow) { this.chat.set(account, [...(this.chat.get(account) || []), m].slice(-200)); }
-  async chats(account: string, limit = 40) { return (this.chat.get(account) || []).slice(-limit); }
-  async clearChat(account: string) { this.chat.delete(account); }
+  titles = new Map<string, string>();
+  async addChat(account: string, m: ChatRow) { this.chat.set(account, [...(this.chat.get(account) || []), { ...m, thread: m.thread || 'main' }].slice(-500)); }
+  async chats(account: string, limit = 40, thread = 'main') { return (this.chat.get(account) || []).filter((m) => (m.thread || 'main') === thread).slice(-limit); }
+  async clearChat(account: string, thread?: string) { if (!thread) { this.chat.delete(account); return; } this.chat.set(account, (this.chat.get(account) || []).filter((m) => (m.thread || 'main') !== thread)); this.titles.delete(account + ':' + thread); }
+  async threads(account: string) {
+    const by = new Map<string, Thread>();
+    for (const m of this.chat.get(account) || []) { const id = m.thread || 'main'; const t = by.get(id) || { id, title: '', at: 0, n: 0 }; if (!t.title && m.role === 'user') t.title = titleOf(m.content); t.at = Math.max(t.at, m.at); t.n++; by.set(id, t); }
+    return [...by.values()].map((t) => ({ ...t, title: this.titles.get(account + ':' + t.id) || t.title || 'New chat' })).sort((a, b) => b.at - a.at);
+  }
+  async renameThread(account: string, thread: string, title: string) { this.titles.set(account + ':' + thread, titleOf(title)); }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
@@ -60,6 +71,9 @@ class Neon implements Store {
       await this.sql`create index if not exists pocket_memory_account on pocket_memory (account, at)`;
       await this.sql`create table if not exists pocket_chat (id bigserial primary key, account text not null, role text not null, content text not null, meta jsonb, at timestamptz not null default now())`;
       await this.sql`create index if not exists pocket_chat_account on pocket_chat (account, id desc)`;
+      await this.sql`alter table pocket_chat add column if not exists thread text not null default 'main'`;
+      await this.sql`create index if not exists pocket_chat_thread on pocket_chat (account, thread, id desc)`;
+      await this.sql`create table if not exists pocket_thread (account text not null, id text not null, title text not null, primary key (account, id))`;
     })();
   }
   async incr(key: string, ttl: number, by = 1) {
@@ -98,15 +112,30 @@ Neon.prototype.memories = async function (this: Neon, account: string) {
 };
 Neon.prototype.deleteMemory = async function (this: Neon, account: string, id: string) { await this.ready; await this.sql`delete from pocket_memory where account = ${account} and id = ${id}`; };
 Neon.prototype.addChat = async function (this: Neon, account: string, m: ChatRow) {
-  await this.ready; await this.sql`insert into pocket_chat (account, role, content, meta, at) values (${account}, ${m.role}, ${m.content}, ${m.meta ? JSON.stringify(m.meta) : null}, ${new Date(m.at).toISOString()})`;
+  await this.ready; await this.sql`insert into pocket_chat (account, role, content, meta, at, thread) values (${account}, ${m.role}, ${m.content}, ${m.meta ? JSON.stringify(m.meta) : null}, ${new Date(m.at).toISOString()}, ${m.thread || 'main'})`;
 };
-Neon.prototype.chats = async function (this: Neon, account: string, limit = 40) {
-  await this.ready; const r = await this.sql`select role, content, meta, at from pocket_chat where account = ${account} order by id desc limit ${limit}`;
+Neon.prototype.chats = async function (this: Neon, account: string, limit = 40, thread = 'main') {
+  await this.ready; const r = await this.sql`select role, content, meta, at from pocket_chat where account = ${account} and thread = ${thread} order by id desc limit ${limit}`;
   return r.reverse().map((x) => ({ role: x.role, content: x.content, meta: x.meta, at: new Date(x.at).getTime() }));
 };
-Neon.prototype.clearChat = async function (this: Neon, account: string) { await this.ready; await this.sql`delete from pocket_chat where account = ${account}`; };
+Neon.prototype.clearChat = async function (this: Neon, account: string, thread?: string) {
+  await this.ready;
+  if (!thread) { await this.sql`delete from pocket_chat where account = ${account}`; await this.sql`delete from pocket_thread where account = ${account}`; return; }
+  await this.sql`delete from pocket_chat where account = ${account} and thread = ${thread}`; await this.sql`delete from pocket_thread where account = ${account} and id = ${thread}`;
+};
+Neon.prototype.threads = async function (this: Neon, account: string) {
+  await this.ready;
+  const r = await this.sql`select c.thread as id, max(c.at) as at, count(*) as n,
+      coalesce(max(t.title), (select content from pocket_chat f where f.account = ${account} and f.thread = c.thread and f.role = 'user' order by f.id asc limit 1)) as title
+    from pocket_chat c left join pocket_thread t on t.account = c.account and t.id = c.thread
+    where c.account = ${account} group by c.thread order by max(c.at) desc limit 60`;
+  return r.map((x) => ({ id: x.id, title: titleOf(String(x.title || '')), at: new Date(x.at).getTime(), n: Number(x.n) }));
+};
+Neon.prototype.renameThread = async function (this: Neon, account: string, thread: string, title: string) {
+  await this.ready; await this.sql`insert into pocket_thread (account, id, title) values (${account}, ${thread}, ${titleOf(title)}) on conflict (account, id) do update set title = excluded.title`;
+};
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
-interface Neon extends Pick<Store, 'addMemory' | 'memories' | 'deleteMemory' | 'addChat' | 'chats' | 'clearChat'> {}
+interface Neon extends Pick<Store, 'addMemory' | 'memories' | 'deleteMemory' | 'addChat' | 'chats' | 'clearChat' | 'threads' | 'renameThread'> {}
 
 const g = globalThis as unknown as { __pocketStore?: Store };
 export const store: Store = g.__pocketStore || (g.__pocketStore = DATABASE_URL ? new Neon() : new Memory());

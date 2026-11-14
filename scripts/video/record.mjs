@@ -1,10 +1,10 @@
 // Records the demo journey on the live site with Playwright, phone size and a desktop pass.
 // Writes raw videos and events.json (seconds from the start of each video) into OUT.
-// Usage: BASE=https://pocket-teamtitanlink.vercel.app OUT=/tmp/video/raw node scripts/video/record.mjs
+// Usage: BASE=https://pocket-zeta-lime.vercel.app OUT=/tmp/video/raw node scripts/video/record.mjs
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-const BASE = (process.env.BASE || 'https://pocket-teamtitanlink.vercel.app').replace(/\/$/, '');
+const BASE = (process.env.BASE || 'https://pocket-zeta-lime.vercel.app').replace(/\/$/, '');
 const OUT = process.env.OUT || 'video-raw'; mkdirSync(OUT, { recursive: true });
 const VOICE = process.env.VOICE_NOTE || 'tests/e2e/fixtures/messy-voice.mp3';
 const ev = { phone: {}, desktop: {} };
@@ -57,7 +57,7 @@ if (process.env.ONLY !== 'desktop') {
   await tap(p.locator('a[href="/chat"]:visible')); await p.waitForTimeout(1500); mark('chat2');
   await tap(p.locator('textarea[aria-label="Message Pocket"]')); await p.keyboard.type('hello, what can you do for me?', { delay: 45 }); mark('askSmall'); await p.keyboard.press('Enter');
   await p.waitForTimeout(800); await idle(); await p.waitForTimeout(300); mark('smallReply'); await p.waitForTimeout(2500);
-  mark('voiceTap'); await tap(p.locator('button[aria-label="Upload a voice note"]')).catch(() => {});
+  mark('voiceTap'); await tap(p.locator('button[aria-label="Attach a photo or voice note"]')).catch(() => {});
   await p.setInputFiles('input[type=file]', VOICE); mark('voiceSent');
   await p.waitForSelector('[aria-label="Said by voice"]', { timeout: 60000 }); mark('voiceHeard');
   await p.waitForTimeout(500); await idle(); await p.waitForTimeout(400); mark('voiceConfirm'); await p.waitForTimeout(3000);
