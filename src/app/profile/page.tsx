@@ -7,7 +7,7 @@ import { Gate } from '@/ui/Gate';
 import { Avatar, AvatarFor } from '@/ui/Avatar';
 import { copy } from '@/ui/sheets';
 import { EMOJI, KITS, emo, jersey } from '@/ui/avatars';
-import { setChat, setProfile, setSession, useProfile, useSession } from '@/lib/client/session';
+import { clearChats, setProfile, setSession, useProfile, useSession } from '@/lib/client/session';
 
 function ProfileInner() {
   const s = useSession()!; const p = useProfile(); const router = useRouter();
@@ -37,7 +37,7 @@ function ProfileInner() {
         <div className="group" style={{ padding: '.8rem 1rem', overflowWrap: 'anywhere' }}><span className="mono" style={{ fontSize: '.8125rem', filter: shown ? 'none' : 'blur(6px)' }}>{s.secretKey}</span></div>
         <div className="acts2" style={{ marginTop: '.8rem' }}><button className="btn ghost" onClick={() => setShown((x) => !x)}>{shown ? 'Hide' : 'Show'}</button><button className="btn" onClick={() => copy(JSON.stringify({ account: s.account, secretKey: s.secretKey }), 'Backup copied. Store it somewhere safe')}><Copy size={16} aria-hidden /> Copy backup</button></div></Sheet>
       <Sheet open={sheet === 'out'} onClose={() => setSheet('')} label="Sign out"><div className="sh-t">Sign out of this browser?</div><div className="sh-s">Pocket deletes your key from this browser. Without a backup you cannot get back into {s.account}.</div>
-        <div className="acts2"><button className="btn ghost" onClick={() => setSheet('key')}>Back up first</button><button className="btn" style={{ background: 'var(--danger)' }} onClick={() => { setSession(null); setChat([]); toast('Signed out'); router.replace('/welcome'); }}>Sign out</button></div></Sheet>
+        <div className="acts2"><button className="btn ghost" onClick={() => setSheet('key')}>Back up first</button><button className="btn" style={{ background: 'var(--danger)' }} onClick={() => { setSession(null); clearChats(); toast('Signed out'); router.replace('/welcome'); }}>Sign out</button></div></Sheet>
     </>}>
       <BackNav href="/settings" title="Profile" />
       <main className="body settings">
@@ -46,7 +46,7 @@ function ProfileInner() {
           <button className="cell" onClick={() => { setVal(p.name); setSheet('name'); }}><div className="lft"><span className="ic"><UserRound size={17} aria-hidden /></span><div className="ct">Name</div></div><span className="cv">{p.name || 'Add'} <ChevronRight size={16} aria-hidden /></span></button>
           <button className="cell" onClick={() => copy('@' + s.username, 'Username copied')}><div className="lft"><span className="ic"><AtSign size={17} aria-hidden /></span><div className="ct">Username</div></div><span className="cv">@{s.username} <Copy size={14} aria-hidden /></span></button>
           <button className="cell" onClick={() => { setVal(p.email); setSheet('email'); }}><div className="lft"><span className="ic"><Mail size={17} aria-hidden /></span><div className="ct">Email</div></div><span className="cv" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email || 'Add'} <ChevronRight size={16} aria-hidden /></span></button>
-          <button className="cell" onClick={() => copy(s.account, 'Account copied')}><div className="lft"><span className="ic"><Wallet size={17} aria-hidden /></span><div className="ct">NEAR account</div></div><span className="cv mono" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '.8125rem' }}>{s.account} <Copy size={14} aria-hidden /></span></button>
+          <button className="cell acct" onClick={() => copy(s.account, 'Account copied')}><div className="lft"><span className="ic"><Wallet size={17} aria-hidden /></span><div className="cl"><div className="ct">NEAR account</div><div className="cs mono" style={{ overflowWrap: 'anywhere', textAlign: 'left' }}>{s.account}</div></div></div><Copy size={16} aria-hidden style={{ flex: '0 0 auto', color: 'var(--ink-2)' }} /></button>
         </section>
         <div className="ghead" id="paylink"><b>Your pay link</b><span>People can send to you with it</span></div>
         <section className="group"><div className="paylink"><span className="pl">{link.replace(/^https?:\/\//, '')}</span><span style={{ display: 'flex', gap: '.4rem' }}><button className="nb" aria-label="Copy" onClick={() => copy(link, 'Pay link copied')}><Copy size={18} aria-hidden /></button><button className="nb" aria-label="Share" onClick={share}><Share size={18} aria-hidden /></button></span></div></section>

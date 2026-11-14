@@ -22,11 +22,11 @@ function WalletInner() {
     <AppShell screen="wallet" tab="wallet" overlay={<><ReceiveSheet open={sheet === 'recv'} onClose={() => setSheet('')} /><AddSheet open={sheet === 'add'} onClose={() => setSheet('')} /></>}>
       <header className="nav large"><div className="lt">Wallet</div><span style={{ display: 'flex', gap: '.5rem' }}><Link className="nb" href="/settings" aria-label="Settings"><Settings size={20} aria-hidden /></Link><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></span></header>
       <main className="body wallet">
-        <Link className="pcard" href="/coin/usdc" aria-label="Pocket Cash, open USDC">
+        <section className="pcard" aria-label="Pocket Cash, total balance">
           <div className="pc-top"><div className="brand"><Coil /><span>Pocket Cash</span></div><span className="tag cc-tag">NEAR testnet</span></div>
           <div className="pc-bot"><div className="pc-lab">Total balance</div><div className="pc-v">{ready ? <Money v={sm.total} /> : <span className="skel" style={{ display: 'inline-block', width: '8rem', height: '2.4rem' }} />}</div>
             <div className="pc-id" onClick={(e) => { e.preventDefault(); copy(s.account, 'Account copied'); }}>{s.account} <Copy size={14} aria-hidden /></div></div>
-        </Link>
+        </section>
         <div className="acts4">
           <Link href="/send"><span className="ci"><ArrowUpRight size={22} strokeWidth={2.2} aria-hidden /></span>Send</Link>
           <button onClick={() => setSheet('recv')}><span className="ci"><ArrowDownLeft size={22} strokeWidth={2.2} aria-hidden /></span>Receive</button>

@@ -1,6 +1,6 @@
 // Attack checks against any running Pocket (local or hosted). Every request here is meant to be refused,
 // so no money moves. Shows what stops a prompt injected AI, a forged request or an abuser.
-// Usage: node tests/attack.mjs https://pocket-teamtitanlink.vercel.app
+// Usage: node tests/attack.mjs https://pocket-zeta-lime.vercel.app
 const BASE = (process.argv[2] || process.env.BASE || 'http://localhost:3100').replace(/\/$/, '');
 const fails = []; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails.push(m); };
 const post = async (p, b) => { const r = await fetch(BASE + p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }); return { s: r.status, j: await r.json().catch(() => ({})) }; };

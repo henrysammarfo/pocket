@@ -25,7 +25,7 @@ const card = (s) => {
     <div class="cap" style="font-size:34px">Unit, testnet, browser on phone and desktop, responsive and hosted checks</div></div>`;
   return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 200px"><h1 style="font-size:104px">${esc(s.head)}</h1><h2 style="font-size:52px;max-width:1400px">${esc(s.sub)}</h2></div><div class="top logo"><i>${coil}</i>Pocket</div>`;
 };
-const phoneBg = (s) => `<div class="top logo"><i>${coil}</i>Pocket</div><div class="step"><h1>${esc(s.head)}</h1><div class="cap">${esc(s.caption || s.vo)}</div></div><div class="tag">Live on NEAR testnet · pocket-teamtitanlink.vercel.app</div>`;
+const phoneBg = (s) => `<div class="top logo"><i>${coil}</i>Pocket</div><div class="step"><h1>${esc(s.head)}</h1><div class="cap">${esc(s.caption || s.vo)}</div></div><div class="tag">Live on NEAR testnet · pocket-zeta-lime.vercel.app</div>`;
 const deskBg = (s) => `<div style="position:absolute;left:210px;top:40px;width:1500px;height:844px;border-radius:22px;background:#060a09;box-shadow:0 40px 120px rgba(0,0,0,.55),0 0 0 2px #24493f"></div>
   <div style="position:absolute;left:210px;right:210px;top:915px;display:flex;align-items:baseline;gap:40px"><h1 style="font-size:58px;white-space:nowrap">${esc(s.head)}</h1><div class="cap" style="margin:0;font-size:34px">${esc(s.vo)}</div></div>`;
 const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
