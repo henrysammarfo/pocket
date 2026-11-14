@@ -40,11 +40,9 @@ const shots = [];
   await p.click('.plan button:has-text("Review and approve")'); await p.waitForURL('**/review**'); await p.waitForTimeout(2500); await snap('review');
   const el = p.locator('button.hold').first(); const bb = await el.boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(1900); await p.mouse.up();
   await p.locator('a:has-text("See wallet")').waitFor({ timeout: 120000 }); await p.waitForTimeout(1200); await snap('sent');
-  // 6 invest: buy NVDA, then the stock list
-  await p.goto(BASE + '/invest/NVDA'); await p.waitForTimeout(3500); await snap('stock');
+  // 6 wallet and the stock list
   await p.goto(BASE + '/wallet'); await p.waitForTimeout(3500); await snap('wallet');
   await p.goto(BASE + '/invest'); await p.waitForTimeout(3500); await snap('invest');
-  await p.goto(BASE + '/activity'); await p.waitForTimeout(3000); await snap('activity');
   await b.close();
   for (const n of shots) execFileSync('python3', ['-c', `from PIL import Image; Image.open('${TMP}/${n}.png').convert('RGB').save('public/land/${n}.webp', quality=86, method=6)`]);
   console.log('wrote', shots.map((n) => `public/land/${n}.webp`).join(' '));

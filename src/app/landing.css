@@ -114,7 +114,7 @@ html.rv-on .rv:not(.in){opacity:0;transform:translateY(14px)}
  .lp-hero{grid-template-columns:1.1fr .9fr;padding-top:3.5rem;padding-bottom:5rem}
  .lp-hero-art{min-height:36rem}.lp-hero-art .ph{width:18.5rem}.lp-hero-art .back{width:15rem}
  .lp-row{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(3rem,7vw,6rem)}
- .lp-row.flip .lp-row-copy{order:2}
+ .lp-row.flip{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}.lp-row.flip .lp-row-copy{order:2}
  .lp-row-art{padding:3.5rem 3rem;min-height:38rem;align-items:center}
  .lp-row-art .ph{width:17.5rem}.lp-row-art.two .ph{width:15rem}
  .lp-safe-in{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:5rem}
