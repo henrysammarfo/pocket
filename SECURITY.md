@@ -15,15 +15,20 @@ No key is ever committed, logged or sent to the client. `.env*` and `.secrets/` 
 
 ## What stops abuse
 * **AI cannot move money.** It returns a plan; the user holds to approve; the device key signs the exact intents shown.
-* **Relayer policy** (`relay()` in `pool.ts`): sender must be a Pocket sub account, receiver and methods are allow listed (verifier `add_public_key`, USDC `storage_deposit` and `ft_transfer`, NEAR transfer up to 5), gas up to 50 TGas, deposits capped. The delegate signature and nonce are checked by the NEAR protocol.
+* **Relayer policy** (`delegatePolicy` in `src/lib/shared/policy.ts`): sender must be a Pocket sub account, receiver and methods are allow listed (verifier `add_public_key`, USDC `storage_deposit` and `ft_transfer`, NEAR transfers up to 5 in total per delegate), gas up to 50 TGas, deposits exact, every field validated so malformed input gets a 400, never a crash. The delegate signature and nonce are checked by the NEAR protocol.
 * **Intents** are NEP-413 signed with a 32 byte random nonce (never the `0x5628` versioned prefix) and a short deadline. The verifier enforces nonces, so replays fail.
 * **Quotes** are HMAC signed, expire in 60 s, and are refused if the price is older than `MAX_PRICE_AGE_SEC`. The maker signs the exact token diff the user signed.
-* **Daily limit** is checked on the server for every send. Changing it needs a NEP-413 message signed by the device key; raising it also asks for the passkey when that is on.
+* **Daily limit** is checked on the server for every send with one atomic increment, so parallel requests cannot go over it, and the amount is refunded if the chain rejects the send. Changing it needs a NEP-413 message signed by the device key, which works once (its nonce is burned). Raising it also asks for the passkey in the browser when that is on.
+* **Formal rules:** every rule above is stated in [docs/POLICY.md](docs/POLICY.md) with the code that enforces it and the test that checks it. `tests/unit/policy.test.ts` checks them with property based and fuzz tests (thousands of random plans, delegates and races).
 * **Rate limits** per IP and per account on signup, faucet and chat.
 * **Attack checks** in `tests/attack.mjs` (`npm run attack -- <url>`): a relayer call outside the allow list, a forged signature, a service account as sender, a NEAR send above the cap, the faucet for a stranger, a limit change without a signature, and a prompt injected plan. All are refused.
 * Tokens are fixed supply with no mint and no force unregister.
 
+## Verify the deployed code
+`npm run verify:chain` compares the on chain `code_hash` of the verifier and every token with `vendor/defuse.wasm` and `vendor/pocket_token.wasm`. No keys needed.
+
 ## Known limits, said plainly
+* Server rules bind the AI, the relayer and the API, not someone who already holds the device key. Why the browser key is a full access key, and the design that moves the limits on chain, are in [docs/POLICY.md](docs/POLICY.md#what-is-not-enforced-on-chain-and-why).
 * The passkey is a **local approval gate** (WebAuthn user verification in this browser). It is not yet an on chain key; that is on the roadmap.
 * The device key in localStorage is as safe as the browser profile. Users can back it up from Profile.
 * Without Neon (`DATABASE_URL`) the limit and activity store is in memory per server instance.
