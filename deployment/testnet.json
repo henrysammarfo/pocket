@@ -1,0 +1,131 @@
+{
+  "network": "testnet",
+  "root": "pocketnear.testnet",
+  "admin": "admin.pocketnear.testnet",
+  "verifier": "verifier.pocketnear.testnet",
+  "maker": "maker.pocketnear.testnet",
+  "faucet": "faucet.pocketnear.testnet",
+  "relayer": "relayer.pocketnear.testnet",
+  "verifierRelease": "near/intents defuse/v0.4.2 release asset defuse.wasm",
+  "verifierWasmSha256": "f67f9559b3b512c52dfa11723a28b9119bcf773ac01780370d6409e5f1fb20e5",
+  "usdc": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
+  "tokens": [
+    {
+      "symbol": "pUSD",
+      "name": "Pocket test dollar (testnet, no value)",
+      "decimals": 6,
+      "contract": "pusd.pocketnear.testnet",
+      "assetId": "nep141:pusd.pocketnear.testnet"
+    },
+    {
+      "symbol": "TSLAon",
+      "name": "Pocket paper TSLAon, tracks TSLA (testnet, no value)",
+      "decimals": 18,
+      "contract": "tslaon.pocketnear.testnet",
+      "assetId": "nep141:tslaon.pocketnear.testnet"
+    },
+    {
+      "symbol": "NVDAon",
+      "name": "Pocket paper NVDAon, tracks NVDA (testnet, no value)",
+      "decimals": 18,
+      "contract": "nvdaon.pocketnear.testnet",
+      "assetId": "nep141:nvdaon.pocketnear.testnet"
+    },
+    {
+      "symbol": "AAPLon",
+      "name": "Pocket paper AAPLon, tracks AAPL (testnet, no value)",
+      "decimals": 18,
+      "contract": "aaplon.pocketnear.testnet",
+      "assetId": "nep141:aaplon.pocketnear.testnet"
+    },
+    {
+      "symbol": "SPYon",
+      "name": "Pocket paper SPYon, tracks SPY (testnet, no value)",
+      "decimals": 18,
+      "contract": "spyon.pocketnear.testnet",
+      "assetId": "nep141:spyon.pocketnear.testnet"
+    },
+    {
+      "symbol": "QQQon",
+      "name": "Pocket paper QQQon, tracks QQQ (testnet, no value)",
+      "decimals": 18,
+      "contract": "qqqon.pocketnear.testnet",
+      "assetId": "nep141:qqqon.pocketnear.testnet"
+    }
+  ],
+  "bootstrapTxs": [
+    {
+      "label": "register verifier on AAPLon",
+      "hash": "BmzH4Ma7y37v5rBDBzfL53vajQFSfv4cYZRs4rJvK6Zr"
+    },
+    {
+      "label": "create spyon.pocketnear.testnet",
+      "hash": "BSsix2Z7dQDa7HC3RauxmcbtCU77pT1ZiMVzS4L3Wm7M"
+    },
+    {
+      "label": "deploy spyon.pocketnear.testnet",
+      "hash": "2qtL4zMJzZRqfNRoPjMHYwc88w79JFgoFqmSHuXLHT8Z"
+    },
+    {
+      "label": "init SPYon",
+      "hash": "3pSoRsE7xkAEbpV7nyQqNAwKwejJPRV758ktWfnjTCCk"
+    },
+    {
+      "label": "register verifier on SPYon",
+      "hash": "HWfRqLGhZowABQEEH7nofveXbDR4YV7kr3JouHfvFHyW"
+    },
+    {
+      "label": "create qqqon.pocketnear.testnet",
+      "hash": "FRd9VpRrEtofXxdx5VMhHawx2Z68J9HxgPotPBnjaLRb"
+    },
+    {
+      "label": "deploy qqqon.pocketnear.testnet",
+      "hash": "2eyoVqrRH7zpDDVch6WzzVNJ4h4JHDzXEYV5pgASFmdq"
+    },
+    {
+      "label": "init QQQon",
+      "hash": "51XaeH6hdyM7w5eeEyJY33L4BptH8Pig1tGBUDSXWSbF"
+    },
+    {
+      "label": "register verifier on QQQon",
+      "hash": "DYU65MgnMUMBfADMC4KdgQJ5qsZHsL4ouZKRNm8b4C9A"
+    },
+    {
+      "label": "deposit pUSD for faucet",
+      "hash": "CJxESvut5X8ELHrXof78n54KKbc1cPwPNEAjbGUnyFuj"
+    },
+    {
+      "label": "deposit pUSD for maker",
+      "hash": "7y6ngSCCCnhSfmZjG3Bu9qrxYEFi1WSUn9fkfpEhRFNX"
+    },
+    {
+      "label": "deposit TSLAon for maker",
+      "hash": "HR8dTVvL2gnt412fNSUokTCcZjFfhqWEXXLyEWAsWfgo"
+    },
+    {
+      "label": "deposit NVDAon for maker",
+      "hash": "FoDVzA6Y3fiFRxx4JFyC6UVxRn5FZwExyD99kNLPrBWF"
+    },
+    {
+      "label": "deposit AAPLon for maker",
+      "hash": "6ZUY312fHQCGi9YDuFQLgCGjCrZ6oMyULZ39GvUH9dM5"
+    },
+    {
+      "label": "deposit SPYon for maker",
+      "hash": "3To1VYbzu2GTJjFM4CkayC5vitswqXWE6EcGaUtZcWvm"
+    },
+    {
+      "label": "deposit QQQon for maker",
+      "hash": "Ev4skmfFPNMAVhLfhPt4kfntjE5uasZ7itAqxS3fz1rq"
+    },
+    {
+      "label": "verifier key for maker.pocketnear.testnet",
+      "hash": "13CSmWzWv5ituuwzfTnJJGPtxoBG7vXaGa9SSa4xyfwa"
+    },
+    {
+      "label": "verifier key for faucet.pocketnear.testnet",
+      "hash": "BZA6vkxa9PrJj94EA6cvkokNhhFL8W4g92ZAzB17B3xy"
+    }
+  ],
+  "updatedAt": "2026-11-13T21:03:02.654Z"
+}
