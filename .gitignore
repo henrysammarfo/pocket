@@ -44,3 +44,4 @@ next-env.d.ts
 contracts/token/target/
 /test-results/
 /playwright-report/
+/video/

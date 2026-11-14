@@ -123,6 +123,7 @@ export async function submitTransfer(signed: SignedNep413, ip: string) {
 export const FAUCET_AMOUNT = '1000';
 export async function faucet(account: string, ip: string) {
   if (!validAccountId(account) || !account.endsWith('.testnet')) throw new HttpError(400, 'Enter a NEAR testnet account.');
+  if (!isPocketUser(account)) throw new HttpError(403, 'The Pocket faucet is for Pocket accounts.');
   if (!(await viewAccount(account))) throw new HttpError(400, 'That account does not exist on testnet yet.');
   await limit('faucetip:' + ip, Number(process.env.FAUCET_PER_IP_HOUR || 5), 3600);
   await limit('faucet:' + account, Number(process.env.FAUCET_PER_ACCOUNT_DAY || 3), DAY);
@@ -258,8 +259,9 @@ export function toDelegate(d: DelegateJson) {
 export async function relay(d: DelegateJson, ip: string) {
   const usd = delegatePolicy(d);
   const da = toDelegate(d);
-  const sig = bs58.decode(d.signature.replace(/^ed25519:/, ''));
-  const pub = bs58.decode(d.publicKey.replace(/^ed25519:/, ''));
+  let sig: Uint8Array, pub: Uint8Array;
+  try { sig = bs58.decode(String(d.signature).replace(/^ed25519:/, '')); pub = bs58.decode(String(d.publicKey).replace(/^ed25519:/, '')); } catch { throw new HttpError(400, 'Bad key or signature encoding.'); }
+  if (pub.length !== 32 || sig.length !== 64) throw new HttpError(400, 'Bad signature on the meta transaction.');
   if (!ed25519.verify(sig, sha256(encodeDelegateAction(da)), pub)) throw new HttpError(400, 'Bad signature on the meta transaction.');
   await assertKeyOf(d.senderId, d.publicKey);
   await limit('relay:' + d.senderId, 60, 3600);

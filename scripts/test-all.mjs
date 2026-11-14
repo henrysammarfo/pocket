@@ -38,12 +38,14 @@ if (built) {
 const noSrv = built ? '' : 'build failed';
 const noKeys = hasKeys ? '' : 'no testnet keys in .env.local (run npm run setup)';
 run('smoke local', 'node', ['tests/smoke.mjs', BASE], { skip: noSrv });
+run('attack checks local', 'node', ['tests/attack.mjs', BASE], { skip: noSrv || noKeys });
 run('integration testnet (judge)', 'npm', ['run', '-s', 'judge'], { skip: noKeys });
 run('e2e money flow phone', 'node', ['tests/e2e/ui-flow.mjs'], { skip: noSrv || noKeys });
 run('e2e chat and voice phone', 'node', ['tests/e2e/chat-voice.mjs'], { skip: noSrv || noKeys, env: { W: '390', H: '844' } });
 run('e2e chat and voice desktop', 'node', ['tests/e2e/chat-voice.mjs'], { skip: noSrv || noKeys, env: { W: '1440', H: '900' } });
 run('responsive matrix', 'node', ['tests/e2e/responsive.mjs'], { skip: noSrv || noKeys });
 run('smoke hosted', 'node', ['tests/smoke.mjs', process.env.SMOKE_URL || ''], { skip: process.env.SMOKE_URL ? '' : 'set SMOKE_URL to the preview URL' });
+run('attack checks hosted', 'node', ['tests/attack.mjs', process.env.SMOKE_URL || ''], { skip: process.env.SMOKE_URL ? '' : 'set SMOKE_URL to the preview URL' });
 if (srv) { try { process.kill(-srv.pid); } catch {} }
 const fail = rows.filter((r) => r[1] === 'FAIL').length;
 const md = `# Test run ${new Date().toISOString()}\n\n| Step | Result | Last line | Time |\n| --- | --- | --- | --- |\n` + rows.map((r) => `| ${r[0]} | ${r[1]} | ${String(r[2]).replace(/\|/g, '/')} | ${(r[3] / 1000).toFixed(1)} s |`).join('\n') + `\n\n${fail ? fail + ' failed' : 'All run steps passed'}. Logs and screenshots are in test-results/.\n`;

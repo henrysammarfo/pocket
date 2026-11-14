@@ -1,0 +1,167 @@
+{
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+4%",
+ "scenes": [
+  {
+   "id": "title",
+   "kind": "card",
+   "head": "Pocket",
+   "sub": "Talk to your money",
+   "vo": "This is Pocket. A money app you just talk to."
+  },
+  {
+   "id": "problem",
+   "kind": "card",
+   "head": "Money apps are hard",
+   "sub": "Many apps, hidden fees, and AI you can't trust with your keys",
+   "vo": "Sending money, buying a stock, or saving in dollars usually means many apps and fees you only see later. And nobody should hand an AI their keys."
+  },
+  {
+   "id": "signup",
+   "kind": "phone",
+   "from": "welcome",
+   "to": "chat",
+   "head": "Sign up in seconds",
+   "vo": "Pick a name and tap create. Pocket makes you a real account on the NEAR test network. No seed phrase, and no fees.",
+   "cut": [
+    "tapCreate",
+    "chat",
+    1.2
+   ]
+  },
+  {
+   "id": "wallet",
+   "kind": "phone",
+   "from": "wallet",
+   "len": 2.6,
+   "head": "Free test dollars",
+   "vo": "You start with free test dollars."
+  },
+  {
+   "id": "small",
+   "kind": "phone",
+   "from": "chat2",
+   "to": "smallReply",
+   "tail": 2.4,
+   "head": "Ask it anything",
+   "vo": "Ask it anything, the way you would ask a friend."
+  },
+  {
+   "id": "voice",
+   "kind": "phone",
+   "from": "voiceTap",
+   "to": "voiceConfirm",
+   "tail": 2.8,
+   "audio": "voice",
+   "zoom": {
+    "at": "voiceHeard",
+    "y": 0.58,
+    "z": 1.45
+   },
+   "head": "Talk the way you talk",
+   "vo": "Now a voice note, the way people really talk.",
+   "vo2": "Pocket writes it down, works out what you meant, and checks with you first.",
+   "caption": "A voice note, the way people really talk. Pocket writes it down, works out what you meant, and checks with you first."
+  },
+  {
+   "id": "plan",
+   "kind": "phone",
+   "from": "yes",
+   "to": "plan",
+   "tail": 3.2,
+   "zoom": {
+    "at": "plan",
+    "y": 0.52,
+    "z": 1.4
+   },
+   "head": "One plan, checked in code",
+   "vo": "Then it makes one plan. Your rules are checked in code, not by the AI. Nothing moves yet."
+  },
+  {
+   "id": "hold",
+   "kind": "phone",
+   "from": "review",
+   "to": "done",
+   "cut": [
+    "holdEnd",
+    "done",
+    0.6
+   ],
+   "tail": 2.2,
+   "zoom": {
+    "at": "holdStart",
+    "y": 0.86,
+    "z": 1.5
+   },
+   "head": "Press and hold to approve",
+   "vo": "To approve, press and hold. Let go early and nothing happens. Pocket pays the network fee, and both steps settle in seconds.",
+   "speed": false
+  },
+  {
+   "id": "receipt",
+   "kind": "phone",
+   "from": "receipt",
+   "to": "receiptScrolled",
+   "tail": 2.0,
+   "zoom": {
+    "at": "receipt",
+    "y": 0.45,
+    "z": 1.35
+   },
+   "head": "A receipt from the chain",
+   "vo": "The receipt is read straight from the chain. The price, the spread, and who filled the order."
+  },
+  {
+   "id": "settings",
+   "kind": "phone",
+   "from": "settings",
+   "to": "settings",
+   "head": "You stay in control",
+   "vo": "You set a daily limit, approve changes with your passkey, and see your AI credits.",
+   "tail": 2.6
+  },
+  {
+   "id": "desktop",
+   "kind": "desktop",
+   "from": "invest",
+   "head": "Phone and desktop, live prices",
+   "vo": "It works on phone and desktop, with live prices.",
+   "len": 5.5,
+   "src": [
+    8.6,
+    10.8
+   ]
+  },
+  {
+   "id": "near",
+   "kind": "card",
+   "head": "Why NEAR",
+   "bullets": [
+    "Named accounts made for you",
+    "Gasless sends paid by a relayer",
+    "Trades settle in the NEAR Intents verifier",
+    "The AI only proposes. You sign."
+   ],
+   "vo": "NEAR makes this possible. Named accounts, gasless sends, and the NEAR Intents verifier that settles both sides of a trade at once. The AI only proposes. You sign."
+  },
+  {
+   "id": "tests",
+   "kind": "card",
+   "head": "Run it yourself",
+   "code": [
+    "npm run setup",
+    "npm run test:all",
+    "ALL PASS"
+   ],
+   "vo": "Anyone can run the whole thing on testnet with one command, and every test passes."
+  },
+  {
+   "id": "end",
+   "kind": "card",
+   "head": "Pocket",
+   "sub": "pocket-teamtitanlink.vercel.app",
+   "foot": "github.com/henrysammarfo/pocket  \u00b7  NEAR testnet  \u00b7  #NEARHackathon",
+   "vo": "Pocket. Talk to your money. Try it now."
+  }
+ ]
+}
