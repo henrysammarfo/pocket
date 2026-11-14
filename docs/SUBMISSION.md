@@ -11,7 +11,7 @@ Every field the form takes, with what goes in it. There are no image, logo or vi
 | Lead name | 2 to 80 characters | **Henry fills in** (full name) |
 | Email | up to 160 characters, at most 2 submissions per email | henrysammarfo@gmail.com |
 | Team size | one of `1`, `2 - 4`, `4 - 6`, `6 - 8`, `8+` | **Henry picks** |
-| Tracks | one or more of the track ids | `realworld`, `security`, `privacy` |
+| Tracks | one or more of the track ids | `realworld`, `privacy`, `security`, `open` |
 | NEAR address (payout) | mainnet account, lowercase | henrysammarfo.near (checked on mainnet with a read only `view_account` call on 14 Nov 2026: the account exists) |
 | Project URL | public repo, not used by another entry | https://github.com/henrysammarfo/pocket |
 | Demo URL | link to a public X post with the video or screenshots, up to 300 characters, like `https://x.com/<handle>/status/<id>` | **Henry posts the video on X and pastes the post link** |
@@ -35,7 +35,7 @@ Pocket, the money app you talk to. Say or type "send Mum 50 dollars and put 25 i
 
 The AI never holds keys. It can only propose. Your browser holds an ed25519 key for a real NEAR testnet account made at sign up. Sends are gasless: pUSD moves as a NEP-413 signed intent in the NEAR Intents verifier, and USDC and NEAR move as NEP-366 meta transactions paid by a relayer that only accepts allowed calls. Paper stocks (TSLAon, NVDAon and more, live priced) settle atomically as two signed token_diff intents, yours and the market maker's, in one execute_intents call. Every move gets a public receipt rebuilt from the chain.
 
-Private by design: every chat, receipt photo and voice note is processed by private models on NEAR AI Cloud, running inside attested TEEs (Intel TDX with NVIDIA confidential GPUs), so the host cannot read what you say about your money. Qwen3.6 35B handles chat and plans, Qwen3 VL reads receipts and bills, and Whisper hears voice notes, with a prompt tuned for Ghanaian English and Pidgin. Anyone can check the enclaves with npm run verify:tee. If NEAR AI is busy or reaches its daily spend cap, Groq takes over automatically. Memory and AI credits are per account in Neon, behind a signed session, and the app keeps working without any AI key.
+Private by design: chats, receipt photos, voice notes and web searches run on private models on NEAR AI Cloud inside attested TEEs (Intel TDX with NVIDIA confidential GPUs). Qwen3.6 35B handles chat, plans and search (store: false), Qwen3 VL reads receipts, Whisper hears voice notes tuned for Ghanaian English and Pidgin. The server keeps no chat text; history stays in your browser. Settings shows a Verified screen that checks fresh attestation live, and anyone can run npm run verify:tee. If NEAR AI is down or at its daily cap, Groq takes over.
 
 Live on testnet at https://pocket-zeta-lime.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
 
@@ -54,7 +54,7 @@ Longer version if wanted (standard accounts allow 280 characters):
 
 ## Why it stands out
 - A normal person can use it: one plan card, one hold, plain words, no seed phrase, no gas.
-- Private AI: chats, photos and voice run in attested TEEs on NEAR AI Cloud, checkable with `npm run verify:tee`.
+- Private AI: chats, photos, voice and web search run in attested TEEs on NEAR AI Cloud, the server keeps no chat text, and a Verified screen in Settings (and `npm run verify:tee`, `GET /api/attest`) checks fresh attestation live.
 - AI with money, done safely: the model only proposes, code checks, the user signs, and server policy limits what the relayer pays for.
 - Real NEAR, not a mock: NEP-413, NEP-366, NEP-141 and the unmodified NEAR Intents verifier v0.4.2 with its published hash.
 - Reproducible by an AI judge in one command, with machine readable steps in AGENTS.md, a test report in docs/TEST_REPORT.md, and `npm run attack` showing a prompt injected plan stopped.
