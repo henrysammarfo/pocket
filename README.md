@@ -234,3 +234,5 @@ Browser suites, each runnable against any URL with `BASE=...`: `tests/e2e/hosted
 
 ## Disclosure
 Built for the NEAR hackathon on top of an earlier Pocket prototype (branch `otari-devs-wilding`, tagged `near-baseline`); the NEAR version replaces its chain, wallet and backend. Built with AI coding help. Market data: CoinGecko, Nasdaq.com, ExchangeRate API. Brand marks: Simple Icons, Invesco, State Street; pUSD and paper token marks are Pocket originals. Paper money, not financial advice.
+
+Other project by the same builder: [NEAR Settlement Thesis](https://github.com/henrysammarfo/near-settlement-thesis), a separate and independent entry in the Investment Thesis track (HACKATHON.md Q-015).
