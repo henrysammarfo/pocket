@@ -6,6 +6,8 @@
 
 **Pocket** is a chat first money assistant. Say *"Send Mum 50 dollars and put 25 in Tesla"*. Pocket turns it into a plan card, checks it against your rules in code, and nothing moves until you **hold to approve** on your own device. Sends are gasless, trades settle in one atomic call to the **NEAR Intents verifier**, and every move gets a public receipt rebuilt from the chain.
 
+**Live demo: https://pocket-teamtitanlink.vercel.app** (NEAR testnet, AI chat and voice on). Latest test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
+
 **Testnet only. No mainnet, no real money.** Test dollars (pUSD), Circle testnet USDC, and paper stock tokens (TSLAon, NVDAon, AAPLon, SPYon, QQQon) priced live.
 
 ## One command setup
@@ -22,7 +24,7 @@ Have a funded testnet account already? `ROOT=you.testnet npm run setup` (key in 
 ## Try it in five steps (do X, see Y)
 | Do | See |
 | --- | --- |
-| 1. Open the app, pick a username, tap **Create my Pocket** | A real account `name.pocketnear.testnet` is created for you, gas paid by Pocket. You land in Chat |
+| 1. Open https://pocket-teamtitanlink.vercel.app (or your own copy), pick a username, tap **Create my Pocket** | A real account `name.pocketnear.testnet` is created for you, gas paid by Pocket. You land in Chat |
 | 2. Wallet, tap **Get test dollars** | 1,000 pUSD arrive from the faucet, with a NearBlocks link |
 | 3. In Chat type or say *"ehm send send @admin like five dollars and put 10 in Tesla"* | Pocket cleans up the messy speech, confirms what it heard, and shows one plan card with two steps checked against your rules |
 | 4. **Review and approve**, then press and hold the button for 1.2 s | The send and the TSLAon buy settle on testnet, gas paid by the relayer |
