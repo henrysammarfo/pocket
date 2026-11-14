@@ -1,17 +1,22 @@
 import 'server-only';
-// Live web answers and product finds. Uses the provider's own web search tool (Groq browser_search
-// on gpt-oss), so no extra key is needed. Only links that came back from the real search are shown;
-// links the model writes itself are dropped, because models invent product URLs.
-import { groq } from './llm';
+// Live web answers and product finds.
+// First choice: NEAR AI Cloud's built in web_search on the private TEE chat model, through the stateless
+// Responses API with store: false (NEAR AI keeps no request, response or history). The search itself is
+// run by NEAR AI through Brave Search, so the query leaves the enclave for the search provider, but it is
+// not tied to the user and Pocket stores nothing. Spend counts toward the NEAR AI daily cap.
+// Fallback: Groq browser_search on gpt-oss (not private), when NEAR AI is resting or at its daily cap.
+// Links: Groq returns the pages it opened, so only those are shown. NEAR AI returns no URLs, so the model
+// lists them and Pocket opens each one and drops any that do not exist, because models invent URLs.
+import { groq, nearai, isUp, underCap, record, rest } from './llm';
+import { limit } from './store';
 
 export type Source = { title: string; url: string };
 export type Product = { title: string; url: string; store: string; price?: string; rating?: string; image?: string };
-export type WebOut = { reply: string; sources: Source[]; products: Product[]; usd: number };
+export type WebOut = { reply: string; sources: Source[]; products: Product[]; usd: number; private: boolean; provider: string };
 
 // A separate model for search keeps chat inside its own free tier token budget.
 export const SEARCH_MODEL = process.env.SEARCH_MODEL || 'openai/gpt-oss-20b';
-// Search runs on Groq's browser_search tool (search queries are not private; chats, photos and voice are).
-export const webUp = () => !!groq && process.env.WEB_SEARCH !== 'off';
+export const webUp = () => (!!nearai || !!groq) && process.env.WEB_SEARCH !== 'off';
 const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
 const okUrl = (u: string) => /^https:\/\/[^\s"'<>]+$/.test(u) && !/exa\.ai\/search/.test(u);
 
@@ -49,7 +54,9 @@ async function ogImage(url: string): Promise<string | undefined> {
 
 const clean = (t: string) => t.replace(/【[^】]*】/g, '').replace(/<https?:\/\/[^>]+>/g, '').replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '$1').replace(/https?:\/\/\S+/g, '').replace(/\u202f/g, ' ').replace(/ [\u2013\u2014-] /g, ', ').replace(/[\u2013\u2014]/g, ', ').replace(/\n{3,}/g, '\n\n').trim();
 
-export async function webAnswer(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
+async function groqWeb(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
+  // Groq's free tier allows about 8K tokens a minute per model and one search uses about 6K, so share it fairly.
+  await limit('web:groq:min', Number(process.env.WEB_GLOBAL_PER_MIN || 3), 60);
   const sys = kind === 'product'
     ? `Today is ${now}. Find real products for the user with the search tool, then open the two or three best product pages so you can read their price. Reply in two to four short plain sentences naming the products and prices you actually read. No tables, no markdown, no links, no citation marks. Never use dashes as punctuation. Prices are for information only; Pocket cannot buy for the user.`
     : `Today is ${now}. Use the search tool for anything about current events, news, sports, weather, prices or facts that may have changed. Reply in two to four short plain sentences with what you found and when it happened. No tables, no markdown, no links, no citation marks. Never use dashes as punctuation.`;
@@ -66,5 +73,67 @@ export async function webAnswer(query: string, kind: 'web' | 'product', now: str
   const { sources, products } = parseTools(m.executed_tools || []);
   const top = products.slice(0, 4);
   if (kind === 'product') await Promise.all(top.map(async (p) => { p.image = await ogImage(p.url); }));
-  return { reply: clean(String(m.content || '')) || 'I searched but could not find a clear answer.', sources: sources.slice(0, 4), products: kind === 'product' ? top : [], usd };
+  return { reply: clean(String(m.content || '')) || 'I searched but could not find a clear answer.', sources: sources.slice(0, 4), products: kind === 'product' ? top : [], usd, private: false, provider: 'Groq' };
+}
+
+// A URL the model wrote is kept only if the page exists. Big stores often block servers (403, 429, 503),
+// which still proves the page is there; 404, 410 and network failures drop it.
+async function exists(url: string) {
+  if (!okUrl(url)) return false;
+  try {
+    const r = await fetch(url, { method: 'GET', headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36', accept: 'text/html' }, signal: AbortSignal.timeout(4500), redirect: 'follow' });
+    r.body?.cancel().catch(() => {});
+    return r.ok || [401, 403, 429, 503].includes(r.status);
+  } catch { return false; }
+}
+
+// Pure: split the model's text into the answer and its SOURCES / PRODUCTS lines. Exported for tests.
+export function parseNear(text: string) {
+  const t = String(text || '');
+  const i = t.search(/^\s*\**SOURCES:?\**\s*$/im); const j = t.search(/^\s*\**PRODUCTS:?\**\s*$/im);
+  const cut = [i, j].filter((x) => x >= 0); const body = cut.length ? t.slice(0, Math.min(...cut)) : t;
+  const block = (start: number) => (start < 0 ? [] : t.slice(start).split('\n').slice(1).map((l) => l.replace(/^[-*\d.\s]+/, '').trim()).filter((l) => l.includes('|') && /https:\/\//.test(l)));
+  const urlOf = (l: string) => (l.match(/https:\/\/[^\s|)\]]+/)?.[0] || '').replace(/[.,]+$/, '');
+  const srcLines = block(i).filter((l) => j < 0 || i > j || t.indexOf(l) < j);
+  const sources = srcLines.map((l) => ({ title: l.split('|')[0].replace(/\*\*/g, '').trim().slice(0, 140), url: urlOf(l) })).filter((s) => s.url);
+  const products = block(j).map((l) => { const p = l.split('|').map((x) => x.replace(/\*\*/g, '').trim()); const url = urlOf(l); return { title: p[0].slice(0, 140), price: p[1] && /\d/.test(p[1]) ? p[1].slice(0, 30) : undefined, store: p[2] && !/^https?:/.test(p[2]) ? p[2].slice(0, 40) : host(url), url }; }).filter((p) => p.url);
+  const seen = new Set<string>();
+  return { body: body.replace(/\*\*/g, '').trim(), sources: sources.filter((s) => !seen.has(s.url) && seen.add(s.url)), products };
+}
+
+async function nearaiWeb(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
+  const p = nearai!;
+  const instructions = `Today is ${now}. Use web_search for this. After searching, always write your final answer: two to four short plain sentences with what you found and when it happened. No tables, no markdown, no links or citation marks in the sentences. Never use dashes as punctuation. Then on a new line write SOURCES: and up to 4 lines, each "title | url", using exact URLs from the search results.${kind === 'product' ? ' Then on a new line write PRODUCTS: and up to 4 lines, each "name | price | store | url", using exact product page URLs from the search results.' : ''}`;
+  const r = await fetch(p.baseUrl.replace(/\/$/, '') + '/responses', {
+    method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${p.key}` }, signal: AbortSignal.timeout(45000),
+    body: JSON.stringify({ model: p.chat, store: false, reasoning: { effort: 'low' }, max_output_tokens: 1500, max_tool_calls: 3, instructions, input: query.slice(0, 400), tools: [{ type: 'web_search', count: 5 }] }),
+  });
+  if (!r.ok) { rest(p.id + 'chat', r); throw new Error('nearai search ' + r.status); }
+  const j = await r.json();
+  const out: { type: string; content?: { text?: string }[] }[] = j.output || [];
+  const searches = out.filter((o) => o.type === 'web_search_call').length;
+  const text = out.filter((o) => o.type === 'message').map((o) => (o.content || []).map((c) => c.text || '').join('')).join('\n').trim();
+  const tin = j.usage?.input_tokens || 0, tout = j.usage?.output_tokens || 0;
+  // Brave search is billed per request (about $0.005, from https://cloud-api.near.ai/v1/services).
+  const usd = (tin * p.inUsd + tout * p.outUsd) / 1e6 + searches * Number(process.env.NEARAI_SEARCH_USD || 0.005);
+  await record(p, p.chat + ' web_search', usd, tin, tout);
+  const parsed = parseNear(text);
+  // The model sometimes ends right after searching with an empty message; the caller retries once.
+  if (!clean(parsed.body)) throw new Error('nearai search gave an empty answer');
+  const [okS, okP] = await Promise.all([Promise.all(parsed.sources.slice(0, 4).map((s) => exists(s.url))), Promise.all(parsed.products.slice(0, 4).map((x) => exists(x.url)))]);
+  const sources = parsed.sources.slice(0, 4).filter((_, k) => okS[k]);
+  const top: Product[] = parsed.products.slice(0, 4).filter((_, k) => okP[k]);
+  if (kind === 'product') await Promise.all(top.map(async (x) => { x.image = await ogImage(x.url); }));
+  return { reply: clean(parsed.body).replace(/\s+([.,;:])/g, '$1').replace(/(\.\s*){2,}/g, '. ').trim() || 'I searched but could not find a clear answer.', sources, products: kind === 'product' ? top : [], usd, private: true, provider: 'NEAR AI Cloud' };
+}
+
+export async function webAnswer(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
+  if (nearai && isUp(nearai) && (await underCap(nearai))) {
+    for (let tries = 0; tries < 2; tries++) {
+      try { return await nearaiWeb(query, kind, now); }
+      catch (e) { const msg = e instanceof Error ? e.message : 'error'; console.warn(JSON.stringify({ ai: 'nearai', kind: 'search', fallback: tries === 1 || !/empty/.test(msg), error: msg.slice(0, 120) })); if (!/empty/.test(msg) || !isUp(nearai) || !(await underCap(nearai))) break; }
+    }
+  }
+  if (!groq) throw new Error('no web search provider is available');
+  return groqWeb(query, kind, now);
 }

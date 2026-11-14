@@ -6,15 +6,16 @@ import { COST, creditsOf, refund, settleUsage, spend } from '@/lib/server/credit
 import { anyUp as aiUp } from '@/lib/server/llm';
 import { okImage, readImage, visionUp } from '@/lib/server/vision';
 
+// Privacy: chat text is never written to the server. The browser keeps the history (localStorage);
+// this route only answers. Saved memory items are the one thing kept, and only when the user asks
+// Pocket to remember something. See README, "What is stored, where".
 export const POST = handler(async (req) => {
-  const b = await body<ChatIn & { confirm?: Confirm; image?: string; thread?: string }>(req);
-  const thread = typeof b.thread === 'string' && /^[a-z0-9-]{1,40}$/.test(b.thread) ? b.thread : 'main';
+  const b = await body<ChatIn & { confirm?: Confirm; image?: string }>(req);
   if (!b.ctx || typeof b.ctx.dollars !== 'number') throw new HttpError(400, 'Bad chat request');
   await limit('chat:' + ipOf(req), Number(process.env.CHAT_PER_IP_HOUR || 120), 3600);
   const account = await sessionOf(req, false);
   if (b.confirm) {
     const out = planFrom(b.confirm, b.ctx);
-    if (account) await store.addChat(account, { thread, role: 'assistant', content: out.reply, at: Date.now(), meta: { plan: out.plan, check: out.check } });
     return out;
   }
   if (!Array.isArray(b.messages) || !b.messages.length) throw new HttpError(400, 'Bad chat request');
@@ -32,7 +33,6 @@ export const POST = handler(async (req) => {
     await limit('chat:acct:' + account, Number(process.env.CHAT_PER_ACCOUNT_HOUR || 90), 3600);
     memories = (await store.memories(account)).map((m) => m.text);
     if (useAI) await spend(account, COST.chat);
-    await store.addChat(account, { thread, role: 'user', content: String(last.content).slice(0, 2000), at: Date.now(), meta: b.voice || b.image ? { voice: !!b.voice, photo: !!b.image } : null });
   }
   // A shared photo (receipt, bill): read it into text first, then the chat model works with that text.
   let photoUsd = 0; let photoText = '';
@@ -51,7 +51,6 @@ export const POST = handler(async (req) => {
     for (const f of out.remembered || []) await store.addMemory(account, f);
     if (useAI && out.usd) await settleUsage(account, COST.chat, out.usd);
     if (useAI && out.source !== 'ai') await refund(account, COST.chat);
-    await store.addChat(account, { thread, role: 'assistant', content: out.reply, at: Date.now(), meta: { plan: out.plan, check: out.check, confirm: out.confirm, chips: out.chips, source: out.source, sources: out.sources, products: out.products } });
   }
   const { usd: _u, ...rest } = out; void _u;
   return { ...rest, ...(photoText ? { photoText } : {}), credits: account ? await creditsOf(account) : undefined };

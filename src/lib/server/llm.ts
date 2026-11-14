@@ -20,10 +20,11 @@ const first: ProvId = E.AI_PROVIDER === 'groq' ? 'groq' : E.AI_PROVIDER === 'nea
 export const ORDER: Prov[] = [P[first], P[first === 'nearai' ? 'groq' : 'nearai']].filter((p) => p.key);
 export const PRIMARY: Prov | null = ORDER[0] || null;
 export const groq = P.groq.key ? P.groq : null;
+export const nearai = P.nearai.key ? P.nearai : null;
 
 // Rest a provider after it fails: 10 minutes for auth or credit problems, as long as asked for rate limits.
 const down: Record<string, number> = {};
-const rest = (k: string, r: Response | null) => { const s = r ? ([401, 402, 403].includes(r.status) ? 600 : r.status === 429 ? Math.min(120, Number(r.headers.get('retry-after')) || 20) : 30) : 30; down[k] = Date.now() + s * 1000; };
+export const rest = (k: string, r: Response | null) => { const s = r ? ([401, 402, 403].includes(r.status) ? 600 : r.status === 429 ? Math.min(120, Number(r.headers.get('retry-after')) || 20) : 30) : 30; down[k] = Date.now() + s * 1000; };
 export const isUp = (p: Prov, kind: 'chat' | 'stt' = 'chat') => !!p.key && Date.now() > (down[p.id + kind] || 0);
 export const anyUp = (kind: 'chat' | 'stt' = 'chat') => ORDER.some((p) => isUp(p, kind));
 
@@ -31,8 +32,8 @@ export const anyUp = (kind: 'chat' | 'stt' = 'chat') => ORDER.some((p) => isUp(p
 const CAP = Number(E.NEARAI_USD_PER_DAY || 0.8);
 const dayKey = () => 'nearai:usd:' + new Date().toISOString().slice(0, 10);
 export async function nearaiSpentToday() { return (await store.get(dayKey())) / 1e6; }
-async function underCap(p: Prov) { return p.id !== 'nearai' || (await nearaiSpentToday()) < CAP; }
-async function record(p: Prov, model: string, usd: number, tin: number, tout: number) {
+export async function underCap(p: Prov) { return p.id !== 'nearai' || (await nearaiSpentToday()) < CAP; }
+export async function record(p: Prov, model: string, usd: number, tin: number, tout: number) {
   if (p.id === 'nearai' && usd > 0) await store.incr(dayKey(), 2 * 86400, Math.ceil(usd * 1e6)).catch(() => {});
   console.info(JSON.stringify({ ai: p.id, model, tin, tout, usd: Number(usd.toFixed(6)) }));
 }
