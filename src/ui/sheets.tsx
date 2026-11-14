@@ -32,7 +32,7 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
       <h3 className="sh-t">Add test money</h3>
       <p className="sh-s">Free test dollars to try everything. Nothing here has real value.</p>
       <div className="group list">
-        <button className="row" onClick={go} disabled={busy}><span className="logo"><Logo name="pusd" /></span><span className="rn"><span className="nm">{busy ? 'Claiming…' : 'Claim 1,000 pUSD'}</span><span className="sb">Pocket faucet, once a day</span></span><ChevronRight size={16} aria-hidden /></button>
+        <button className="row" onClick={go} disabled={busy}><span className="logo"><Logo name="pusd" /></span><span className="rn"><span className="nm">{busy ? 'Claiming…' : 'Claim 1,000 pUSD'}</span><span className="sb">Pocket faucet, up to 3 times a day</span></span><ChevronRight size={16} aria-hidden /></button>
         <a className="row" href="https://faucet.circle.com/" target="_blank" rel="noreferrer" onClick={() => s && copy(s.account, 'Account copied, paste it at Circle')}><span className="logo usdc"><Logo name="usdc" /></span><span className="rn"><span className="nm">Get testnet USDC</span><span className="sb">Circle faucet, pick NEAR testnet</span></span><ExternalLink size={16} aria-hidden /></a>
       </div>
     </Sheet>

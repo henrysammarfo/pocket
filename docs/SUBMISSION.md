@@ -6,6 +6,7 @@ Nothing here has been submitted or posted. Henry submits and posts himself.
 - **Project name:** Pocket
 - **Tracks:** `realworld` (Real-World Money: stablecoins, meta transactions, NEAR Intents) and `security` (AI with money but without the keys)
 - **Repository:** https://github.com/henrysammarfo/pocket (main; the hackathon work was merged from branch `near-hackathon` in PR #2)
+- **Live app:** https://pocket-teamtitanlink.vercel.app (NEAR testnet, Groq AI chat and voice on; stays up through judging)
 - **Demo post:** Henry's X post link
 - **NEAR payout account, team lead, email, team size, consent:** Henry fills these in himself
 
@@ -16,7 +17,7 @@ The AI never holds keys. It can only propose. Your browser holds an ed25519 key 
 
 Chat runs on any OpenAI compatible model: Groq's free tier by default, or NEAR AI Cloud's private models with one setting. Voice uses Whisper with a prompt tuned for Ghanaian English and Pidgin. Memory and AI credits are per account in Neon, behind a signed session, and the app keeps working without any AI key.
 
-One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
+Live on testnet at https://pocket-teamtitanlink.vercel.app. One command to reproduce: npm run setup creates your own testnet root and contracts, and npm run test:all runs lint, unit, a fresh build, the full testnet flow and real browser tests on phone and desktop from a clean state.
 
 ## Two minute demo script
 | Time | On screen | Say |
@@ -33,7 +34,7 @@ One command to reproduce: npm run setup creates your own testnet root and contra
 | 1:45 | Terminal: npm run test:all, all PASS | "Judges and their agents can rerun all of this with one command. Pocket. Talk to your money." |
 
 ## X post draft (Henry posts it)
-> Built Pocket at #NEARHackathon @NEARProtocol: a money app you just talk to. Say "send Mum 50 and put 25 in Tesla" (ums and Pidgin welcome), get one plan, hold to approve. Gasless sends, atomic trades through NEAR Intents, the AI never touches your keys. Testnet. Repo and demo: <links>. What would you ask your money?
+> Built Pocket at #NEARHackathon @NEARProtocol: a money app you just talk to. Say "send Mum 50 and put 25 in Tesla" (ums and Pidgin welcome), get one plan, hold to approve. Gasless sends, atomic trades through NEAR Intents, the AI never touches your keys. Testnet. Try it: https://pocket-teamtitanlink.vercel.app Repo: https://github.com/henrysammarfo/pocket What would you ask your money?
 
 ## Why it stands out
 - A normal person can use it: one plan card, one hold, plain words, no seed phrase, no gas.
