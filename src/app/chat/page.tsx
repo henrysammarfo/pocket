@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUp, ExternalLink, Globe, Lock, Mic, PanelLeft, Paperclip, Pencil, ShieldCheck, Square, SquarePen, Trash2, X } from 'lucide-react';
-import { AppShell, Brand, fmt, Sheet, toast, toastErr } from '@/ui/kit';
+import { ArrowUp, ChartLine, ExternalLink, Globe, Lock, Mic, PanelLeft, Paperclip, Pencil, Send as SendIc, Settings as SettingsIc, ShieldCheck, Square, SquarePen, Trash2, Wallet as WalletIc, X } from 'lucide-react';
+import { AppShell, Brand, Coil, fmt, Sheet, toast, toastErr } from '@/ui/kit';
 import { speak, useVoice } from '@/ui/useVoice';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
@@ -40,17 +40,30 @@ function PlanCard({ plan, check, keep, onReview, onChange }: { plan: Plan; check
 
 const ago = (t: number) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'now' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; };
 
-function Threads({ open, onClose, onNew, onPick }: { open: boolean; onClose: () => void; onNew: () => void; onPick: (id: string) => void }) {
+// One sidebar, like ChatGPT: on desktop it sits on the left and collapses to a slim rail; on phones it is hidden
+// and slides over the chat from the menu button, with a backdrop.
+function Threads({ open, mini, onClose, onToggle, onNew, onPick }: { open: boolean; mini: boolean; onClose: () => void; onToggle: () => void; onNew: () => void; onPick: (id: string) => void }) {
   const list = useThreads(); const cur = useThreadId();
   const [edit, setEdit] = useState(''); const [name, setName] = useState(''); const [del, setDel] = useState('');
-  const save = (id: string) => { const t = name.trim(); setEdit(''); if (!t) return; renameThreadLocal(id, t); api('/api/chat/threads', { id, title: t }, 'PATCH').catch(() => {}); };
-  const remove = (id: string) => { setDel(''); dropThread(id); api('/api/chat/history?thread=' + id, undefined, 'DELETE').catch(() => {}); if (id === cur) onNew(); };
+  const save = (id: string) => { const t = name.trim(); setEdit(''); if (!t) return; renameThreadLocal(id, t); };
+  const remove = (id: string) => { setDel(''); dropThread(id); /* also clears any copy an older version saved on the server */ api('/api/chat/history?thread=' + id, undefined, 'DELETE').catch(() => {}); if (id === cur) onNew(); };
+  useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [open, onClose]);
   return (
     <>
       <div className={'tscrim' + (open ? ' on' : '')} onClick={onClose} aria-hidden />
-      <aside className={'tpanel' + (open ? ' open' : '')} aria-label="Your chats">
-        <div className="tp-h"><b>Chats</b><button className="nb tp-x" aria-label="Close chats" onClick={onClose}><X size={20} aria-hidden /></button></div>
-        <button className="btn tp-new" onClick={onNew}><SquarePen size={18} aria-hidden />New chat</button>
+      <aside className={'tpanel' + (open ? ' open' : '') + (mini ? ' mini' : '')} aria-label="Chats and menu">
+        <div className="tp-h">
+          <Link href="/" className="tp-brand" aria-label="Pocket home"><Coil /><span>Pocket</span></Link>
+          <button className="nb tp-x" aria-label="Close menu" onClick={onClose}><X size={20} aria-hidden /></button>
+          <button className="nb tp-col" aria-label={mini ? 'Open sidebar' : 'Close sidebar'} title={mini ? 'Open sidebar' : 'Close sidebar'} onClick={onToggle}><PanelLeft size={20} aria-hidden /></button>
+        </div>
+        <button className="tp-item tp-new" onClick={onNew} title="New chat"><SquarePen size={19} aria-hidden /><span>New chat</span></button>
+        <nav className="tp-nav" aria-label="Main">
+          <Link className="tp-item" href="/send" title="Send"><SendIc size={19} aria-hidden /><span>Send</span></Link>
+          <Link className="tp-item" href="/invest" title="Invest"><ChartLine size={19} aria-hidden /><span>Invest</span></Link>
+          <Link className="tp-item" href="/wallet" title="Wallet"><WalletIc size={19} aria-hidden /><span>Wallet</span></Link>
+        </nav>
+        <div className="tp-lab">Chats</div>
         <div className="tp-list">
           {!list.length && <div className="tp-empty">Your chats show up here. Start one and it is saved to your account.</div>}
           {list.map((t) => (
@@ -69,7 +82,7 @@ function Threads({ open, onClose, onNew, onPick }: { open: boolean; onClose: () 
             </div>
           ))}
         </div>
-        <div className="tp-foot">Chats are saved to your Pocket account behind a signed session. Keys and passwords are never stored.</div>
+        <div className="tp-foot"><Link className="tp-item" href="/settings" title="Settings"><SettingsIc size={19} aria-hidden /><span>Settings</span></Link><Link className="tp-item tp-me" href="/profile" title="Profile"><Avatar size={28} /><span>Profile</span></Link></div>
       </aside>
     </>
   );
@@ -114,6 +127,11 @@ function ChatInner() {
   const [blocked, setBlocked] = useState<{ reasons: string[] } | null>(null);
   const [svc, setSvc] = useState<{ ai: boolean; voice: boolean; vision: boolean }>({ ai: false, voice: false, vision: false });
   const [drawer, setDrawer] = useState(false);
+  const closeDrawer = useCallback(() => setDrawer(false), []);
+  // Desktop sidebar can collapse to a slim rail; remembered on this device.
+  const [mini, setMini] = useState(false);
+  useEffect(() => { setMini(localStorage.getItem('pocket-sidebar') === 'mini'); }, []);
+  const toggleMini = () => setMini((m) => { localStorage.setItem('pocket-sidebar', m ? 'open' : 'mini'); return !m; });
   const [photo, setPhoto] = useState('');
   const thread = useThreadId();
   const body = useRef<HTMLElement>(null);
@@ -122,21 +140,7 @@ function ChatInner() {
   const router = useRouter();
   useEffect(() => { body.current?.scrollTo({ top: 1e6 }); }, [msgs.length, busy]);
   useEffect(() => { fetch('/api/health').then((r) => r.json()).then((h) => setSvc({ ai: !!h?.services?.ai, voice: !!h?.services?.voice, vision: !!h?.services?.vision })).catch(() => {}); }, []);
-  // Past chats live on the server (Neon) too, so a new device carries on: the list, then the open chat.
-  useEffect(() => {
-    api<{ items: { id: string; title: string; at: number }[] }>('/api/chat/threads').then((r) => {
-      const local = getThreads(); const ids = new Set(local.map((t) => t.id));
-      const merged = [...local, ...(r.items || []).filter((t) => !ids.has(t.id))].sort((a, b) => b.at - a.at);
-      if (merged.length !== local.length) setThreads(merged);
-    }).catch(() => {});
-  }, []);
-  useEffect(() => {
-    if (msgs.length) return;
-    const id = thread;
-    api<{ items: { role: 'user' | 'assistant'; content: string; at: number; meta?: { plan?: Plan; check?: Check; voice?: boolean; photo?: boolean; sources?: WebSource[]; products?: WebProduct[] } | null }[] }>('/api/chat/history?thread=' + id)
-      .then((r) => { if (r.items?.length && getThreadId() === id && !getChat().length) setChat(r.items.map((x) => ({ role: x.role, content: x.content, at: x.at, voice: !!x.meta?.voice, sources: x.meta?.sources, products: x.meta?.products, plan: x.meta?.plan ? { plan: x.meta.plan, check: x.meta.check } : undefined })), id); })
-      .catch(() => {});
-  }, [thread]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Chats live only in this browser (localStorage). The server keeps no chat text or titles, so there is nothing to load.
   const newChat = () => { setThreadId(newThreadId()); setDrawer(false); setText(''); setPhoto(''); setTimeout(() => ta.current?.focus(), 50); };
   const pick = (id: string) => { setThreadId(id); setDrawer(false); };
 
@@ -206,7 +210,7 @@ function ChatInner() {
   };
   const greet = `Hi ${profile.name || '@' + s.username}. Your balance is $${fmt(sm.dollars)} in test dollars. Ask me anything, or tell me what your money should do. You can also hold the mic and just talk, or share a photo of a bill.`;
   return (
-    <AppShell screen="chat" tab="chat" overlay={
+    <AppShell screen="chat" tab="chat" cls={mini ? "mini-side" : undefined} overlay={
       <Sheet open={!!blocked} onClose={() => setBlocked(null)} label="Blocked by your rules" cls="sheet">
         <div className="bicon"><Lock size={30} strokeWidth={2.2} aria-hidden /></div><div className="btitle">Blocked by your rules</div>
         <div className="bwhy">{blocked?.reasons.join(' ')}</div>
@@ -214,8 +218,8 @@ function ChatInner() {
         <button className="btn big" onClick={() => setBlocked(null)}>Go back</button><Link className="btn text" href="/settings">See your rules</Link>
       </Sheet>
     }>
-      <Threads open={drawer} onClose={() => setDrawer(false)} onNew={newChat} onPick={pick} />
-      <header className="nav"><button className="nb" aria-label="Chats" onClick={() => setDrawer(true)}><PanelLeft size={21} aria-hidden /></button><Brand /><span className="nav-r"><button className="nb" aria-label="New chat" onClick={newChat}><SquarePen size={20} aria-hidden /></button><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></span></header>
+      <Threads open={drawer} mini={mini} onClose={closeDrawer} onToggle={toggleMini} onNew={() => { setDrawer(false); newChat(); }} onPick={(id) => { setDrawer(false); pick(id); }} />
+      <header className="nav"><button className="nb tp-menu" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><PanelLeft size={21} aria-hidden /></button><Brand /><span className="nav-r"><button className="nb" aria-label="New chat" onClick={newChat}><SquarePen size={20} aria-hidden /></button><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></span></header>
       <main className="body chat" ref={body}>
         <div className="thread">
           <div className="when">Today</div>

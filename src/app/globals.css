@@ -53,7 +53,10 @@ html.theming *,html.theming *::before,html.theming *::after{transition:backgroun
 @media (prefers-reduced-motion:reduce){html.theming *{transition:none!important}}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-body{font-family:var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;letter-spacing:-.006em;overflow:hidden}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;letter-spacing:-.006em}
+/* Only the app shell locks the page (it scrolls inside .body). Marketing pages scroll natively; locking body there
+   propagates to the viewport, which blocked wheel and touch scrolling and made iOS Safari scroll janky. */
+body:has(.app){overflow:hidden}
 svg{display:block;flex:0 0 auto}
 .app{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);padding-left:var(--sal);padding-right:var(--sar)}
 /* mock device chrome (screenshots only) */
@@ -626,10 +629,15 @@ button.cell{width:100%;text-align:left}
 .nav-r{display:flex;align-items:center;gap:.35rem}
 .tscrim{position:fixed;inset:0;z-index:70;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity var(--t-pop) var(--ease-out)}
 .tscrim.on{opacity:1;pointer-events:auto}
-.tpanel{position:fixed;top:0;bottom:0;left:0;z-index:71;width:min(20rem,86vw);display:flex;flex-direction:column;gap:.75rem;padding:calc(var(--sat) + .9rem) 1rem calc(var(--sab) + 1rem);background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform var(--t-sheet) var(--ease-drawer);visibility:hidden}
-.tpanel.open{transform:none;visibility:visible}
-.tp-h{display:flex;align-items:center;justify-content:space-between;padding:0 .25rem}.tp-h b{font:700 1.375rem var(--display)}
-.tp-new{justify-content:flex-start;padding-inline:1rem}
+.tpanel{position:fixed;top:0;bottom:0;left:0;z-index:71;width:min(18.5rem,84vw);display:flex;flex-direction:column;gap:.2rem;padding:calc(var(--sat) + .6rem) .6rem calc(var(--sab) + .75rem);background:var(--bg);box-shadow:0 0 48px rgba(0,0,0,.22);transform:translateX(-102%);transition:transform var(--t-sheet) var(--ease-drawer),visibility 0s linear var(--t-sheet);visibility:hidden;overscroll-behavior:contain}
+.tpanel.open{transform:none;visibility:visible;transition:transform var(--t-sheet) var(--ease-drawer),visibility 0s}
+.tp-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;min-height:3rem;padding:0 .1rem .35rem .5rem}
+.tp-brand{display:inline-flex;align-items:center;gap:.5rem;font:700 1.125rem var(--display);color:var(--ink);text-decoration:none}.tp-brand svg{width:22px;height:20px;color:var(--accent-text)}
+.tp-col{display:none}
+.tp-item{display:flex;align-items:center;gap:.75rem;width:100%;min-height:2.6rem;padding:0 .7rem;border-radius:.75rem;font-size:.9375rem;font-weight:500;color:var(--ink);text-decoration:none;text-align:left;white-space:nowrap}
+.tp-item svg{flex:0 0 auto;color:var(--ink-2)}.tp-item:hover,.tp-item:focus-visible{background:var(--surface-2)}
+.tp-nav{display:flex;flex-direction:column;gap:.1rem}
+.tp-lab{font-size:.75rem;font-weight:600;color:var(--ink-3);padding:1rem .7rem .35rem;letter-spacing:.01em}
 .tp-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:.15rem;margin:0 -.25rem;padding:0 .25rem}
 .tp-empty{font-size:.875rem;line-height:1.5;color:var(--ink-2);padding:.75rem .5rem}
 .tp-row{display:flex;align-items:center;gap:.15rem;border-radius:.9rem;min-height:3rem;padding:0 .25rem 0 0}
@@ -641,13 +649,27 @@ button.cell{width:100%;text-align:left}
 .tp-edit{flex:1;padding:.3rem .25rem}.tp-edit input{width:100%;font:inherit;font-size:.9375rem;padding:.55rem .7rem;border-radius:.7rem;border:1px solid var(--accent);background:var(--surface);color:var(--ink)}
 .tp-del{flex:1;display:flex;align-items:center;gap:.4rem;padding:.4rem .6rem;font-size:.875rem;flex-wrap:wrap}.tp-del span{flex:1 1 auto}
 .tp-del button{padding:.35rem .7rem;border-radius:999px;background:var(--surface-2);font-weight:600;font-size:.8125rem}.tp-del .danger{background:var(--danger);color:#fff}
-.tp-foot{font-size:.75rem;line-height:1.45;color:var(--ink-3);padding:0 .25rem}
+.tp-foot{display:flex;flex-direction:column;gap:.1rem;margin-top:auto;padding-top:.5rem;border-top:1px solid var(--sep)}
+@media (hover:hover) and (pointer:fine){.tp-row .tp-ic{opacity:0}.tp-row:hover .tp-ic,.tp-row .tp-ic:focus-visible,.tp-row.on .tp-ic{opacity:1}.tp-row:not(:hover):not(.on) .tp-ic{width:0;overflow:hidden}}
+.tp-row:hover{background:var(--surface-2)}
+.tp-me .av,.tp-me img{flex:0 0 auto}
 @media (min-width:1024px){
- .s-chat .tpanel{position:absolute;top:0;bottom:0;left:0;transform:none;visibility:visible;box-shadow:none;width:17rem;padding:1rem .75rem;background:transparent;border-right:1px solid var(--sep);z-index:5}
- .s-chat .tscrim,.s-chat .tp-x{display:none}
- .s-chat .main{position:relative;padding-left:17rem}
- .s-chat .nav>.nb[aria-label="Chats"]{visibility:hidden}
+ /* desktop chat: one sidebar only, the app rail is hidden here */
+ .s-chat .side{display:none}
+ .s-chat{--tpw:16.5rem}.s-chat.mini-side{--tpw:3.75rem}
+ .s-chat .tpanel{position:absolute;top:0;bottom:0;left:0;transform:none;visibility:visible;box-shadow:none;width:var(--tpw);padding:.75rem .55rem;background:var(--surface);border-right:1px solid var(--sep);z-index:5;transition:width var(--t-sheet) var(--ease-drawer)}
+ .s-chat .tscrim,.s-chat .tp-x,.s-chat .tp-menu{display:none}
+ .s-chat .tp-col{display:grid}
+ .s-chat .main{position:relative;padding-left:var(--tpw);transition:padding-left var(--t-sheet) var(--ease-drawer)}
+ .s-chat .main>.nav{max-width:none;padding-inline:1.25rem}
+ .s-chat .nav .brand{visibility:hidden}.s-chat.mini-side .nav .brand{visibility:visible}
+ .s-chat .nav button[aria-label="New chat"]{display:none}
+ .tpanel.mini{overflow:hidden}
+ .tpanel.mini .tp-brand,.tpanel.mini .tp-item span,.tpanel.mini .tp-lab,.tpanel.mini .tp-list{display:none}
+ .tpanel.mini .tp-h{justify-content:center;padding:0 0 .35rem}
+ .tpanel.mini .tp-item{justify-content:center;padding:0}
 }
+@media (prefers-reduced-motion:reduce){.tpanel,.s-chat .tpanel,.s-chat .main{transition:none}}
 .mephoto{align-self:flex-end;max-width:min(14rem,70%);border-radius:1rem;display:block}
 .cphoto{display:flex;align-items:center;gap:.6rem;font-size:.8125rem;line-height:1.35;color:var(--ink-2)}
 .cphoto img{width:3rem;height:3rem;object-fit:cover;border-radius:.6rem;flex:0 0 auto}.cphoto span{flex:1}

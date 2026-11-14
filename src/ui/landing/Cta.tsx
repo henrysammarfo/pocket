@@ -14,13 +14,17 @@ export function StandaloneGate() {
   useEffect(() => { if (m && s && matchMedia('(display-mode: standalone)').matches) r.replace('/chat'); }, [m, s, r]);
   return null;
 }
-// Reveal sections as they scroll in. Pure CSS does the motion; this only adds a class.
+// Reveal sections as they scroll in: a short fade and lift, opacity and transform only. Content is visible
+// without JS, and with reduced motion it simply appears.
 export function Reveal() {
   useEffect(() => {
     const els = document.querySelectorAll('.rv');
-    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { els.forEach((e) => e.classList.add('in')); return; }
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
-    els.forEach((e) => io.observe(e)); return () => io.disconnect();
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const vh = innerHeight; els.forEach((e) => { if (e.getBoundingClientRect().top < vh) e.classList.add('in'); });
+    document.documentElement.classList.add('rv-on');
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: 0.01 });
+    els.forEach((e) => { if (!e.classList.contains('in')) io.observe(e); });
+    return () => { io.disconnect(); document.documentElement.classList.remove('rv-on'); };
   }, []);
   return null;
 }
