@@ -1,6 +1,7 @@
 'use client';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Brand } from '@/ui/kit';
 import { signup, ROOT } from '@/lib/client/api';
@@ -50,12 +51,12 @@ function Welcome() {
   };
   return (
     <div className="land">
-      <header className="lnav"><Brand /><nav><a href="#how">How it works</a><a href="#safety">Security</a><a href="https://github.com/henrysammarfo/pocket/tree/near-hackathon">Code</a></nav>{s ? <a className="btn" href="/chat">Open Pocket</a> : <a className="btn" href="#start">Get started</a>}</header>
+      <header className="lnav"><Link href="/" aria-label="Pocket home" style={{ display: "contents" }}><Brand /></Link><nav><Link href="/#how">How it works</Link><Link href="/#security">Security</Link><a href="https://github.com/henrysammarfo/pocket">Code</a></nav>{s ? <a className="btn" href="/chat">Open Pocket</a> : <a className="btn" href="#start">Get started</a>}</header>
       <section className="hero">
         <div>
           <div className="eyebrow"><i />Your money. Your rules.</div>
           <h1>Talk to your money. It listens to your rules.</h1>
-          <p>Pocket is a money assistant you can chat with. Send test dollars to family anywhere, buy paper stocks, and see every receipt. Nothing moves until you approve it on your own device.</p>
+          <p>Pocket, the money app you talk to. Send test dollars to family anywhere, buy paper stocks, and see every receipt. Nothing moves until you approve it on your own device.</p>
           {s ? (
             <div className="hb"><a className="btn" href="/chat">Open Pocket as @{s.username}</a></div>
           ) : restore ? (
@@ -73,29 +74,17 @@ function Welcome() {
               <button className="btn big" disabled={!!busy || ro}>{busy || 'Create my Pocket'}</button>
               {err && <div className="errline" role="alert">{err}</div>}
               <button type="button" className="btn text" onClick={() => { setRestore(true); setErr(''); }}>I have a backup key</button>
-              <div className="fine" style={{ fontSize: '.8125rem', color: 'var(--ink-3)', lineHeight: 1.45 }}>No email, password or seed phrase. Pocket makes a private key in this browser that never leaves it, creates your NEAR testnet account, pays the gas and adds 1,000 test dollars. Add a passkey (Face ID or fingerprint) in Settings to guard approvals, and back up your key from Profile. Nothing here has real value.</div>
             </form>
           )}
           <div className="checks">{['Runs on NEAR testnet', 'Fee $0 on sends', 'You sign every move'].map((t) => <span key={t}><Check size={16} strokeWidth={2.2} aria-hidden />{t}</span>)}</div>
         </div>
-        <div className="hr"><div className="device"><div className="scr">{/* eslint-disable-next-line @next/next/no-img-element */}
-<img src={theme === 'black' ? '/shots/chat-black.webp' : '/shots/chat-light.webp'} alt="Pocket chat with a plan card" /></div><span className="cap">Design preview with example data</span></div></div>
-      </section>
-      <section className="lsec" id="how">
-        <h2>How it works</h2>
-        <div className="grid3">
-          <div className="group"><b>1. Say it</b><p>&quot;Send Mum 50 dollars and put 25 in Tesla.&quot; Pocket turns it into a plan card and checks it against your rules in code.</p></div>
-          <div className="group"><b>2. Hold to approve</b><p>You hold the button for a second. Your device key signs the exact amounts on the card. The AI never holds a key.</p></div>
-          <div className="group"><b>3. Settled on NEAR</b><p>Sends go through a relayer that pays the gas (NEP-366). Trades settle in one atomic call to the NEAR Intents verifier. Every move gets a public receipt.</p></div>
-        </div>
-      </section>
-      <section className="lsec" id="safety">
-        <h2>Safety, plainly</h2>
-        <div className="grid3">
-          <div className="group"><b>Testnet only</b><p>Test dollars (pUSD), Circle testnet USDC and paper stock tokens. No mainnet, no real money.</p></div>
-          <div className="group"><b>Your rules hold</b><p>Always keep, daily send limit and passkey approval are checked before any card can be approved, and again by the server.</p></div>
-          <div className="group"><b>Open and reproducible</b><p>Unmodified NEAR Intents verifier (sha256 on the health page), fixed supply tokens with no mint, one command to run your own.</p></div>
-        </div>
+        <div className="hr"><div className="group signup-how"><b>How sign up works</b>
+          <ol>
+            <li><b>Pick a username.</b> It becomes your NEAR testnet account, like ama.{ROOT}.</li>
+            <li><b>Your key is made here.</b> A private key is created inside this browser and never leaves it. No email, password, seed phrase or login service.</li>
+            <li><b>Pocket pays the setup.</b> We create the account, pay the gas and add 1,000 test dollars.</li>
+            <li><b>Make it yours.</b> Add a passkey (Face ID, fingerprint or screen lock) in Settings, and back up your key from Profile.</li>
+          </ol></div></div>
       </section>
     </div>
   );

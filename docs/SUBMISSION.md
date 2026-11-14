@@ -31,7 +31,7 @@ Live app for judges: https://pocket-zeta-lime.vercel.app (NEAR testnet, stays up
 | **Average** | **7.2** | **6.8** | |
 
 ## What we built (under 2,000 characters)
-Pocket is a money app you talk to. Say or type "send Mum 50 dollars and put 25 in Tesla", even messy, with ums, repeats or Pidgin, and Pocket says back what it understood, then shows one plan card. The plan is checked in code against your own rules (daily limit, always keep, trade cap). Nothing moves until you hold to approve on your own device, and raising your limit needs your passkey.
+Pocket, the money app you talk to. Say or type "send Mum 50 dollars and put 25 in Tesla", even messy, with ums, repeats or Pidgin, and Pocket says back what it understood, then shows one plan card. The plan is checked in code against your own rules (daily limit, always keep, trade cap). Nothing moves until you hold to approve on your own device, and raising your limit needs your passkey.
 
 The AI never holds keys. It can only propose. Your browser holds an ed25519 key for a real NEAR testnet account made at sign up. Sends are gasless: pUSD moves as a NEP-413 signed intent in the NEAR Intents verifier, and USDC and NEAR move as NEP-366 meta transactions paid by a relayer that only accepts allowed calls. Paper stocks (TSLAon, NVDAon and more, live priced) settle atomically as two signed token_diff intents, yours and the market maker's, in one execute_intents call. Every move gets a public receipt rebuilt from the chain.
 
@@ -43,7 +43,12 @@ Live on testnet at https://pocket-zeta-lime.vercel.app. One command to reproduce
 `video/pocket-demo.mp4`, about 1 min 38 s: title card, the problem, sign up, wallet, a chat question, a messy voice note heard back cleanly, the plan card (zoomed), hold to approve, the receipt from chain, Settings with credits and memory, the desktop Invest view, the NEAR stack card, the tests card, end card. English voiceover, captions, no music. Rebuild with `npm run video`; scenes and lines are in [scripts/video/script.json](../scripts/video/script.json).
 
 ## X post draft (Henry posts it)
-> Pocket: a money app you just talk to, on @NEARProtocol, #NEARHackathon. Say "send Mum 50 and put 25 in Tesla", get one plan, hold to approve. Gasless sends, atomic trades via NEAR Intents, and the AI never holds your keys. Testnet. https://pocket-zeta-lime.vercel.app https://github.com/henrysammarfo/pocket
+> Pocket, the money app you talk to, on @NEARProtocol, #NEARHackathon. Say "send Mum 50 and put 25 in Tesla", get one plan, hold to approve. Gasless sends, atomic trades via NEAR Intents, and the AI never holds your keys. Testnet. https://pocket-zeta-lime.vercel.app https://github.com/henrysammarfo/pocket
+
+Short version for a tight limit (80 characters, the link counts as 23):
+> Pocket, the money app you talk to. Live on NEAR testnet. https://pocket-zeta-lime.vercel.app
+
+Note: standard X accounts without a blue tick can post 280 characters; the 4,000 character limit is the Premium one.
 
 ## Why it stands out
 - A normal person can use it: one plan card, one hold, plain words, no seed phrase, no gas.

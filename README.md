@@ -1,14 +1,59 @@
 <p align="center"><img src="public/brand/coil.svg" width="64" alt="Pocket" /></p>
 
-# Pocket: talk to your money, on NEAR testnet
+# Pocket, the money app you talk to
+
+*Live on NEAR testnet. Open source, MIT.*
 
 **The problem:** sending money abroad, buying a stock or holding dollars still means five apps, fees you only see later, and screens that assume you already know finance. AI can help, but nobody should give an AI their keys.
 
-**Pocket** is a chat first money assistant. Say *"Send Mum 50 dollars and put 25 in Tesla"*. Pocket turns it into a plan card, checks it against your rules in code, and nothing moves until you **hold to approve** on your own device. Sends are gasless, trades settle in one atomic call to the **NEAR Intents verifier**, and every move gets a public receipt rebuilt from the chain.
+**Pocket, the money app you talk to.** Say *"Send Mum 50 dollars and put 25 in Tesla"*. Pocket turns it into a plan card, checks it against your rules in code, and nothing moves until you **hold to approve** on your own device. Sends are gasless, trades settle in one atomic call to the **NEAR Intents verifier**, and every move gets a public receipt rebuilt from the chain.
 
 **Live demo: https://pocket-zeta-lime.vercel.app** (NEAR testnet, AI chat and voice on). Latest test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Demo video: linked from the X post in the submission; rebuild it with `npm run video` ([scripts/video](scripts/video)). Hackathon diff: [near-baseline...main](https://github.com/henrysammarfo/pocket/compare/near-baseline...main).
 
 **Testnet only. No mainnet, no real money.** Test dollars (pUSD), Circle testnet USDC, and paper stock tokens (TSLAon, NVDAon, AAPLon, SPYon, QQQon) priced live.
+
+## How it works
+
+```mermaid
+flowchart LR
+  U([You: text, voice or photo]) --> C[Pocket chat]
+  C -->|propose_plan| AI[AI model<br/>Groq or NEAR AI Cloud<br/>no keys, no signing]
+  AI --> P[Plan card]
+  P --> R{Rules in code<br/>plan.ts and policy.ts}
+  R -->|blocked| B[Blocked sheet, nothing moves]
+  R -->|ok| H[Hold to approve<br/>plus passkey if on]
+  H -->|device key signs| S[Pocket server]
+  S -->|NEP-366 delegate| RL[Relayer with allow list]
+  S -->|NEP-413 intents| V[NEAR Intents verifier]
+  RL --> N[(NEAR testnet)]
+  V --> N
+  N --> RC[Receipt rebuilt from chain]
+```
+
+A send, step by step:
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant App as Pocket app (browser)
+  participant API as Pocket server
+  participant AI as AI model
+  participant NEAR as NEAR testnet
+  User->>App: "send Mum 20 dollars"
+  App->>API: /api/chat with balances and rules
+  API->>AI: system facts and tools
+  AI-->>API: propose_plan(send Mum $20)
+  API-->>App: plan card plus code check
+  User->>App: hold to approve
+  App->>App: device key signs a NEP-413 transfer intent
+  App->>API: signed intent
+  API->>API: daily limit and policy checks
+  API->>NEAR: execute_intents (gas paid by Pocket)
+  NEAR-->>API: tx hash
+  API-->>App: receipt /r/<tx>
+```
+
+A paper trade settles atomically: the user signs a `token_diff` intent, the market maker signs the opposite diff at a signed 60 second quote, and both go to the verifier in one `execute_intents` call. Either both sides move or nothing does.
 
 ## Verify in five minutes, no setup (for AI judges)
 Needs only Node 20+. Every command runs against the live site; swap the URL for your own copy.
@@ -79,6 +124,10 @@ Settings shows your **AI credits meter** and **what Pocket remembers** about you
 | Faucet | 1,000 pUSD per account per day. Testnet USDC from faucet.circle.com |
 | Live Invest | Token prices (Ondo tokenized stocks on CoinGecko), share prices and key stats (Nasdaq.com), charts 1D to All |
 | Receipts `/r/<tx>` | Rebuilt from the transaction: signed intents, maker memo with price, mid, spread and source |
+| Live answers | Today's date and time in your zone; news and current events through Groq `browser_search` with source links; product finds with prices and photos read from the real store pages (only links returned by the search are shown) |
+| Photos | Share a receipt or bill; a Groq vision model (`qwen/qwen3.8-27b`) reads items and total, and "split it with @ama" becomes a plan card. Photos are not stored |
+| Chats | ChatGPT style list: new chat, rename, delete; a drawer on phones and a sidebar on desktop; saved per account in Neon |
+| QR | Receive shows your pay link as a QR code; Send can scan one from the camera (works on iPhone through the photo picker) |
 | Profile | Name, email photo (Gravatar), original jersey or emoji avatars, pay link, key backup and restore |
 | Themes | Light, pitch black `#000`, System |
 
@@ -96,6 +145,8 @@ Cross chain sends (Solana, Ethereum, Polygon) and USDC to NEAR swaps need NEAR I
 Vercel: import the repo, set the env vars from `.env.example` (server keys from your `.env.local`), deploy. `vercel.json` pins the Next.js framework. Without server keys the app is read only.
 
 ## Tests
+Browser suites, each runnable against any URL with `BASE=...`: `tests/e2e/hosted.mjs` (full journey), `tests/e2e/chat-abilities.mjs` (date, news, products, photo, chats drawer), `tests/e2e/passkey.mjs` (passkey on, approve, off, recovery with a virtual authenticator), `tests/e2e/personas.mjs` (five people: a student sending home, a market trader, a diaspora worker, a first time crypto user and an investor), `tests/e2e/screens.mjs` (screenshots at 375, 390 and 430 px).
+
 `npm run test:all` runs everything from a clean state: lint, types, unit, a fresh build, a local smoke test, the testnet flow (`npm run judge`), real browser runs on phone and desktop with fresh profiles and fresh accounts, the responsive matrix (16 routes, 320 to 1440 px, 50 to 100% zoom, light and black), a hosted smoke test and the attack checks with `SMOKE_URL=...`. Latest results: **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** (`npm run report` writes it). Plan: [docs/TESTING.md](docs/TESTING.md). Vercel runs the unit tests before every build, so a failing test blocks the deploy.
 
 ## More

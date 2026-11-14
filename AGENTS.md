@@ -1,6 +1,6 @@
 # AGENTS.md: how an AI agent runs and checks Pocket
 
-Pocket is a chat first money assistant on **NEAR testnet only**. Everything below works with your own keys. Nothing touches mainnet.
+Pocket, the money app you talk to, runs on **NEAR testnet only**. Everything below works with your own keys. Nothing touches mainnet.
 
 ## Run it
 ```bash

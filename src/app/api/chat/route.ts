@@ -35,14 +35,14 @@ export const POST = handler(async (req) => {
     await store.addChat(account, { thread, role: 'user', content: String(last.content).slice(0, 2000), at: Date.now(), meta: b.voice || b.image ? { voice: !!b.voice, photo: !!b.image } : null });
   }
   // A shared photo (receipt, bill): read it into text first, then the chat model works with that text.
-  let photoUsd = 0;
+  let photoUsd = 0; let photoText = '';
   if (b.image) {
     if (!account) throw new HttpError(401, 'Sign in to share photos.');
     if (!okImage(b.image)) throw new HttpError(400, 'Use a JPEG, PNG or WebP photo under 3 MB.');
     if (!useAI || !visionUp()) throw new HttpError(503, 'Reading photos needs the AI, which is not available right now.');
     await limit('photo:acct:' + account, Number(process.env.PHOTO_PER_ACCOUNT_HOUR || 20), 3600);
     await spend(account, COST.photo);
-    try { const v = await readImage(b.image); photoUsd = v.usd; last.content = `${String(last.content || '').trim() || 'I shared a photo.'}\n\n[Photo the user shared, read by Pocket: ${v.text}]`; }
+    try { const v = await readImage(b.image); photoUsd = v.usd; photoText = v.text; last.content = `${String(last.content || '').trim() || 'I shared a photo.'}\n\n[Photo the user shared, read by Pocket: ${v.text}]`; }
     catch { await refund(account, COST.photo); throw new HttpError(502, 'I could not read that photo just now. Try again in a moment.'); }
   }
   const out = await chat({ messages: b.messages, ctx: b.ctx, voice: b.voice, memories, offline: !useAI });
@@ -54,5 +54,5 @@ export const POST = handler(async (req) => {
     await store.addChat(account, { thread, role: 'assistant', content: out.reply, at: Date.now(), meta: { plan: out.plan, check: out.check, confirm: out.confirm, chips: out.chips, source: out.source, sources: out.sources, products: out.products } });
   }
   const { usd: _u, ...rest } = out; void _u;
-  return { ...rest, credits: account ? await creditsOf(account) : undefined };
+  return { ...rest, ...(photoText ? { photoText } : {}), credits: account ? await creditsOf(account) : undefined };
 });

@@ -33,11 +33,14 @@
     "@neondatabase/serverless": "^1.2.1",
     "@noble/curves": "^2.4.0",
     "@noble/hashes": "^2.4.0",
+    "@types/qrcode": "^1.5.6",
     "borsh": "^2.0.0",
     "bs58": "^6.0.0",
+    "jsqr": "^1.4.0",
     "lucide-react": "^1.72.0",
     "near-api-js": "^5.1.1",
     "next": "15.5.29",
+    "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
@@ -55,5 +58,6 @@
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
-  }
+  },
+  "description": "Pocket, the money app you talk to. Live on NEAR testnet."
 }
