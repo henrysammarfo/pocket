@@ -140,6 +140,7 @@
     "Named accounts made for you",
     "Gasless sends paid by a relayer",
     "Trades settle in the NEAR Intents verifier",
+    "Private AI on NEAR AI Cloud (TEE)",
     "The AI only proposes. You sign."
    ],
    "vo": "NEAR makes this possible. Named accounts, gasless sends, and the NEAR Intents verifier that settles both sides of a trade at once. The AI only proposes. You sign."
@@ -160,7 +161,7 @@
    "kind": "card",
    "head": "Pocket",
    "sub": "pocket-zeta-lime.vercel.app",
-   "foot": "github.com/henrysammarfo/pocket  \u00b7  NEAR testnet  \u00b7  #NEARHackathon",
+   "foot": "github.com/henrysammarfo/pocket  \u00b7  Private AI on NEAR AI Cloud  \u00b7  #NEARHackathon",
    "vo": "Pocket. Talk to your money. Try it now."
   }
  ]

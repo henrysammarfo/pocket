@@ -141,6 +141,21 @@ export async function chat(input: ChatIn): Promise<ChatOut> {
       }
     }
     const text = tidy(String(msg.content || '').replace(/<think>[\s\S]*?<\/think>/g, ''));
+    // Sometimes the model says the plan back in plain words, or calls confirm_intent with no steps.
+    // When it is asking for a yes, read the steps with Pocket's own parser so the Yes button still appears.
+    const asks = text || (ci?.say ? tidy(String(ci.say)) : '');
+    if (asks && /(is that right|did i get that right|shall i|should i make the plan|correct)\??\s*$/i.test(asks)) {
+      const last = input.messages.filter((m) => m.role === 'user').pop()?.content?.slice(0, 2000) || '';
+      const steps = parseCommand(input.voice ? cleanSpeech(last) : last) || parseCommand(cleanSpeech(last));
+      if (steps?.length) return { ...base, reply: asks, confirm: { summary: 'Here is the plan.', steps }, chips: CHIPS };
+      // Too messy for the parser: ask the model once more, this time it must call confirm_intent.
+      try {
+        const again = await complete({ ...body, tools: TOOLS, tool_choice: { type: 'function', function: { name: 'confirm_intent' } } });
+        const c = (again.j.choices?.[0]?.message?.tool_calls || []).find((t: any) => t.function?.name === 'confirm_intent');
+        const st = c ? normalizeSteps(JSON.parse(c.function.arguments || '{}').steps) : [];
+        if (st.length) return { ...base, usd: usd + again.usd, reply: asks, confirm: { summary: 'Here is the plan.', steps: st }, chips: CHIPS };
+      } catch (e) { console.error('confirm retry failed:', e instanceof Error ? e.message : String(e)); }
+    }
     if (text) return { ...base, reply: text };
     if (remembered.length) return { ...base, reply: 'Got it, I will remember that.' };
     if (ci?.say) return { ...base, reply: tidy(String(ci.say)) };

@@ -37,3 +37,12 @@ PASS no horizontal overflow
 PASS no page errors 
 ```
 
+
+### Live site after private AI went live (PR #11), 14 Nov 2026 13:40 (Africa/Accra, UTC+0)
+AI: NEAR AI Cloud private TEE models (`Qwen/Qwen3.6-35B-A3B-FP8` chat, `Qwen/Qwen3-VL-30B-A3B-Instruct` photos, `openai/whisper-large-v3` voice), Groq fallback.
+- `npm run smoke`, `npm run attack`: ALL PASS
+- `npm run e2e:hosted` (full journey, phone and desktop): ALL PASS
+- `tests/e2e/chat-voice.mjs` (small talk, messy voice note, confirm, plan, memory, credits): ALL PASS
+- `tests/e2e/chat-abilities.mjs` (date, news with sources, product finds with real links, live price, receipt photo read, bill split, chats drawer new, rename, delete): ALL PASS
+- `tests/e2e/passkey.mjs` (add, use and remove a passkey with a virtual authenticator): ALL PASS
+- `npm run verify:tee`: ALL PASS for all three models

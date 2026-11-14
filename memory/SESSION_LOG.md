@@ -15,3 +15,10 @@
 - Web search stays on Groq browser_search (web.ts uses groq explicitly). verify:tee checks all three models. Settings shows "Private AI on NEAR AI Cloud (TEE)". SUBMISSION adds track privacy.
 - Local: smoke, attack, chat-voice, chat-abilities ALL PASS on NEAR AI; with a bad NEAR AI key chat-voice ALL PASS through Groq fallback.
 - Vercel env set by name for production and preview: AI_PROVIDER=nearai, NEARAI_API_KEY.
+
+## 2026-11-14 round 3 final (branch round3-final)
+- Voice confirm fix: when the model says the plan back in plain words (no confirm_intent steps), the server parses the steps or asks once more with tool_choice forced to confirm_intent, so the Yes button always appears.
+- Settings private AI row: removed the "Learn" label that clipped at 390 px.
+- Video: Why NEAR card adds "Private AI on NEAR AI Cloud (TEE)"; end card foot says Private AI on NEAR AI Cloud; URL pocket-zeta-lime. Rebuilt /workspace/pocket-build/video/pocket-demo.mp4 (98 s) from existing raw recordings.
+- SUBMISSION: idea text mentions private NEAR AI inference (about 1,860 chars); short X post 87 chars with @NEARProtocol #NEARHackathon. Only Pocket is entered (no second project).
+- Fresh screenshots of production at 390 and 1440 in /workspace/pocket-build/shots/round3-final.
