@@ -17,18 +17,18 @@ import { rpc, view, viewAccessKey, viewAccount } from '../shared/rpc';
 import { buildPayload, parseMessage, type Intent } from '../shared/intents';
 import { signNep413, verifyNep413, keyFromString, type SignedNep413 } from '../shared/nep413';
 import { toUnits, fromUnits, nearToYocto } from '../shared/units';
-import { fnCall, signAndSend, TGAS, type TxResult } from './tx';
+import { fnCall, signAndSend, type TxResult } from './tx';
 import { secretKey } from './env';
 import { tokenPrices } from './prices';
 import { store, limit, HttpError } from './store';
+import { delegatePolicy, reserveSpend, burnNonce, isPocketUser, validAccountId, type DelegateJson } from '../shared/policy';
+export { isPocketUser, validAccountId, type DelegateJson };
 
 const need = (k: Parameters<typeof secretKey>[0]) => {
   const v = secretKey(k);
   if (!v) throw new HttpError(503, `${k.toLowerCase()} key is not set on this server, so this action is off. See README, section Self host.`);
   return v;
 };
-export const isPocketUser = (a: string) => a.endsWith('.' + ROOT) && /^[a-z0-9_-]{2,32}$/.test(a.slice(0, -ROOT.length - 1)) && !['admin', 'verifier', 'maker', 'faucet', 'relayer', ...TOKENS.map((t) => t.contract.split('.')[0])].includes(a.split('.')[0]);
-export const validAccountId = (a: string) => /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/.test(a) && a.length >= 2 && a.length <= 64;
 
 // ---------- balances ----------
 export async function balances(account: string) {
@@ -75,11 +75,12 @@ export async function getLimit(account: string) {
   const v = await store.get('limit:' + account);
   return v > 0 ? v : 200;
 }
+// Atomic reserve (no check then act race), refunded if the chain rejects the send. See docs/POLICY.md L1.
 async function spend(account: string, usd: number) {
-  const lim = await getLimit(account);
-  const used = await store.get(dayKey(account));
-  if (used + usd > lim + 1e-9) throw new HttpError(403, `Over your daily send limit of $${lim}. You have $${Math.max(0, lim - used).toFixed(2)} left today.`);
-  await store.incr(dayKey(account), DAY, usd);
+  return reserveSpend(store, dayKey(account), await getLimit(account), usd, DAY);
+}
+async function settleOrRefund<T>(refund: (() => Promise<void>) | null, run: () => Promise<T>): Promise<T> {
+  try { return await run(); } catch (e) { if (refund) await refund().catch(() => {}); throw e; }
 }
 export async function usedToday(account: string) { return store.get(dayKey(account)); }
 
@@ -89,8 +90,10 @@ export async function setLimit(signed: SignedNep413) {
   try { m = JSON.parse(signed.payload.message); } catch { throw new HttpError(400, 'Bad message.'); }
   if (m.action !== 'pocket.set_limit' || !m.account || typeof m.limit !== 'number' || !m.at || Math.abs(Date.now() - m.at) > 120000) throw new HttpError(400, 'Bad limit message.');
   if (signed.payload.recipient !== 'pocket') throw new HttpError(400, 'Wrong recipient.');
-  if (m.limit < 0 || m.limit > 5000) throw new HttpError(400, 'Limit must be between $0 and $5,000.');
+  if (!Number.isFinite(m.limit) || m.limit < 0 || m.limit > 5000) throw new HttpError(400, 'Limit must be between $0 and $5,000.');
+  await limit('setlimit:' + m.account, 30, 3600);
   await assertKeyOf(m.account, signed.public_key);
+  await burnNonce(store, 'limit', signed.payload.nonce, 300); // a signed limit change works once (N1)
   await store.incr('limit:' + m.account, 365 * DAY, m.limit - (await store.get('limit:' + m.account)));
   return { account: m.account, limit: m.limit };
 }
@@ -111,8 +114,8 @@ export async function submitTransfer(signed: SignedNep413, ip: string) {
   await limit('relayip:' + ip, 120, 3600);
   await assertKeyOf(m.signer_id, signed.public_key);
   const usd = tok.symbol === 'pUSD' ? Number(fromUnits(BigInt(amt), tok.decimals)) : 0;
-  if (usd) await spend(m.signer_id, usd);
-  const r = await executeIntents([signed]);
+  const refund = usd ? await spend(m.signer_id, usd) : null;
+  const r = await settleOrRefund(refund, () => executeIntents([signed]));
   const data = { token: tok.symbol, amount: fromUnits(BigInt(amt), tok.decimals), to: t.receiver_id, memo: t.memo || null };
   await store.addActivity({ account: m.signer_id, kind: 'send', tx: r.hash, data, at: Date.now() });
   await store.addActivity({ account: t.receiver_id, kind: 'receive', tx: r.hash, data: { ...data, from: m.signer_id }, at: Date.now() });
@@ -219,35 +222,7 @@ export async function createAccount(username: string, publicKey: string, ip: str
 }
 
 // ---------- NEP-366 meta transactions ----------
-export type DelegateJson = {
-  senderId: string; receiverId: string; nonce: string; maxBlockHeight: string; publicKey: string;
-  actions: ({ type: 'functionCall'; method: string; args: Record<string, unknown>; gas: string; deposit: string } | { type: 'transfer'; deposit: string })[];
-  signature: string;
-};
-const ONE_YOCTO = '1';
-const USDC_STORAGE = nearToYocto('0.00125').toString();
-
-function delegatePolicy(d: DelegateJson) {
-  if (!isPocketUser(d.senderId)) throw new HttpError(403, 'Only Pocket accounts can use the Pocket relayer.');
-  if (!Array.isArray(d.actions) || d.actions.length < 1 || d.actions.length > 2) throw new HttpError(400, 'One or two actions only.');
-  let usd = 0;
-  for (const a of d.actions) {
-    if (a.type === 'transfer') {
-      if (!validAccountId(d.receiverId)) throw new HttpError(400, 'Bad receiver.');
-      if (BigInt(a.deposit) > nearToYocto('5')) throw new HttpError(400, 'NEAR sends are capped at 5 NEAR on testnet.');
-      continue;
-    }
-    if (BigInt(a.gas) > 50n * TGAS) throw new HttpError(400, 'Too much gas.');
-    if (d.receiverId === VERIFIER && a.method === 'add_public_key' && a.deposit === ONE_YOCTO && d.actions.length === 1) continue;
-    if (d.receiverId === USDC && a.method === 'storage_deposit' && a.deposit === USDC_STORAGE && a.args.registration_only === true && validAccountId(String(a.args.account_id))) continue;
-    if (d.receiverId === USDC && a.method === 'ft_transfer' && a.deposit === ONE_YOCTO && validAccountId(String(a.args.receiver_id)) && /^\d+$/.test(String(a.args.amount))) {
-      usd += Number(fromUnits(BigInt(String(a.args.amount)), USDC_DECIMALS));
-      continue;
-    }
-    throw new HttpError(403, `The relayer does not pay for ${d.receiverId}.${a.method}.`);
-  }
-  return usd;
-}
+// Relayer policy: delegatePolicy in src/lib/shared/policy.ts (rules R1 to R7, docs/POLICY.md).
 
 export function toDelegate(d: DelegateJson) {
   const actions: Action[] = d.actions.map((a) => a.type === 'transfer'
@@ -266,10 +241,13 @@ export async function relay(d: DelegateJson, ip: string) {
   await assertKeyOf(d.senderId, d.publicKey);
   await limit('relay:' + d.senderId, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
-  if (usd) await spend(d.senderId, usd);
+  const refund = usd ? await spend(d.senderId, usd) : null;
   const signedDelegate = new SignedDelegate({ delegateAction: da, signature: new Signature({ keyType: 0, data: sig }) });
-  const r = await signAndSend(RELAYER, need('RELAYER'), d.senderId, [actionCreators.signedDelegate(signedDelegate)]);
-  if (!r.ok) throw new HttpError(400, 'The network rejected it: ' + r.failures.join('; ').slice(0, 300));
+  const r = await settleOrRefund(refund, async () => {
+    const res = await signAndSend(RELAYER, need('RELAYER'), d.senderId, [actionCreators.signedDelegate(signedDelegate)]);
+    if (!res.ok) throw new HttpError(400, 'The network rejected it: ' + res.failures.join('; ').slice(0, 300));
+    return res;
+  });
   const ft = d.actions.find((a) => a.type === 'functionCall' && a.method === 'ft_transfer') as { args: { receiver_id: string; amount: string; memo?: string } } | undefined;
   const nearT = d.actions.find((a) => a.type === 'transfer') as { deposit: string } | undefined;
   if (ft) {

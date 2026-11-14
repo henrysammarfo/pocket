@@ -14,14 +14,22 @@ import crypto from 'node:crypto';
 const RPC = process.env.NEAR_RPC_URL || 'https://test.rpc.fastnear.com';
 const NEED = Number(process.env.SETUP_MIN_NEAR || 40);
 const creds = (a) => path.join(os.homedir(), '.near-credentials/testnet', a + '.json');
-const near = (...args) => execFileSync('near', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+// near CLI: a local `near` binary if there is one, otherwise the npm build of near-cli-rs through npx.
+let NEAR_BIN = ['near'];
+try { execFileSync('near', ['--version'], { stdio: 'ignore' }); } catch {
+  try { execFileSync('npx', ['-y', 'near-cli-rs@0.31.1', '--version'], { stdio: 'ignore' }); NEAR_BIN = ['npx', '-y', 'near-cli-rs@0.31.1']; }
+  catch { console.error('Could not run near CLI. Install it: https://github.com/near/near-cli-rs (npm i -g near-cli-rs or cargo install near-cli-rs).'); process.exit(1); }
+}
+const near = (...args) => execFileSync(NEAR_BIN[0], [...NEAR_BIN.slice(1), ...args], { stdio: ['ignore', 'ignore', 'pipe'] });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function balance(a) {
   const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'view_account', finality: 'final', account_id: a } }) }).then((x) => x.json());
   return r.result ? Number(BigInt(r.result.amount) / 10n ** 21n) / 1000 : null;
 }
-try { execFileSync('near', ['--version'], { stdio: 'ignore' }); } catch { console.error('Install near CLI first: https://github.com/near/near-cli-rs (cargo install near-cli-rs, or npx near-cli-rs).'); process.exit(1); }
-if (!fs.existsSync('contracts/token/target/near/pocket_token.wasm')) {
+// Token wasm: the prebuilt vendor/pocket_token.wasm (the exact code deployed on testnet, sha256 in
+// vendor/pocket_token.sha256) is used by default, so no Rust toolchain is needed. Set BUILD_TOKEN=1 to
+// rebuild it from contracts/token with cargo-near instead.
+if (process.env.BUILD_TOKEN === '1') {
   console.log('Building the token contract (cargo near build)…');
   execFileSync('cargo', ['near', 'build', 'non-reproducible-wasm'], { cwd: 'contracts/token', stdio: 'inherit' });
 }

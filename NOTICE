@@ -1,0 +1,32 @@
+Pocket
+Copyright (c) 2026 Henry Sammarfo and Pocket contributors
+Licensed under the MIT License (see LICENSE).
+
+This repository includes or uses the third party works below. Each stays under its own license.
+
+Bundled binaries
+* vendor/defuse.wasm: NEAR Intents verifier, unmodified release asset of near/intents tag defuse/v0.4.2
+  (https://github.com/near/intents), MIT License. sha256 in vendor/defuse.sha256.
+* vendor/pocket_token.wasm: built from contracts/token (this repository, MIT), which depends on
+  near-sdk (MIT OR Apache-2.0) and near-contract-standards (MIT OR Apache-2.0). sha256 in vendor/pocket_token.sha256.
+
+Fonts
+* Manrope (public/fonts/Manrope-*), SIL Open Font License 1.1, by Mikhail Sharanda.
+* Inter (public/fonts/InterVariable-*), SIL Open Font License 1.1, by Rasmus Andersson.
+
+Icons and marks
+* Lucide icons (lucide-react), ISC License.
+* public/logos/{apple,ethereum,near,nvidia,polygon,solana,tesla,usdc}.svg come from Simple Icons
+  (https://simpleicons.org), CC0 1.0. The marks themselves are trademarks of their owners.
+* public/logos/{invesco,state-street}-*.svg are marks of Invesco Ltd. and State Street Corporation,
+  shown only to identify the ETF a paper token tracks.
+* All brand and company names and logos are trademarks of their owners. Their use here is
+  nominative, for identification only, and does not imply endorsement. Pocket is not affiliated
+  with Tesla, NVIDIA, Apple, Invesco, State Street, Circle, Ondo or NEAR Foundation.
+* public/brand/* (Pocket coil, pUSD and paper token marks) are Pocket originals under this repository's MIT License.
+
+Data
+* Prices from CoinGecko (Ondo tokenized stock prices), Nasdaq.com and ExchangeRate API, used under
+  their public terms. Pocket runs on NEAR testnet with paper money only. Not financial advice.
+
+npm dependencies keep their own licenses (mostly MIT, ISC, Apache-2.0); see package-lock.json.

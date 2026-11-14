@@ -26,7 +26,13 @@ const repo = path.resolve(here, '..');
 
 const VERIFIER_WASM = path.join(repo, 'vendor/defuse.wasm');
 const VERIFIER_SHA = fs.readFileSync(path.join(repo, 'vendor/defuse.sha256'), 'utf8').trim().slice(0, 64);
-const TOKEN_WASM = path.join(repo, 'contracts/token/target/near/pocket_token.wasm');
+// Built from contracts/token when BUILD_TOKEN=1 (cargo near build), otherwise the vendored build, sha256 checked.
+const BUILT_TOKEN = path.join(repo, 'contracts/token/target/near/pocket_token.wasm');
+const TOKEN_WASM = process.env.BUILD_TOKEN === '1' && fs.existsSync(BUILT_TOKEN) ? BUILT_TOKEN : path.join(repo, 'vendor/pocket_token.wasm');
+if (TOKEN_WASM.includes('vendor')) {
+  const want = fs.readFileSync(path.join(repo, 'vendor/pocket_token.sha256'), 'utf8').trim().slice(0, 64);
+  if (crypto.createHash('sha256').update(fs.readFileSync(TOKEN_WASM)).digest('hex') !== want) throw new Error('token wasm sha256 mismatch');
+}
 
 const svgUri = (f) => 'data:image/svg+xml;base64,' + Buffer.from(fs.readFileSync(path.join(repo, 'public/brand', f), 'utf8').replace(/<!--.*?-->/gs, '').replace(/\s+/g, ' ').trim()).toString('base64');
 const PUSD_ICON = svgUri('pusd.svg');

@@ -2,6 +2,7 @@
   "name": "nx",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +12,8 @@
     "test": "vitest run",
     "setup": "node scripts/setup.mjs",
     "bootstrap": "node scripts/bootstrap-testnet.mjs",
-    "judge": "node --conditions=react-server --env-file=.env.local --import tsx scripts/judge.mts",
+    "judge": "node scripts/judge-run.mjs",
+    "verify:chain": "node scripts/verify-chain.mjs",
     "e2e": "node tests/e2e/ui-flow.mjs",
     "e2e:responsive": "node tests/e2e/responsive.mjs",
     "test:all": "node scripts/test-all.mjs",
@@ -48,6 +50,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.29",
+    "fast-check": "^4.10.2",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.1.0"
