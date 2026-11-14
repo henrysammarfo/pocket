@@ -101,6 +101,9 @@ export function parseNear(text: string) {
   return { body: body.replace(/\*\*/g, '').trim(), sources: sources.filter((s) => !seen.has(s.url) && seen.add(s.url)), products };
 }
 
+// NEAR AI's search sometimes returns no results, and the model then says it cannot look things up.
+const UNABLE = /(unable|not able|cannot|can't|could not|couldn't) (to )?(access|retrieve|find|fetch|get|look up)|no (search )?results|technical (limitation|issue)/i;
+
 async function nearaiWeb(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
   const p = nearai!;
   const instructions = `Today is ${now}. Use web_search for this. After searching, always write your final answer: two to four short plain sentences with what you found and when it happened. No tables, no markdown, no links or citation marks in the sentences. Never use dashes as punctuation. Then on a new line write SOURCES: and up to 4 lines, each "title | url", using exact URLs from the search results.${kind === 'product' ? ' Then on a new line write PRODUCTS: and up to 4 lines, each "name | price | store | url", using exact product page URLs from the search results.' : ''}`;
@@ -110,7 +113,7 @@ async function nearaiWeb(query: string, kind: 'web' | 'product', now: string): P
   });
   if (!r.ok) { rest(p.id + 'chat', r); throw new Error('nearai search ' + r.status); }
   const j = await r.json();
-  const out: { type: string; content?: { text?: string }[] }[] = j.output || [];
+  const out: { type: string; content?: { text?: string; annotations?: { type?: string; url?: string; title?: string }[] }[]; action?: { sources?: { url?: string; title?: string }[] } }[] = j.output || [];
   const searches = out.filter((o) => o.type === 'web_search_call').length;
   const text = out.filter((o) => o.type === 'message').map((o) => (o.content || []).map((c) => c.text || '').join('')).join('\n').trim();
   const tin = j.usage?.input_tokens || 0, tout = j.usage?.output_tokens || 0;
@@ -118,8 +121,16 @@ async function nearaiWeb(query: string, kind: 'web' | 'product', now: string): P
   const usd = (tin * p.inUsd + tout * p.outUsd) / 1e6 + searches * Number(process.env.NEARAI_SEARCH_USD || 0.005);
   await record(p, p.chat + ' web_search', usd, tin, tout);
   const parsed = parseNear(text);
+  // Use the API's own citations too when it sends them (url_citation annotations, or the sources on a search
+  // call), so links come from the search, not only from the SOURCES lines the model writes.
+  const cited = [
+    ...out.flatMap((o) => (o.content || []).flatMap((c) => (c.annotations || []).filter((a) => a.type === 'url_citation' && a.url).map((a) => ({ title: String(a.title || host(a.url!)).slice(0, 140), url: String(a.url) })))),
+    ...out.flatMap((o) => (o.action?.sources || []).filter((x) => x.url).map((x) => ({ title: String(x.title || host(x.url!)).slice(0, 140), url: String(x.url) }))),
+  ];
+  for (const c of cited) if (!parsed.sources.some((x) => x.url === c.url)) parsed.sources.push(c);
   // The model sometimes ends right after searching with an empty message; the caller retries once.
   if (!clean(parsed.body)) throw new Error('nearai search gave an empty answer');
+  if (searches && !parsed.sources.length && UNABLE.test(parsed.body)) throw new Error('nearai search found nothing');
   const [okS, okP] = await Promise.all([Promise.all(parsed.sources.slice(0, 4).map((s) => exists(s.url))), Promise.all(parsed.products.slice(0, 4).map((x) => exists(x.url)))]);
   const sources = parsed.sources.slice(0, 4).filter((_, k) => okS[k]);
   const top: Product[] = parsed.products.slice(0, 4).filter((_, k) => okP[k]);
@@ -127,13 +138,20 @@ async function nearaiWeb(query: string, kind: 'web' | 'product', now: string): P
   return { reply: clean(parsed.body).replace(/\s+([.,;:])/g, '$1').replace(/(\.\s*){2,}/g, '. ').trim() || 'I searched but could not find a clear answer.', sources, products: kind === 'product' ? top : [], usd, private: true, provider: 'NEAR AI Cloud' };
 }
 
+// NEAR AI first (private). An answer is only used with at least one checked link (a source, or a product for
+// product searches); otherwise that one request goes to Groq search, which returns real result URLs.
 export async function webAnswer(query: string, kind: 'web' | 'product', now: string): Promise<WebOut> {
+  let near: WebOut | null = null;
   if (nearai && isUp(nearai) && (await underCap(nearai))) {
     for (let tries = 0; tries < 2; tries++) {
-      try { return await nearaiWeb(query, kind, now); }
+      try { near = await nearaiWeb(query, kind, now); break; }
       catch (e) { const msg = e instanceof Error ? e.message : 'error'; console.warn(JSON.stringify({ ai: 'nearai', kind: 'search', fallback: tries === 1 || !/empty/.test(msg), error: msg.slice(0, 120) })); if (!/empty/.test(msg) || !isUp(nearai) || !(await underCap(nearai))) break; }
     }
   }
-  if (!groq) throw new Error('no web search provider is available');
-  return groqWeb(query, kind, now);
+  const linked = (w: WebOut) => (kind === 'product' ? w.products.length > 0 : w.sources.length > 0);
+  if (near && linked(near)) return near;
+  if (near) console.warn(JSON.stringify({ ai: 'nearai', kind: 'search', fallback: true, error: 'no checked source links' }));
+  if (!groq) { if (near) return near; throw new Error('no web search provider is available'); }
+  try { return await groqWeb(query, kind, now); }
+  catch (e) { if (near) return near; throw e; }
 }
