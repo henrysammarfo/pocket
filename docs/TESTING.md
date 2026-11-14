@@ -19,7 +19,8 @@ One command runs everything: `npm run test:all`. It writes `test-results/summary
 | Browser e2e, money | Phone size: sign up, chat plan, hold to approve, send and buy settle, wallet, stock page, buy sheet, receipt, every page | `npm run e2e` |
 | Browser e2e, chat and voice | Phone (390x844) and desktop (1440x900): small talk, messy typed request, confirm step, plan card, mic record and stop with a fake microphone, a real messy voice note (West African accent, fillers, repeats, Pidgin) transcribed by Whisper and confirmed back, memory saved and shown in Settings, credits metered, no overflow, no page errors | `npm run e2e:chat` |
 | Responsive | 16 routes x widths 320, 375, 414, 768, 1024, 1440 x zoom 100, 75, 50% x light and black: no horizontal overflow, at most 5 tabs | `npm run e2e:responsive` |
-| CI | Same `npm run test:all` on GitHub Actions, results uploaded as an artifact | `.github/workflows/test.yml` |
+| Deploy gate | Vercel runs the unit tests before `next build`; a failing test blocks the deploy | `npm run build:vercel` (set in `vercel.json`) |
+| Report | Writes docs/TEST_REPORT.md: date, commit, pass counts, hosted smoke, screenshots | `npm run report -- <url>` |
 
 ## Results
 Run on the box, 13 Nov 2026 (Africa/Accra, UTC+0), Groq on (`openai/gpt-oss-120b`, `whisper-large-v3`), Neon off locally (in memory store), testnet keys on.
@@ -53,5 +54,5 @@ Hosted preview smoke test (https://pocket-2cmwsja7v-teamtitanlink.vercel.app): p
 - The model asked for a confirmation on clear typed requests, which broke the money flow test. Typed requests with a clear person, amount and asset now go straight to a plan card; voice always confirms.
 - The welcome page showed overflow when an old build was served; the runner now always deletes `.next` and builds fresh.
 
-## CI status
-The workflow is in place, but GitHub did not start the job: "The job was not started because your account is locked due to a billing issue." Once the GitHub account's billing is sorted, every push runs `npm run test:all`. Add the testnet keys and `GROQ_API_KEY` as repository secrets for the full run; without them the testnet and browser money steps are skipped.
+## CI
+GitHub Actions is off for this repo (account billing), so nothing shows as failing or locked. The old workflow is kept, switched off, at `docs/ci/github-actions-test.yml.example`. Checks run as a Vercel deploy gate and as the committed report instead.

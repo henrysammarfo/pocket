@@ -99,7 +99,7 @@ function SettingsInner() {
         <div className="ghead"><b>About</b></div>
         <section className="group">
           <a className="cell" href="/api/health" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><HeartPulse size={17} aria-hidden /></span><div className="ct">Contracts and health</div></div><span className="cv">Open <ChevronRight size={16} aria-hidden /></span></a>
-          <a className="cell" href="https://github.com/henrysammarfo/pocket/tree/near-hackathon" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><Info size={17} aria-hidden /></span><div className="ct">Source code</div></div><span className="cv">GitHub <ChevronRight size={16} aria-hidden /></span></a>
+          <a className="cell" href="https://github.com/henrysammarfo/pocket/tree/main" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><Info size={17} aria-hidden /></span><div className="ct">Source code</div></div><span className="cv">GitHub <ChevronRight size={16} aria-hidden /></span></a>
         </section>
         <div className="srcline"><Info size={14} aria-hidden /><span>Testnet only. Your key lives in this browser. Back it up from Profile.</span></div>
       </main>

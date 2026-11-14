@@ -16,7 +16,10 @@
     "e2e:responsive": "node tests/e2e/responsive.mjs",
     "test:all": "node scripts/test-all.mjs",
     "smoke": "node tests/smoke.mjs",
-    "e2e:chat": "node tests/e2e/chat-voice.mjs"
+    "e2e:chat": "node tests/e2e/chat-voice.mjs",
+    "build:vercel": "vitest run --reporter=dot && next build",
+    "report": "node scripts/report.mjs",
+    "vercel:env": "python3 scripts/vercel-env.py"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",

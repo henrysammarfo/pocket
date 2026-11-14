@@ -1,3 +1,6 @@
+# OPTIONAL, not active. GitHub Actions is off for this repo (account billing). Copy to .github/workflows/test.yml to turn it back on.
+# Today the checks run in two places instead: Vercel runs the unit tests before every build (a failure blocks the deploy),
+# and `npm run test:all` plus `npm run report` writes docs/TEST_REPORT.md.
 name: test
 on:
   push: { branches: [near-hackathon, main] }

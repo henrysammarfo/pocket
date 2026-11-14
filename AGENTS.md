@@ -4,7 +4,7 @@ Pocket is a chat first money assistant on **NEAR testnet only**. Everything belo
 
 ## Run it
 ```bash
-git clone https://github.com/henrysammarfo/pocket && cd pocket && git checkout near-hackathon
+git clone https://github.com/henrysammarfo/pocket && cd pocket
 npm ci
 npm run setup     # needs near CLI (near-cli-rs) and cargo-near; creates a testnet root, deploys, writes .env.local
 npm run judge     # end to end on testnet: signup, faucet, gasless sends, trade, receipts. Prints PASS
