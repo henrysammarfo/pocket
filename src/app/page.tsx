@@ -40,7 +40,7 @@ const FAQ = [
   ['Do I need a wallet, an email or a seed phrase?', 'No. Pick a username and Pocket makes a private key inside your browser, creates your NEAR testnet account and pays the fee. You can back the key up from Profile and add a passkey in Settings.'],
   ['Does Pocket use Privy or another login service?', 'No. There is no third party login. Your key is made and kept on your own device, which is why Pocket can never move money without you. A passkey (Face ID, fingerprint or screen lock) can guard every approval.'],
   ['Can the AI move my money?', 'No. The AI can only propose a plan card. Your rules are checked in code, and nothing moves until you press and hold to approve on your own device. Instructions hidden in pasted text or photos are ignored.'],
-  ['Who can see my chats?', 'Chats, photos and voice notes are processed by private models on NEAR AI Cloud, inside attested secure hardware. Web searches go through a search provider. Your chat history is saved to your account behind a signed session.'],
+  ['Who can see my chats?', 'Chats, photos, voice notes and web searches are processed by private models on NEAR AI Cloud, inside attested secure hardware. Your chat history stays in your own browser, and the Pocket server keeps no chat text.'],
   ['What does it cost?', 'Pocket is free while on testnet, with 1,000 AI credits a month. Sends cost you nothing; Pocket pays the network fee.'],
   ['Can I run my own copy?', 'Yes. The code is open source under the MIT licence. One command sets up your own testnet copy with its own keys.'],
 ];

@@ -12,18 +12,18 @@ export default function Privacy() {
         <h1>Privacy</h1>
         <p className="upd">Last updated 14 November 2026</p>
         <h2>What stays on your device</h2>
-        <ul><li>Your private key. It is made in your browser and never sent to Pocket.</li><li>Your app settings, such as theme and spoken replies.</li></ul>
+        <ul><li>Your private key. It is made in your browser and never sent to Pocket.</li><li>Your chats and their titles. The Pocket server keeps no chat text.</li><li>Your app settings, such as theme and spoken replies.</li></ul>
         <h2>What Pocket stores</h2>
         <ul>
           <li>Your username, first name and NEAR testnet account name.</li>
-          <li>Your chat history and the facts you ask Pocket to remember, saved to your account behind a signed session. You can delete chats and memories at any time.</li>
+          <li>The facts you ask Pocket to remember, saved to your account behind a signed session. You can forget them at any time in Settings.</li>
           <li>Your daily limit, keep amount and AI credit use.</li>
           <li>Public testnet transactions, which anyone can see on the NEAR explorer.</li>
         </ul>
         <h2>What Pocket never stores</h2>
         <ul><li>Private keys, seed phrases or passwords. The assistant refuses to save them.</li><li>Photos you share. They are read once and discarded.</li><li>Voice recordings. They are turned into text and discarded.</li></ul>
         <h2>Where the AI runs</h2>
-        <p>Chats, photos and voice notes are processed by private models on <a href="https://docs.near.ai/cloud/private-inference/">NEAR AI Cloud</a>, inside attested secure hardware (Intel TDX and NVIDIA confidential computing), so the host cannot read them. Anyone can check the attestation with <code>npm run verify:tee</code>. If NEAR AI is unavailable, Pocket falls back to Groq. Live web searches go through Groq.</p>
+        <p>Chats, photos and voice notes are processed by private models on <a href="https://docs.near.ai/cloud/private-inference/">NEAR AI Cloud</a>, inside attested secure hardware (Intel TDX and NVIDIA confidential computing), so the host cannot read them. Anyone can check the attestation with <code>npm run verify:tee</code>. Live web searches run there too. Only if NEAR AI is unavailable does Pocket fall back to Groq.</p>
         <h2>No tracking</h2>
         <p>Pocket has no ads, no analytics trackers and no third party login.</p>
         <h2>Contact</h2>

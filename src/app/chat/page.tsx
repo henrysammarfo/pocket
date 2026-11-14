@@ -45,8 +45,8 @@ const ago = (t: number) => { const m = Math.round((Date.now() - t) / 60000); ret
 function Threads({ open, mini, onClose, onToggle, onNew, onPick }: { open: boolean; mini: boolean; onClose: () => void; onToggle: () => void; onNew: () => void; onPick: (id: string) => void }) {
   const list = useThreads(); const cur = useThreadId();
   const [edit, setEdit] = useState(''); const [name, setName] = useState(''); const [del, setDel] = useState('');
-  const save = (id: string) => { const t = name.trim(); setEdit(''); if (!t) return; renameThreadLocal(id, t); api('/api/chat/threads', { id, title: t }, 'PATCH').catch(() => {}); };
-  const remove = (id: string) => { setDel(''); dropThread(id); api('/api/chat/history?thread=' + id, undefined, 'DELETE').catch(() => {}); if (id === cur) onNew(); };
+  const save = (id: string) => { const t = name.trim(); setEdit(''); if (!t) return; renameThreadLocal(id, t); };
+  const remove = (id: string) => { setDel(''); dropThread(id); /* also clears any copy an older version saved on the server */ api('/api/chat/history?thread=' + id, undefined, 'DELETE').catch(() => {}); if (id === cur) onNew(); };
   useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [open, onClose]);
   return (
     <>
@@ -140,21 +140,7 @@ function ChatInner() {
   const router = useRouter();
   useEffect(() => { body.current?.scrollTo({ top: 1e6 }); }, [msgs.length, busy]);
   useEffect(() => { fetch('/api/health').then((r) => r.json()).then((h) => setSvc({ ai: !!h?.services?.ai, voice: !!h?.services?.voice, vision: !!h?.services?.vision })).catch(() => {}); }, []);
-  // Past chats live on the server (Neon) too, so a new device carries on: the list, then the open chat.
-  useEffect(() => {
-    api<{ items: { id: string; title: string; at: number }[] }>('/api/chat/threads').then((r) => {
-      const local = getThreads(); const ids = new Set(local.map((t) => t.id));
-      const merged = [...local, ...(r.items || []).filter((t) => !ids.has(t.id))].sort((a, b) => b.at - a.at);
-      if (merged.length !== local.length) setThreads(merged);
-    }).catch(() => {});
-  }, []);
-  useEffect(() => {
-    if (msgs.length) return;
-    const id = thread;
-    api<{ items: { role: 'user' | 'assistant'; content: string; at: number; meta?: { plan?: Plan; check?: Check; voice?: boolean; photo?: boolean; sources?: WebSource[]; products?: WebProduct[] } | null }[] }>('/api/chat/history?thread=' + id)
-      .then((r) => { if (r.items?.length && getThreadId() === id && !getChat().length) setChat(r.items.map((x) => ({ role: x.role, content: x.content, at: x.at, voice: !!x.meta?.voice, sources: x.meta?.sources, products: x.meta?.products, plan: x.meta?.plan ? { plan: x.meta.plan, check: x.meta.check } : undefined })), id); })
-      .catch(() => {});
-  }, [thread]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Chats live only in this browser (localStorage). The server keeps no chat text or titles, so there is nothing to load.
   const newChat = () => { setThreadId(newThreadId()); setDrawer(false); setText(''); setPhoto(''); setTimeout(() => ta.current?.focus(), 50); };
   const pick = (id: string) => { setThreadId(id); setDrawer(false); };
 
