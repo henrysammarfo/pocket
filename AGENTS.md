@@ -20,6 +20,7 @@ Already have a funded testnet account in `~/.near-credentials/testnet`? Run `ROO
 | Unit, property based and fuzz tests (NEP-413, relayer policy, daily limit races, plan rules, address rules, units, messy speech) | `npm test` |
 | Deployed contracts are exactly the code in `vendor/` (code_hash check, no keys) | `npm run verify:chain` |
 | Every rule, the code that enforces it and its test | [docs/POLICY.md](docs/POLICY.md) |
+| The NEAR AI Cloud model runs in an attested TEE (fresh Intel TDX and NVIDIA evidence, nonce bound) | `npm run verify:tee` |
 | Types and lint | `npm run typecheck && npm run lint` |
 | Full testnet flow (server side) | `npm run judge` |
 | UI flow in a browser (needs a running server) | `BASE=http://localhost:3000 npm run e2e` |
