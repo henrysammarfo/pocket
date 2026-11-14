@@ -5,7 +5,7 @@ Nothing here has been submitted or posted. Henry submits and posts himself.
 ## Form fields
 - **Project name:** Pocket
 - **Tracks:** `realworld` (Real-World Money: stablecoins, meta transactions, NEAR Intents) and `security` (AI with money but without the keys)
-- **Repository:** https://github.com/henrysammarfo/pocket (branch `near-hackathon`, PR #2; merge to main before 14 Nov 23:59 UTC or point judges at the branch)
+- **Repository:** https://github.com/henrysammarfo/pocket (main; the hackathon work was merged from branch `near-hackathon` in PR #2)
 - **Demo post:** Henry's X post link
 - **NEAR payout account, team lead, email, team size, consent:** Henry fills these in himself
 

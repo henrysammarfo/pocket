@@ -64,7 +64,7 @@ Cross chain sends (Solana, Ethereum, Polygon) and USDC to NEAR swaps need NEAR I
 Vercel: import the repo, set the env vars from `.env.example` (server keys from your `.env.local`), deploy. `vercel.json` pins the Next.js framework. Without server keys the app is read only.
 
 ## Tests
-`npm run test:all` runs everything from a clean state: lint, types, unit, a fresh build, a local smoke test, the testnet flow (`npm run judge`), real browser runs on phone and desktop with fresh profiles and fresh accounts, the responsive matrix (16 routes, 320 to 1440 px, 50 to 100% zoom, light and black), and a hosted smoke test with `SMOKE_URL=...`. Results: [docs/TESTING.md](docs/TESTING.md). CI: `.github/workflows/test.yml`.
+`npm run test:all` runs everything from a clean state: lint, types, unit, a fresh build, a local smoke test, the testnet flow (`npm run judge`), real browser runs on phone and desktop with fresh profiles and fresh accounts, the responsive matrix (16 routes, 320 to 1440 px, 50 to 100% zoom, light and black), and a hosted smoke test with `SMOKE_URL=...`. Latest results: **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** (`npm run report` writes it). Plan: [docs/TESTING.md](docs/TESTING.md). Vercel runs the unit tests before every build, so a failing test blocks the deploy.
 
 ## More
 [docs/BUSINESS.md](docs/BUSINESS.md) how Pocket makes money and meters AI. [docs/SUBMISSION.md](docs/SUBMISSION.md) submission text and demo script. [SECURITY.md](SECURITY.md) threat model. [AGENTS.md](AGENTS.md) for AI judges.
