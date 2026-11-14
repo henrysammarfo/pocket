@@ -8,7 +8,7 @@ import { speak, useVoice } from '@/ui/useVoice';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
 import { api } from '@/lib/client/api';
-import { summary, useBalances, useQuotes } from '@/lib/client/data';
+import { resolveRecipient, summary, useBalances, useQuotes } from '@/lib/client/data';
 import { dropThread, getChat, getRules, getThreadId, getThreads, newThreadId, renameThreadLocal, setChat, setThreadId, setThreads, touchThread, useChat, useContacts, useProfile, useRules, useSession, useThreadId, useThreads, type ChatMsg, type WebProduct, type WebSource } from '@/lib/client/session';
 import type { Balances } from '@/lib/client/data';
 import type { Check, Plan, Step } from '@/lib/shared/plan';
@@ -18,13 +18,22 @@ const stepSub = (s: Step) => (s.type === 'send' ? (s.note ? `Note: ${s.note}` : 
 const stepVal = (s: Step) => (s.type === 'send' ? `$${fmt(s.amount)}` : `$${fmt(s.usd || 0)}`);
 
 function PlanCard({ plan, check, keep, onReview, onChange }: { plan: Plan; check?: Check; keep: number; onReview: () => void; onChange: () => void }) {
+  // Check every recipient before the review screen, so "send mum 10" says who is missing right on the card.
+  const [who, setWho] = useState<string[]>([]);
+  useEffect(() => {
+    let dead = false;
+    Promise.all(plan.steps.map((st) => (st.type === 'send' ? resolveRecipient(st.to).then((r) => ('error' in r ? r.error : '')).catch(() => '') : Promise.resolve('')))).then((e) => { if (!dead) setWho(e.filter(Boolean)); });
+    return () => { dead = true; };
+  }, [plan.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ok = check?.ok && !who.length;
   return (
     <section className="group plan" aria-label="Your plan">
-      <div className="plan-h"><div className="ttl">Your plan</div>{check?.ok ? <span className="chip ok"><ShieldCheck size={13} aria-hidden />Within your rules</span> : <span className="chip" style={{ color: 'var(--danger)' }}><Lock size={13} aria-hidden />Blocked by your rules</span>}</div>
+      <div className="plan-h"><div className="ttl">Your plan</div>{ok ? <span className="chip ok"><ShieldCheck size={13} aria-hidden />Within your rules</span> : who.length && check?.ok ? <span className="chip" style={{ color: 'var(--warn-ink)' }}><Lock size={13} aria-hidden />Needs a recipient</span> : <span className="chip" style={{ color: 'var(--danger)' }}><Lock size={13} aria-hidden />Blocked by your rules</span>}</div>
       <div className="cap plan-cap">Checked in code before anything moves</div>
       {plan.steps.map((s, i) => <div className="cell" key={i}><div className="cl"><div className="ct">{stepTitle(s)}</div><div className="cs">{stepSub(s)}</div></div><div className="cv">{stepVal(s)}</div></div>)}
       {keep > 0 && <div className="cell"><div className="cl"><div className="ct">Keep</div><div className="cs">Pinned rule</div></div><div className="cv">${fmt(keep)}</div></div>}
-      <div className="acts2"><button className="btn ghost" onClick={onChange}>Change</button><button className="btn" onClick={onReview}>{check?.ok ? 'Review and approve' : 'See why'}</button></div>
+      {who.map((w) => <div className="plan-warn" key={w} role="alert">{w}</div>)}
+      <div className="acts2"><button className="btn ghost" onClick={onChange}>Change</button>{who.length && check?.ok ? <Link className="btn" href="/contacts">Add contact</Link> : <button className="btn" onClick={onReview}>{check?.ok ? 'Review and approve' : 'See why'}</button>}</div>
     </section>
   );
 }
@@ -143,7 +152,7 @@ function ChatInner() {
     r.source === 'ai' ? (r.model ? 'AI: ' + r.model.split('/').pop() : 'AI') : r.source === 'rules' ? 'Pocket rules parser' : 'AI is off',
     ...(r.plan ? [r.check?.ok ? 'Safety check passed' : 'Blocked by your rules', 'Prices read'] : []),
   ];
-  type Out = { reply: string; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean };
+  type Out = { reply: string; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean; photoText?: string };
   const land = (next: ChatMsg[], r: Out, voice?: boolean, id = getThreadId()) => {
     setChat([...next, { role: 'assistant', content: r.reply, at: Date.now(), plan: r.plan ? { plan: r.plan, check: r.check } : undefined, confirm: r.confirm, chips: r.chips, sources: r.sources, products: r.products, meta: [...metaOf(r, voice), ...(r.searched ? ['Searched the web'] : []), ...(r.remembered?.length ? ['Saved to memory'] : [])] }], id);
     if (r.check && !r.check.ok) setBlocked({ reasons: r.check.reasons });
@@ -158,8 +167,9 @@ function ChatInner() {
     const next: ChatMsg[] = [...getChat().map((m) => (m.chips ? { ...m, chips: undefined } : m)), { role: 'user', content, at: Date.now(), voice, photo: thumb || undefined }];
     setChat(next, id); touchThread(id, content); setText(''); setPhoto(''); setBusy(true);
     try {
-      const r = await api<Out>('/api/chat', { messages: next.slice(-16).map((m) => ({ role: m.role, content: m.content })), ctx: await ctxNow(), voice, thread: id, ...(pic ? { image: pic } : {}) });
-      land(next, r, voice, id); touchThread(id);
+      const r = await api<Out>('/api/chat', { messages: next.slice(-16).map((m) => ({ role: m.role, content: m.photoText ? `${m.content}\n\n[Photo the user shared earlier, read by Pocket: ${m.photoText}]` : m.content })), ctx: await ctxNow(), voice, thread: id, ...(pic ? { image: pic } : {}) });
+      const withPhoto = r.photoText ? next.map((m, k) => (k === next.length - 1 ? { ...m, photoText: r.photoText } : m)) : next;
+      land(withPhoto, r, voice, id); touchThread(id);
     } catch (e) {
       setChat([...next, { role: 'assistant', content: 'I could not reach Pocket just now. ' + (e instanceof Error ? e.message : ''), at: Date.now() }], id);
     } finally { setBusy(false); }

@@ -3,9 +3,12 @@ import './globals.css';
 import './app.css';
 
 export const metadata: Metadata = {
-  title: 'Pocket, a money assistant on NEAR testnet',
-  description: 'Talk to your money. Send test dollars to family, buy paper stocks, and approve every move on your own device. NEAR testnet only.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://pocket-zeta-lime.vercel.app'),
+  title: 'Pocket, the money app you talk to',
+  description: 'Pocket, the money app you talk to. Send test dollars to family, split a bill from a photo, buy paper stocks, and approve every move on your own device. Live on NEAR testnet.',
   icons: { icon: '/brand/pusd.svg' },
+  openGraph: { type: 'website', siteName: 'Pocket', title: 'Pocket, the money app you talk to', description: 'Say what your money should do. One plan, checked against your rules, and nothing moves until you hold to approve. Live on NEAR testnet.', url: '/', images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Pocket, the money app you talk to' }] },
+  twitter: { card: 'summary_large_image', title: 'Pocket, the money app you talk to', description: 'Talk to your money. Live on NEAR testnet.', images: ['/og.png'] },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#f5f5f2', colorScheme: 'light dark' };
 

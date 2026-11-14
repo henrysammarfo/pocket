@@ -58,7 +58,7 @@ export const addLocalActivity = (a: LocalActivity) => write(K.activity, [a, ...r
 
 export type WebSource = { title: string; url: string };
 export type WebProduct = { title: string; url: string; store: string; price?: string; rating?: string; image?: string };
-export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[]; confirm?: unknown; chips?: string[]; voice?: boolean; photo?: string; done?: boolean; sources?: WebSource[]; products?: WebProduct[] };
+export type ChatMsg = { role: 'user' | 'assistant'; content: string; at: number; plan?: unknown; blocked?: unknown; meta?: string[]; confirm?: unknown; chips?: string[]; voice?: boolean; photo?: string; photoText?: string; done?: boolean; sources?: WebSource[]; products?: WebProduct[] };
 // Many chats, like ChatGPT. 'main' keeps the old single chat. Each chat's messages live under their own key.
 export type ThreadInfo = { id: string; title: string; at: number };
 const TK = { cur: 'pocket-thread', list: 'pocket-threads' };

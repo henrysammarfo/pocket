@@ -643,7 +643,7 @@ button.cell{width:100%;text-align:left}
 .tp-del button{padding:.35rem .7rem;border-radius:999px;background:var(--surface-2);font-weight:600;font-size:.8125rem}.tp-del .danger{background:var(--danger);color:#fff}
 .tp-foot{font-size:.75rem;line-height:1.45;color:var(--ink-3);padding:0 .25rem}
 @media (min-width:1024px){
- .s-chat .tpanel{position:absolute;top:0;bottom:0;left:auto;transform:none;visibility:visible;box-shadow:none;width:17rem;padding:1rem .75rem;background:transparent;border-right:1px solid var(--sep);z-index:5}
+ .s-chat .tpanel{position:absolute;top:0;bottom:0;left:0;transform:none;visibility:visible;box-shadow:none;width:17rem;padding:1rem .75rem;background:transparent;border-right:1px solid var(--sep);z-index:5}
  .s-chat .tscrim,.s-chat .tp-x{display:none}
  .s-chat .main{position:relative;padding-left:17rem}
  .s-chat .nav>.nb[aria-label="Chats"]{visibility:hidden}
@@ -662,3 +662,7 @@ button.cell{width:100%;text-align:left}
 .pp{font-weight:700;font-size:.9375rem}.ps{font-size:.75rem;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srcs{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:.75rem;color:var(--ink-3)}
 .srcs a{display:inline-flex;align-items:center;gap:.2rem;padding:.2rem .55rem;border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-weight:600}
+.qrwrap{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin:.25rem 0 1rem;font-size:.8125rem;color:var(--ink-2)}
+.qr{padding:.6rem;border-radius:1.1rem;background:#fff;box-shadow:inset 0 0 0 1px var(--sep)}.qr svg{display:block;width:100%;height:100%}
+.field .fb+.fb{margin-left:.35rem}
+.plan-warn{margin:.2rem 1.1rem .4rem;padding:.65rem .8rem;border-radius:.9rem;background:var(--warn-bg);color:var(--warn-ink);font-size:.875rem;line-height:1.45}

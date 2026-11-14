@@ -58,7 +58,14 @@ function SettingsInner() {
   };
   const togglePk = async () => {
     try {
-      if (rules.passkey) { await passkeyApprove(rules.passkeyId); setRules({ passkey: false, passkeyId: undefined }); toast('Passkey approval is off'); }
+      if (rules.passkey) {
+        try { await passkeyApprove(rules.passkeyId); }
+        catch (e) {
+          // The passkey may have been deleted from the phone. Without this way out, nothing could be approved again.
+          if (!confirm('Your passkey could not be used. It may have been removed from this device. Turn passkey approval off anyway? Your device key still signs every move.')) throw e;
+        }
+        setRules({ passkey: false, passkeyId: undefined }); toast('Passkey approval is off');
+      }
       else { const id = await passkeyCreate(s.username); setRules({ passkey: true, passkeyId: id }); toast('Passkey approval is on'); }
     } catch (e) { toastErr(e); }
   };

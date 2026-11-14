@@ -4,6 +4,7 @@ import { ChevronRight, Copy, ExternalLink } from 'lucide-react';
 import { Coil, Logo, Sheet, fmt, toast, toastErr } from './kit';
 import { claimFaucet } from '@/lib/client/api';
 import { useSession } from '@/lib/client/session';
+import { QrCode } from './qr';
 
 export const copy = async (t: string, what = 'Copied') => { try { await navigator.clipboard.writeText(t); toast(what); } catch { toast(t); } };
 
@@ -14,7 +15,8 @@ export function ReceiveSheet({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Sheet open={open} onClose={onClose} label="Receive">
       <h3 className="sh-t">Receive</h3>
-      <p className="sh-s">Share any of these. Pocket users can also just type <b>@{s.username}</b>.</p>
+      <p className="sh-s">Show this code, or share a link. Pocket users can also just type <b>@{s.username}</b>.</p>
+      <div className="qrwrap"><QrCode text={link} size={188} /><span>Scan with Pocket to pay @{s.username}</span></div>
       <div className="group list">
         <button className="row" onClick={() => copy(s.account, 'Account copied')}><span className="logo near"><Logo name="near" /></span><span className="rn"><span className="nm">{s.account}</span><span className="sb">Your NEAR testnet account</span></span><Copy size={16} aria-hidden /></button>
         <button className="row" onClick={() => copy(link, 'Pay link copied')}><span className="logo txt"><Coil /></span><span className="rn"><span className="nm">Pay link</span><span className="sb">{link.replace(/^https?:\/\//, '')}</span></span><Copy size={16} aria-hidden /></button>

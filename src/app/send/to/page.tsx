@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleX, ClipboardPaste, Link as LinkIcon, Search, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { AppShell, HoldButton, Logo, Sheet, fmt, toast, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
+import { ScanButton } from '@/ui/qr';
 import { AvatarFor } from '@/ui/Avatar';
 import { Keypad, press } from '@/ui/Keypad';
 import { api, passkeyApprove, send } from '@/lib/client/api';
@@ -118,6 +119,7 @@ function XSend() {
         <form className="field focus" onSubmit={(e) => { e.preventDefault(); if (qs.trim()) runDetect(qs); }}>
           <input ref={inp} className="inp in" autoFocus aria-label="Recipient" placeholder="Name, @username, .testnet or address" value={qs} onChange={(e) => setQs(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
           <button type="button" className="fb" onClick={async () => { try { const t = await navigator.clipboard.readText(); setQs(t.trim()); runDetect(t.trim()); } catch { inp.current?.focus(); toast('Paste with your keyboard'); } }}><ClipboardPaste size={15} aria-hidden />Paste</button>
+          <ScanButton onResult={(r, raw) => { if (!r) { toast(raw ? 'That QR code is not a Pocket pay link or NEAR account.' : 'No QR code found in that photo. Try again closer.'); return; } setQs(r.to); if (r.amt && /^\d+(\.\d+)?$/.test(r.amt)) setAmt(r.amt); runDetect(r.to); }} />
         </form>
         {q && <button className="btn big" onClick={() => runDetect(qs)}>Continue with {qs.trim().length > 24 ? short(qs.trim()) : qs.trim()}</button>}
         {!contacts.length && !q && <div className="note2"><Search size={16} aria-hidden /><span>Type a username like <b>@{s.username}</b>, a .testnet account, or a 0x address. Save people as contacts and send by name.</span></div>}
