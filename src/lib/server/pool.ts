@@ -1,4 +1,5 @@
 import 'server-only';
+import { plainFailure } from '../shared/plain';
 // Pocket Pool: the server side of money movement on NEAR testnet.
 // The server never holds a user key. It only:
 //   - creates a user account with the user's own public key (sponsor),
@@ -340,7 +341,7 @@ export async function relay(d: DelegateJson, ip: string) {
   const signedDelegate = new SignedDelegate({ delegateAction: da, signature: new Signature({ keyType: 0, data: sig }) });
   const r = await settleOrRefund(refund, async () => {
     const res = await signAndSend(RELAYER, need('RELAYER'), d.senderId, [actionCreators.signedDelegate(signedDelegate)]);
-    if (!res.ok) throw new HttpError(400, 'The network rejected it: ' + res.failures.join('; ').slice(0, 300));
+    if (!res.ok) throw new HttpError(400, plainFailure(res.failures));
     return res;
   });
   if (wp) {
@@ -471,6 +472,7 @@ export async function poolWithdraw(b: { proof?: { pi_a?: unknown; pi_b?: unknown
   if (!validAccountId(b.recipient)) throw new HttpError(400, 'That receiver name is not valid.');
   const args = { proof: { pi_a: p.pi_a, pi_b: p.pi_b, pi_c: p.pi_c }, root: b.root, nullifier_hash: b.nullifier_hash, recipient: b.recipient, relayer: null, fee: '0' };
   const r = await signAndSend(RELAYER, need('RELAYER'), POOL, [fnCall('withdraw', args, 300n)]);
-  if (!r.ok) throw new HttpError(400, 'This private send was refused and nothing moved. Details: ' + r.failures.join('; ').slice(0, 200));
+  if (!r.ok) throw new HttpError(400, 'This private send was refused and nothing moved. ' + plainFailure(r.failures));
   return { hash: r.hash, pool: POOL };
 }
+

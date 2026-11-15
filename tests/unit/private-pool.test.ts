@@ -34,3 +34,9 @@ describe('relayer policy for send_private', () => {
     expect(() => walletPolicy(d({ commitment: '0xabc', amount: String(10n ** 23n) }) as never)).toThrow(/Bad commitment/);
   });
 });
+
+import { plainFailure } from '../../src/lib/shared/plain';
+describe('plain refusal reasons', () => {
+  it('keeps only the account reason', () => expect(plainFailure(['{"ActionError":{"index":0,"kind":{"FunctionCallError":{"ExecutionError":"Smart contract panicked: Over your 24 hour limit for NEAR."}}}'])).toBe('Over your 24 hour limit for NEAR.'));
+  it('falls back to plain words', () => expect(plainFailure(['{"weird":1}'])).toBe('It was refused and nothing moved.'));
+});
