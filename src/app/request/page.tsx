@@ -32,7 +32,7 @@ function RequestInner() {
       <main className="body">
         <section className="group" style={{ padding: '1rem', display: 'grid', gap: '.6rem' }}>
           <label className="field"><input className="inp" inputMode="decimal" aria-label="Amount" placeholder="Amount, like 25" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-          <div style={{ display: 'flex', gap: '.5rem' }}>{(['pUSD', 'USDC'] as const).map((t) => <button key={t} className={'chip' + (token === t ? ' ok' : '')} aria-pressed={token === t} onClick={() => setToken(t)}>{t}</button>)}</div>
+          <div style={{ display: 'flex', gap: '.5rem' }}>{(['pUSD', 'USDC'] as const).map((t) => <button key={t} className={'chip pick' + (token === t ? ' ok' : '')} aria-pressed={token === t} onClick={() => setToken(t)}>{t}</button>)}</div>
           <label className="field"><input className="inp" aria-label="What it is for" placeholder="What it is for (optional)" maxLength={80} value={note} onChange={(e) => setNote(e.target.value)} /></label>
           <label className="field"><span className="in" style={{ flex: '0 0 auto', color: 'var(--ink-2)' }}>Due by</span><input className="inp" type="date" aria-label="Due by (optional)" value={due} onChange={(e) => setDue(e.target.value)} /></label>
           {(amount || due) && !c.ok && <div className="errline" role="alert">{c.reason}</div>}

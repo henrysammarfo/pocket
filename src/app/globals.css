@@ -96,6 +96,7 @@ html:not(.mock) .nav{padding-top:calc(var(--sat) + .25rem)}
 .strip{display:flex;gap:.4rem;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:.3rem;min-height:1.625rem;padding:.2rem .65rem;font-size:.75rem;font-weight:600;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
 .chip.ok{background:var(--accent-soft);color:var(--accent-text)}
+.chip.pick{min-height:2.75rem;min-width:2.75rem;padding:0 1.1rem;font-size:.875rem}
 /* grouped inset lists */
 .group{background:var(--surface);border-radius:1.375rem;display:flex;flex-direction:column;overflow:hidden}
 .ghead{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin:.5rem 1rem -.35rem;flex-wrap:wrap}
@@ -119,7 +120,7 @@ html:not(.mock) .nav{padding-top:calc(var(--sat) + .25rem)}
 .composer{display:flex;flex-direction:column;gap:.5rem;padding:.75rem .75rem .65rem 1rem;border-radius:1.375rem;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sep)}
 .composer .ph{font-size:1rem;color:var(--ink-2)}
 .cbtns{display:flex;justify-content:space-between}
-.cbtns button{width:2.25rem;height:2.25rem;border-radius:999px;display:grid;place-items:center}
+.cbtns button{width:2.75rem;height:2.75rem;border-radius:999px;display:grid;place-items:center}
 .cbtns .mic{background:var(--surface-2)}.cbtns .sendb{background:var(--accent);color:var(--on-accent)}
 /* Liquid Glass floating tab bar */
 .tabbar{position:absolute;left:calc(1rem + var(--sal));right:calc(1rem + var(--sar));bottom:calc(var(--sab) + .6rem);z-index:20;display:grid;grid-template-columns:repeat(4,1fr);padding:.25rem;min-height:3.875rem;border-radius:2rem;background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(190%);backdrop-filter:blur(18px) saturate(190%);box-shadow:inset 0 0 0 .5px var(--glass-line),inset 0 1px 0 var(--glass-edge),var(--glass-shadow)}
@@ -137,7 +138,7 @@ html:not(.mock) .nav{padding-top:calc(var(--sat) + .25rem)}
 .amt .cur{font-weight:300;font-size:.45em;margin:.22em .06em 0 0;color:var(--ink-2)}
 .bal{display:flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--ink-2)}.bal b{color:var(--ink);font-weight:500}
 .quick{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap}
-.quick button{min-height:2.125rem;padding:0 .9rem;font-size:.875rem;font-weight:500;border-radius:999px;background:var(--surface-2)}
+.quick button{min-height:2.75rem;min-width:2.75rem;padding:0 1rem;font-size:.875rem;font-weight:500;border-radius:999px;background:var(--surface-2)}
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem}
 .keys button{min-height:clamp(2.75rem,7vh,3.5rem);display:grid;place-items:center;font:300 1.75rem var(--num);border-radius:999px;transition:background-color 120ms var(--ease-out)}
 .keys button:active{background:var(--surface-2)}
@@ -523,7 +524,7 @@ a.row{color:inherit}a.row:active{background:var(--surface-2)}
 .profhead .pn{font:700 1.625rem/1.2 var(--display);margin-top:.4rem}
 .profhead .pu{font-size:.9375rem;color:var(--ink-2)}
 .paylink{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.85rem 1rem}
-.paylink .pl{font-weight:600;font-family:var(--num)}
+.paylink .pl{font-weight:600;font-family:var(--num);word-break:break-all;min-width:0}
 .avgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;padding:.25rem 0 .5rem}
 .avgrid button{display:flex;flex-direction:column;align-items:center;gap:.3rem;font-size:.6875rem;color:var(--ink-2);border-radius:1rem;padding:.25rem 0}
 .avgrid .kit,.avgrid .emo{width:100%!important;height:auto!important;aspect-ratio:1;max-width:4.25rem}
@@ -604,6 +605,7 @@ button.cell{width:100%;text-align:left}
 .pc-id{cursor:pointer}
 .cbtns{align-items:center}.cright{display:flex;gap:.5rem;align-items:center}
 .cv{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cv.shrink-0{flex:0 0 auto;overflow:visible;text-overflow:unset;max-width:none;white-space:nowrap}
 @media (min-width:360px) and (max-width:1023px){
  .nav{padding-left:1.25rem;padding-right:1.25rem}
  .body{padding-left:1.25rem;padding-right:1.25rem;gap:1rem}
@@ -616,11 +618,11 @@ button.cell{width:100%;text-align:left}
  .thread{gap:1rem}.ai{line-height:1.6}.me{padding:.7rem 1rem;line-height:1.45}
  .strip{gap:.5rem}.chip{padding:.25rem .75rem}
  .composer{padding:.85rem .85rem .75rem 1.1rem;gap:.65rem}
- .cbtns button{width:2.5rem;height:2.5rem}
+ .cbtns button{width:2.75rem;height:2.75rem}
  .tabbar{left:calc(1.25rem + var(--sal));right:calc(1.25rem + var(--sar))}
  .pcard{padding:1.3rem 1.4rem 1.35rem}
  .acts4{margin:.25rem 0}
- .quick{gap:.6rem}.quick button{padding:0 1.1rem;min-height:2.375rem}
+ .quick{gap:.6rem}.quick button{padding:0 1.1rem;min-height:2.75rem;min-width:2.75rem}
 }
 .acts2{grid-template-columns:minmax(0,1fr) minmax(0,1.8fr)}.acts2 .btn{white-space:nowrap;padding-inline:.8rem}
 .cell.acct .lft{min-width:0}.cell.acct .cl{min-width:0}

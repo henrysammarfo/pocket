@@ -5,7 +5,7 @@
 .lp-nav{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:1rem;justify-content:space-between;max-width:calc(var(--w) + 2*var(--pad));margin:0 auto;padding:calc(var(--sat) + .75rem) var(--pad) .75rem;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%)}
 .lp-brand{display:inline-flex;align-items:center;gap:.5rem;font:700 1.25rem var(--display);color:var(--ink)}.lp-brand svg{width:24px;height:22px;color:var(--accent-text)}
 .lp-nav nav{display:none;gap:1.75rem;font-size:.9375rem;color:var(--ink-2)}.lp-nav nav a:hover{color:var(--ink)}
-.lp-navcta{min-height:2.5rem;font-size:.9375rem;padding:.3rem 1.1rem;white-space:nowrap}
+.lp-navcta{min-height:2.75rem;font-size:.9375rem;padding:.3rem 1.1rem;white-space:nowrap}
 .lp-hero{max-width:calc(var(--w) + 2*var(--pad));margin:0 auto;padding:1.5rem var(--pad) 3.5rem;display:grid;gap:2.5rem;align-items:center}
 .lp-pill{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sep);font-size:.8125rem;font-weight:600;color:var(--ink-2)}
 .lp-pill .dot{width:.5rem;height:.5rem;border-radius:999px;background:var(--up);box-shadow:0 0 0 4px color-mix(in srgb,var(--up) 22%,transparent);animation:lp-pulse 2s ease-in-out infinite}
@@ -29,7 +29,7 @@
 .lp-hero-art .back{position:absolute;z-index:1;width:min(14rem,50vw);left:50%;top:50%;translate:-10% -46%;rotate:7deg;opacity:.92}
 @keyframes lp-rise{from{opacity:0;transform:translateY(24px)}}
 .float{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .85rem;border-radius:999px;font-size:.8125rem;font-weight:600;background:var(--glass-strong);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:var(--glass-shadow),inset 0 0 0 .5px var(--glass-line);color:var(--accent-text);}
-.float.f1{left:0;top:22%}.float.f2{right:0;bottom:16%}
+.float.f1{left:0;top:6%}.float.f2{right:0;bottom:16%}
 /* Below the hero: calm sections, real screens, text first. Motion is opacity and transform only. */
 .lp-strip{max-width:calc(var(--w) + 2*var(--pad));margin:0 auto;padding:1.25rem var(--pad);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.9rem 2rem;color:var(--ink-2);font-size:.9375rem;border-top:1px solid var(--sep);border-bottom:1px solid var(--sep)}
 .lp-strip span{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3)}.lp-strip b{font-weight:600;color:var(--ink)}
