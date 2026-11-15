@@ -261,7 +261,7 @@ if (run('judge')) {
   });
   await P.step('live app from the README', async () => {
     await P.p.goto(BASE + '/'); await P.p.waitForTimeout(2500); await P.shot('landing');
-    const t = await P.p.locator('body').innerText(); P.ok(/testnet/i.test(t), 'landing says testnet');
+    const t = await P.p.locator('body').innerText(); P.ok(/test money/i.test(t) && /no real value/i.test(t), 'landing says it is test money with no real value');
     const h = await (await P.p.request.get(BASE + '/api/health')).json(); P.ok(h.ok && h.network === 'testnet', 'health ok on testnet');
   });
   await P.step('judge signs up and checks the phone key on chain', async () => {
