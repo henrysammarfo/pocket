@@ -19,7 +19,7 @@ export function handler<T>(fn: (req: Request) => Promise<T>) {
       const status = known ? (e as HttpError).status : 500;
       const msg = e instanceof Error ? e.message : String(e);
       if (status >= 500 && !known) console.error('[pocket]', msg);
-      return NextResponse.json({ error: status >= 500 && !known ? 'Something went wrong on the server. ' + msg.slice(0, 160) : msg }, { status });
+      return NextResponse.json({ error: status >= 500 && !known ? 'We could not finish that right now. Please try again in a few minutes.' : msg }, { status });
     }
   };
 }

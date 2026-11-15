@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Brand } from '@/ui/kit';
-import { signup, takeRecovery, restoreWithRecovery, ROOT } from '@/lib/client/api';
+import { signup, takeRecovery, restoreWithRecovery } from '@/lib/client/api';
 import { useSession, setProfile, setSession } from '@/lib/client/session';
 import { keyFromString } from '@/lib/shared/nep413';
 import { view, viewAccessKey, viewAccount } from '@/lib/shared/rpc';
@@ -63,7 +63,12 @@ function Welcome() {
       const r = takeRecovery();
       if (r) { setRec(r); return; }
       router.replace(next.startsWith('/') ? next : '/chat');
-    } catch (e2) { setBusy(''); setErr(e2 instanceof Error ? e2.message : String(e2)); }
+    } catch (e2) {
+      setBusy('');
+      const m = e2 instanceof Error ? e2.message : String(e2);
+      const known = /taken|reserved|2 to 32|recovery key/i.test(m) && !/INVALID|TRANSACTION|panic|yocto|TGas|gas/i.test(m);
+      setErr(known ? m : 'We could not set up your Pocket right now. Please try again in a few minutes.');
+    }
   };
   return (
     <div className="land">
@@ -93,7 +98,8 @@ function Welcome() {
             </form>
           ) : (
             <form id="start" className="welcome-form" onSubmit={go}>
-              <label className="field focus"><span className="in" style={{ flex: '0 0 auto', color: 'var(--ink-2)' }}>@</span><input className="inp" aria-label="Pick a username" placeholder="pick a username" value={u} onChange={(e) => setU(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={32} /><span className="suffix">.{ROOT}</span></label>
+              <label className="field focus"><span className="in" style={{ flex: '0 0 auto', color: 'var(--ink-2)' }}>@</span><input className="inp" aria-label="Pick a username" placeholder="pick a username" value={u} onChange={(e) => setU(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={32} /></label>
+              {u.trim() && <div className="fine" style={{ marginTop: '.35rem' }}>Your Pocket name will be @{u.trim().toLowerCase().replace(/^@/, '')}</div>}
               <label className="field"><input className="inp" aria-label="Your first name" placeholder="Your first name (optional)" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} /></label>
               {ro && <div className="note2"><span>This copy of Pocket is read only: its server keys are not set yet. Run your own with <b>npm run setup</b>, see the README.</span></div>}
               <button className="btn big" disabled={!!busy || ro}>{busy || 'Create my Pocket'}</button>
@@ -105,7 +111,7 @@ function Welcome() {
         </div>
         <div className="hr"><div className="group signup-how"><b>How sign up works</b>
           <ol>
-            <li><b>Pick a username.</b> It becomes your Pocket account, like ama.{ROOT}.</li>
+            <li><b>Pick a username.</b> It becomes your Pocket name, like @ama.</li>
             <li><b>Your key is made here.</b> A private key is created inside this browser and never leaves it. No email, password, seed phrase or login service.</li>
             <li><b>Pocket pays the setup.</b> We create the account, pay the fees and add 1,000 test dollars.</li>
             <li><b>Make it yours.</b> Add a passkey (Face ID, fingerprint or screen lock) in Settings, and back up your key from Profile.</li>

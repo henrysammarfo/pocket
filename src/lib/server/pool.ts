@@ -240,17 +240,22 @@ export async function createAccount(username: string, publicKey: string, ip: str
     // call this account's own wallet methods. One transaction, so nobody can init it in between.
     if (!ownerKey || !/^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(ownerKey) || ownerKey === publicKey) throw new HttpError(400, 'A separate recovery key is needed.');
     const gas = 30n * TGAS;
-    const r = await signAndSendG(ROOT, sponsor, id, [
-      G.createAccount(),
-      G.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.1')),
-      G.globalCode(WALLET_CODE_HASH),
-      // Wallet v2: no full access key at all. The recovery key only signs owner messages that the
-      // contract checks itself; the phone gets a function call key for this account's wallet methods.
-      ...(WALLET_V1 ? [G.fullKey(ownerKey)] : []),
-      G.fnKey(publicKey, id, DEVICE_METHODS, BigInt(DEVICE_ALLOWANCE)),
-      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits(), price_key: QUOTE_KEY, ...(WALLET_HAS_POOL && POOL ? { pool: POOL } : {}) }, gas),
-    ]);
-    if (!r.ok) throw new HttpError(400, 'Could not create the account: ' + r.failures.join('; ').slice(0, 200));
+    let r;
+    try {
+      r = await signAndSendG(ROOT, sponsor, id, [
+        G.createAccount(),
+        G.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.1')),
+        G.globalCode(WALLET_CODE_HASH),
+        // Wallet v2: no full access key at all. The recovery key only signs owner messages that the
+        // contract checks itself; the phone gets a function call key for this account's wallet methods.
+        ...(WALLET_V1 ? [G.fullKey(ownerKey)] : []),
+        G.fnKey(publicKey, id, DEVICE_METHODS, BigInt(DEVICE_ALLOWANCE)),
+        G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits(), price_key: QUOTE_KEY, ...(WALLET_HAS_POOL && POOL ? { pool: POOL } : {}) }, gas),
+      ]);
+    } catch {
+      throw new HttpError(503, 'We could not set up your Pocket right now. Please try again in a few minutes.');
+    }
+    if (!r.ok) throw new HttpError(503, 'We could not set up your Pocket right now. Please try again in a few minutes.');
     const s = await signAndSend(ROOT, sponsor, USDC, [fnCall('storage_deposit', { account_id: id, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
     await store.addActivity({ account: id, kind: 'signup', tx: r.hash, data: { near: process.env.SIGNUP_NEAR || '0.1', wallet: WALLET_CODE_HASH }, at: Date.now() });
     return { account: id, hash: r.hash, usdcStorageTx: s?.hash || null, onchainLimits: true };
@@ -260,8 +265,11 @@ export async function createAccount(username: string, publicKey: string, ip: str
     actionCreators.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.05')),
     actionCreators.addKey(PublicKey.fromString(publicKey), actionCreators.fullAccessKey()),
   ];
-  const r = await signAndSend(ROOT, sponsor, id, actions);
-  if (!r.ok) throw new HttpError(400, 'Could not create the account: ' + r.failures.join('; ').slice(0, 200));
+  let r;
+  try { r = await signAndSend(ROOT, sponsor, id, actions); } catch {
+    throw new HttpError(503, 'We could not set up your Pocket right now. Please try again in a few minutes.');
+  }
+  if (!r.ok) throw new HttpError(503, 'We could not set up your Pocket right now. Please try again in a few minutes.');
   // Register the new account for USDC so it can receive Circle testnet dollars. Paid by the sponsor.
   const s = await signAndSend(ROOT, sponsor, USDC, [fnCall('storage_deposit', { account_id: id, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
   await store.addActivity({ account: id, kind: 'signup', tx: r.hash, data: { near: process.env.SIGNUP_NEAR || '0.05' }, at: Date.now() });
