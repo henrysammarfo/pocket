@@ -52,7 +52,8 @@ export async function balances(account: string) {
 
 // ---------- intents ----------
 async function executeIntents(signed: SignedNep413[]): Promise<TxResult> {
-  const r = await signAndSend(RELAYER, need('RELAYER'), VERIFIER, [fnCall('execute_intents', { signed }, 300n)]);
+  // 100 TGas is enough for execute_intents; 300 TGas reserves about 0.3 NEAR from the relayer and was failing signups' faucet when the relayer had less than that.
+  const r = await signAndSend(RELAYER, need('RELAYER'), VERIFIER, [fnCall('execute_intents', { signed }, 100n)]);
   if (!r.ok) throw new HttpError(400, 'The verifier rejected it: ' + r.failures.join('; ').slice(0, 300));
   return r;
 }
@@ -471,7 +472,7 @@ export async function poolWithdraw(b: { proof?: { pi_a?: unknown; pi_b?: unknown
   if (!p || !pts(p.pi_a, 2) || !pts(p.pi_b, 2, 2) || !pts(p.pi_c, 2) || !num(b.root) || !num(b.nullifier_hash)) throw new HttpError(400, 'This private send could not be checked. Nothing was sent.');
   if (!validAccountId(b.recipient)) throw new HttpError(400, 'That receiver name is not valid.');
   const args = { proof: { pi_a: p.pi_a, pi_b: p.pi_b, pi_c: p.pi_c }, root: b.root, nullifier_hash: b.nullifier_hash, recipient: b.recipient, relayer: null, fee: '0' };
-  const r = await signAndSend(RELAYER, need('RELAYER'), POOL, [fnCall('withdraw', args, 300n)]);
+  const r = await signAndSend(RELAYER, need('RELAYER'), POOL, [fnCall('withdraw', args, 100n)]);
   if (!r.ok) throw new HttpError(400, 'This private send was refused and nothing moved. ' + plainFailure(r.failures));
   return { hash: r.hash, pool: POOL };
 }
