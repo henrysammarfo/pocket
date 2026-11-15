@@ -78,7 +78,7 @@ function XSend() {
     if (d.kind === 'mainnet' || d.kind === 'unsupported') { setDerr(d.reason); return; }
     if (d.kind === 'solana') { setNet('sol'); setTgt({ account: d.address, label: short(d.address), net: 'sol', kind: 'Solana address', why: 'Base58, 32 to 44 characters', pocket: false, exists: true }); return; }
     if (d.kind === 'evm-or-near') {
-      const nn = forceNet || net; if (!nn) { setSheet('network'); setTgt({ account: d.address, label: short(d.address), net: 'eth', kind: '0x address', why: 'Could be Ethereum, Polygon or a NEAR 0x account. Pick the network.', pocket: false, exists: true }); return; }
+      const nn = forceNet || net; if (!nn) { setSheet('network'); setTgt({ account: d.address, label: short(d.address), net: 'eth', kind: '0x address', why: 'Could be Ethereum, Polygon or NEAR. Pick one.', pocket: false, exists: true }); return; }
       setTgt({ account: d.address, label: short(d.address), net: nn, kind: nn === 'near' ? 'NEAR address' : NETS[nn].n + ' address', why: nn === 'near' ? 'NEAR account made from this address' : 'You picked ' + NETS[nn].n, pocket: false, exists: true }); return;
     }
     const qy = d.kind === 'username' ? d.username : d.account;
@@ -122,7 +122,7 @@ function XSend() {
       </Sheet>
       <Sheet open={sheet === 'network'} onClose={() => setSheet('')} label="Pick the network"><div className="sh-t">Which network is this on?</div>
         <div className="sh-s">0x addresses look the same on Ethereum, Polygon and NEAR. Ask where their wallet lives. Pocket never guesses for you.</div>
-        <section className="group">{([['eth', 'Fee about 0.40 USDC', false], ['pol', 'Fee about 0.03 USDC', false], ['near', 'Fee 0.00, Pocket pays it', true]] as [Net, string, boolean][]).map(([k, fee, lv]) => <button key={k} className={'opt' + (net === k ? ' on' : '')} onClick={() => setNet(k)}><span className={'logo ' + k}><Logo name={NETS[k].logo} /></span><span className="lft2"><span className="ot">{k === 'near' ? 'NEAR 0x account' : NETS[k].n} <span className={lv ? 'lv' : 'rm'}>{lv ? 'Live' : 'Roadmap'}</span></span><span className="os">{NETS[k].n} {NETS[k].t}. {fee}</span></span><span className="rd">{net === k && <Check size={14} strokeWidth={3} aria-hidden />}</span></button>)}</section>
+        <section className="group">{([['eth', 'Fee about 0.40 USDC', false], ['pol', 'Fee about 0.03 USDC', false], ['near', 'Fee 0.00, Pocket pays it', true]] as [Net, string, boolean][]).map(([k, fee, lv]) => <button key={k} className={'opt' + (net === k ? ' on' : '')} onClick={() => setNet(k)}><span className={'logo ' + k}><Logo name={NETS[k].logo} /></span><span className="lft2"><span className="ot">{NETS[k].n} <span className={lv ? 'lv' : 'rm'}>{lv ? 'Live' : 'Roadmap'}</span></span><span className="os">{NETS[k].n} {NETS[k].t}. {fee}</span></span><span className="rd">{net === k && <Check size={14} strokeWidth={3} aria-hidden />}</span></button>)}</section>
         <button className="btn big" style={{ marginTop: '.9rem' }} disabled={!net} onClick={() => { setSheet(''); runDetect(qs, net!); }}>Use this network</button>
       </Sheet>
       <Sheet open={sheet === 'save'} onClose={() => setSheet('')} label="Save as contact"><div className="sh-t">Save as a contact?</div>
