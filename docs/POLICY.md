@@ -90,14 +90,18 @@ Each new account runs the Pocket wallet global contract (code hash in `deploymen
 | W7 | Lowering rules is instant (phone key allowed). Raising needs a full access key and waits `raise_delay_sec` (default 86400), or is set at once by a direct call from the full key; the phone key can cancel a pending raise | `tests.rs` raise tests, `limits.mts` section 6 |
 | W8 | The phone key is a function call key for the account itself, methods `send_near`, `send_usdc`, `send_token`, `trade`, `lower_limits`, `cancel_pending`, allowance 0.25 NEAR; it cannot attach deposits, add keys or call other contracts | `limits.mts` section 4 |
 | W9 | The verifier holds no key for wallet accounts, so NEP-413 intents signed by the phone key are refused by the verifier | `limits.mts` |
+| W10 (v2) | Owner messages: `owner_action(payload, public_key, signature)` needs `public_key` in `owner_keys`, an ed25519 signature over `pocket.wallet.owner.v1\n` + payload, `payload.account` equal to this account and `payload.nonce == owner_nonce + 1`. Stricter rules, adding a phone key and removing a key apply at once; looser rules and owner key changes wait `raise_delay_sec`, and the phone may cancel | `tests.rs` v2 tests, `v2-live.mts` |
+| W11 (v2) | No full access key exists on a v2 account; the recovery key is only an owner key | `v2-live.mts` section 1 |
+| W12 (v2) | NEAR and stock sends need a price signed by the price key over `pocket.price.v1\n` + payload, for that token, expiring within ten minutes; its dollar value is reserved against `usd_per_send` and `usd_per_day` and returned if the send fails | `tests.rs`, `v2-live.mts` section 3 |
+| W13 | New wallets start with `data/blocklist.json` in `blocked`; the receiver check blocks the same list with evidence on every screen and in the relayer | `wallet-v2.test.ts`, `limits.mts` section 11 |
 
 ## What is not enforced on chain, and why
 
 On the `onchain-limits` branch the caps above are enforced by the contract. What remains off chain or outside the contract:
 
-* The recovery key is a full access key. Whoever holds it controls the account and could remove the contract.
-* On relayed calls NEAR reports the relayer as the signer, so the contract relies on the phone key's method list (which has no raise method) rather than a signer check. Direct calls also check the owner key list.
-* There is no price oracle on chain, so NEAR and stock caps are in units; only pUSD and USDC count as dollars. Trades have their own per trade cap and do not use the daily send cap. Trade prices come from Pocket's signed quote.
+* v1 (live for preview signups until the v2 global deploy is funded): the recovery key is a full access key and could remove the contract. v2 removes that key; the trade off is that nobody can redeploy or delete a v2 account, and losing both phone and recovery key with no guardian strands the funds.
+* On relayed calls NEAR reports the relayer as the signer. v1 relies on the phone key's method list; v2 adds the owner message signature check (W10), which holds through any relayer.
+* v1: no price on chain, so NEAR and stock caps are in units. v2: dollar caps use a price signed by Pocket's price key (W12), which trusts that key for the price (not for the funds). Trades have their own per trade cap and do not use the daily send cap. Trade prices come from Pocket's signed quote.
 * The rolling day uses hourly slots (23 to 24 hours).
 * Accounts made on `main` keep the older server enforced flow (L1, R3 to R6 above), where the browser key is a full access key.
 * Rate limits, the faucet and the keep floor remain server and client rules.
