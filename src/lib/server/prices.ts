@@ -81,9 +81,13 @@ export async function sharePrices(): Promise<Record<string, SharePrice | null>> 
 export async function quotes() {
   const t0 = Date.now();
   const [cg, stocks] = await Promise.all([tokenPrices().catch((e) => ({ error: String(e), tokens: {} as Record<string, TokenPrice>, fetchedAt: 0, source: 'CoinGecko' })), sharePrices()]);
-  await Promise.all(Object.entries(CG_IDS).map(async ([s, id]) => {
-    if (cg.tokens[s]) cg.tokens[s] = { ...cg.tokens[s], spark: await cgSpark(id).catch(() => []) };
-  }));
+  // Attach 1 day sparks if they arrive quickly. Do not hold back the prices if a source is slow.
+  await Promise.race([
+    Promise.all(Object.entries(CG_IDS).map(async ([s, id]) => {
+      if (cg.tokens[s]) cg.tokens[s] = { ...cg.tokens[s], spark: await cgSpark(id).catch(() => []) };
+    })),
+    new Promise((r) => setTimeout(r, 2000)),
+  ]);
   return { serverTime: Date.now(), tookMs: Date.now() - t0, tokens: cg.tokens, tokensFetchedAt: cg.fetchedAt, stocks, error: 'error' in cg ? cg.error : undefined };
 }
 

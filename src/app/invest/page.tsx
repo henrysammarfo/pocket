@@ -28,8 +28,10 @@ function InvestInner() {
   const [range, setRange] = useState('1D');
   const [pts, setPts] = useState<number[] | null>(null);
   const [scrub, setScrub] = useState<number | null>(null);
+  const [waited, setWaited] = useState(false);
   const holdKey = JSON.stringify(sm.holdings);
   const ready = !!q.data && !!b.data;
+  useEffect(() => { const t = setTimeout(() => setWaited(true), 6000); return () => clearTimeout(t); }, []);
   useEffect(() => { if (!ready) return; let on = true; series(range, sm.holdings, q.data!).then((p) => on && setPts(p)).catch(() => on && setPts([])); return () => { on = false; }; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, holdKey, ready, range === '1D' ? q.data?.tokensFetchedAt : 0]);
   const now = sm.stocks;
@@ -40,13 +42,13 @@ function InvestInner() {
   const age = q.data ? Math.max(...Object.values(q.data.tokens).map((t) => t.updatedAt || 0)) : 0;
   return (
     <AppShell screen="invest" tab="invest">
-      <header className="nav large"><div className="lt">Invest</div><span className={'live' + (q.data ? ' ok' : '')}><i /><span>{q.data ? 'Live' : q.error ? 'Offline' : 'Connecting'}</span></span></header>
+      <header className="nav large"><div className="lt">Invest</div><span className={'live' + (q.data ? ' ok' : '')}><i /><span>{q.data ? 'Live' : (q.error || waited) ? 'Offline' : 'Connecting'}</span></span></header>
       <main className="body invest">
         <section className="phero">
           <div className="tk"><span>Your investments</span><span className="tag">Paper money</span></div>
           <div className="pv">{ready ? <Money v={v} /> : <span className="skel" style={{ display: 'inline-block', width: '9rem', height: '2.6rem' }} />}</div>
           {ready && (show ? <Chg d={v - base} base={base} when={RANGE_WORD[range]} /> : <span className="chg">You don&apos;t own any paper stocks yet. Pick one below.</span>)}
-          {ready && sm.stocks > 0 ? <Chart pts={show} base={base} onScrub={setScrub} /> : !ready ? <div className="chart"><div className="ld">Loading chart</div></div> : null}
+          {ready && sm.stocks > 0 ? <Chart pts={show} base={base} onScrub={setScrub} empty="The chart could not be loaded right now. Try again in a minute." /> : !ready ? <div className="chart"><div className="ld">{waited || q.error ? 'Prices could not be loaded right now. Try again in a minute.' : 'Loading prices'}</div></div> : null}
           {sm.stocks > 0 && <Ranges value={range} onChange={(r) => { setPts(null); setRange(r); }} />}
           {sm.stocks > 0 && <div className="srcline" style={{ padding: 0 }}>{range === '1D' ? '1D from token prices (CoinGecko). Longer ranges use the share prices the tokens track (Nasdaq.com).' : 'Share prices from Nasdaq.com, scaled to your token holdings.'}</div>}
         </section>
@@ -70,7 +72,7 @@ function InvestInner() {
               <span className="chev2"><ChevronRight size={16} aria-hidden /></span>
             </Link>); })}
         </section>
-        <div className="src">{q.data ? `Live. Tokens: CoinGecko, ${ago(age)}. Shares: ${st ? st.source + ', ' + st.lastTrade.replace(/^.*\d{4} /, '') : 'not available'}. Paper money, not advice.` : q.error ? 'Prices are offline right now.' : 'Loading live prices'}</div>
+        <div className="src">{q.data ? `Live. Tokens: CoinGecko, ${ago(age)}. Shares: ${st ? st.source + ', ' + st.lastTrade.replace(/^.*\d{4} /, '') : 'not available'}. Paper money, not advice.` : (q.error || waited) ? 'Prices could not be loaded right now. Try again in a minute.' : 'Loading live prices'}</div>
       </main>
     </AppShell>
   );

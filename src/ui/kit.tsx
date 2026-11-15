@@ -203,11 +203,11 @@ export function HoldButton({ label, doneLabel = 'Sent', hint = 'Keep holding to 
 }
 
 // ---------- chart (scrubbable line, from the design's P.chart) ----------
-export function Chart({ pts, base, fmtV = (v: number) => '$' + fmt(v), onScrub, id }: { pts: number[] | null; base?: number; fmtV?: (v: number) => string; onScrub?: (v: number | null) => void; id?: string }) {
+export function Chart({ pts, base, fmtV = (v: number) => '$' + fmt(v), onScrub, id, empty = 'The chart could not be loaded right now.' }: { pts: number[] | null; base?: number; fmtV?: (v: number) => string; onScrub?: (v: number | null) => void; id?: string; empty?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [i, setI] = useState<number | null>(null);
-  if (!pts) return <div className="chart" id={id}><div className="ld">Loading chart</div></div>;
-  if (pts.length < 2) return <div className="chart" id={id}><div className="ld">No chart data</div></div>;
+  if (!pts) return <div className="chart" id={id}><div className="ld">Loading prices</div></div>;
+  if (pts.length < 2) return <div className="chart" id={id}><div className="ld">{empty}</div></div>;
   const b = base ?? pts[0];
   const all = pts.concat([b]); const mn = Math.min(...all), mx = Math.max(...all), r = mx - mn || 1, pad = r * 0.08;
   const X = (k: number) => (k / (pts.length - 1)) * 100, Y = (v: number) => 100 - ((v - mn + pad) / (r + 2 * pad)) * 100;
