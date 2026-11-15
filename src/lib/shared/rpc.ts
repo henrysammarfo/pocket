@@ -43,7 +43,7 @@ export async function view<T = any>(contract: string, method: string, args: obje
   return JSON.parse(new TextDecoder().decode(new Uint8Array(r.result))) as T;
 }
 
-export async function viewAccount(account: string): Promise<{ amount: string; locked: string; code_hash: string; storage_usage: number } | null> {
+export async function viewAccount(account: string): Promise<{ amount: string; locked: string; code_hash: string; global_contract_hash?: string; storage_usage: number } | null> {
   try {
     return await rpc('query', { request_type: 'view_account', finality: 'optimistic', account_id: account });
   } catch (e) {

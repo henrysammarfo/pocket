@@ -12,16 +12,18 @@ import { PublicKey } from '@near-js/crypto';
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import bs58 from 'bs58';
-import { FAUCET, MAKER, PUSD, RELAYER, ROOT, STOCKS, TOKENS, USDC, USDC_DECIMALS, VERIFIER, tokenBySymbol, tokenByAsset } from '../shared/deployment';
+import { FAUCET, MAKER, MARKET, ONCHAIN_LIMITS, PUSD, QUOTE_KEY, RELAYER, ROOT, STOCKS, TOKENS, USDC, USDC_DECIMALS, VERIFIER, WALLET_CODE_HASH, tokenBySymbol, tokenByAsset } from '../shared/deployment';
 import { rpc, view, viewAccessKey, viewAccount } from '../shared/rpc';
 import { buildPayload, parseMessage, type Intent } from '../shared/intents';
 import { signNep413, verifyNep413, keyFromString, type SignedNep413 } from '../shared/nep413';
 import { toUnits, fromUnits, nearToYocto } from '../shared/units';
-import { fnCall, signAndSend, type TxResult } from './tx';
+import { fnCall, signAndSend, signAndSendG, TGAS, type TxResult } from './tx';
+import { G } from './globaltx';
+import { DEVICE_ALLOWANCE, DEVICE_METHODS, DOLLAR_TOKENS, defaultLimits, dollarsOf, type Limits } from '../shared/wallet';
 import { secretKey } from './env';
 import { tokenPrices } from './prices';
 import { store, limit, HttpError } from './store';
-import { delegatePolicy, reserveSpend, burnNonce, isPocketUser, validAccountId, type DelegateJson } from '../shared/policy';
+import { delegatePolicy, walletPolicy, reserveSpend, burnNonce, isPocketUser, validAccountId, type DelegateJson } from '../shared/policy';
 export { isPocketUser, validAccountId, type DelegateJson };
 
 const need = (k: Parameters<typeof secretKey>[0]) => {
@@ -53,9 +55,24 @@ async function executeIntents(signed: SignedNep413[]): Promise<TxResult> {
   return r;
 }
 
-export async function assertKeyOf(account: string, publicKey: string) {
+// A key of the account: a full access key, or (on chain limits) the device's function call key,
+// which can only call the account's own wallet contract.
+export async function assertKeyOf(account: string, publicKey: string, fullOnly = false) {
   const ak = await viewAccessKey(account, publicKey);
-  if (!ak || ak.permission !== 'FullAccess') throw new HttpError(403, 'That key does not belong to this account.');
+  const perm = ak?.permission as { FunctionCall?: { receiver_id: string } } | 'FullAccess' | undefined;
+  const ok = perm === 'FullAccess' || (!fullOnly && typeof perm === 'object' && perm?.FunctionCall?.receiver_id === account);
+  if (!ok) throw new HttpError(403, 'That key does not belong to this account.');
+}
+
+// ---------- on chain limits ----------
+export async function walletOf(account: string): Promise<{ limits: Limits; spentUsd: number; pending: unknown } | null> {
+  if (!ONCHAIN_LIMITS) return null;
+  try {
+    const [limits, spent, pending] = await Promise.all([
+      view<Limits>(account, 'get_limits'), view<{ usd: string }>(account, 'get_spent'), view<unknown>(account, 'get_pending'),
+    ]);
+    return { limits, spentUsd: dollarsOf(spent.usd), pending };
+  } catch { return null; }
 }
 
 function checkSigned(s: SignedNep413, maxTtlSec: number) {
@@ -72,6 +89,8 @@ function checkSigned(s: SignedNep413, maxTtlSec: number) {
 const DAY = 86400;
 const dayKey = (a: string) => `sent:${a}:${new Date().toISOString().slice(0, 10)}`;
 export async function getLimit(account: string) {
+  const w = await walletOf(account);
+  if (w) return dollarsOf(w.limits.usd_per_day);
   const v = await store.get('limit:' + account);
   return v > 0 ? v : 200;
 }
@@ -82,7 +101,10 @@ async function spend(account: string, usd: number) {
 async function settleOrRefund<T>(refund: (() => Promise<void>) | null, run: () => Promise<T>): Promise<T> {
   try { return await run(); } catch (e) { if (refund) await refund().catch(() => {}); throw e; }
 }
-export async function usedToday(account: string) { return store.get(dayKey(account)); }
+export async function usedToday(account: string) {
+  const w = await walletOf(account);
+  return w ? w.spentUsd : store.get(dayKey(account));
+}
 
 export async function setLimit(signed: SignedNep413) {
   if (!verifyNep413(signed)) throw new HttpError(400, 'Bad signature.');
@@ -170,7 +192,7 @@ export async function quote(account: string, side: 'buy' | 'sell', symbol: strin
     price: +price.toFixed(4), mid, spreadBps: SPREAD_BPS, usd, priceSource: 'CoinGecko ' + st.cg, priceAt: p.updatedAt || fetchedAt,
     deadline: Date.now() + QUOTE_TTL * 1000,
   };
-  return { quote: q, mac: mac(q) };
+  return { quote: q, mac: mac(q), ...(ONCHAIN_LIMITS && secretKey('QUOTE') ? { market: { maker: MARKET, msg: signMarketQuote(q) } } : {}) };
 }
 
 export async function settle(q: Quote, m: string, signed: SignedNep413, ip: string) {
@@ -198,7 +220,7 @@ export async function settle(q: Quote, m: string, signed: SignedNep413, ip: stri
 }
 
 // ---------- accounts ----------
-export async function createAccount(username: string, publicKey: string, ip: string) {
+export async function createAccount(username: string, publicKey: string, ip: string, ownerKey?: string) {
   const u = username.toLowerCase();
   if (!/^[a-z0-9]([a-z0-9_-]{0,30}[a-z0-9])?$/.test(u) || u.length < 2) throw new HttpError(400, 'Usernames are 2 to 32 letters or numbers, dash or underscore inside.');
   const id = `${u}.${ROOT}`;
@@ -208,6 +230,25 @@ export async function createAccount(username: string, publicKey: string, ip: str
   await limit('signupip:' + ip, Number(process.env.SIGNUP_PER_IP_HOUR || 5), 3600);
   await limit('signupday', Number(process.env.SIGNUP_PER_DAY || 300), DAY);
   const sponsor = need('SPONSOR');
+  if (ONCHAIN_LIMITS) {
+    // On chain limits: the account runs the Pocket wallet (global contract by code hash). The
+    // recovery key is the only full access key; the phone gets a function call key that can only
+    // call this account's own wallet methods. One transaction, so nobody can init it in between.
+    if (!ownerKey || !/^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(ownerKey) || ownerKey === publicKey) throw new HttpError(400, 'A separate recovery key is needed.');
+    const gas = 30n * TGAS;
+    const r = await signAndSendG(ROOT, sponsor, id, [
+      G.createAccount(),
+      G.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.1')),
+      G.globalCode(WALLET_CODE_HASH),
+      G.fullKey(ownerKey),
+      G.fnKey(publicKey, id, DEVICE_METHODS, BigInt(DEVICE_ALLOWANCE)),
+      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits() }, gas),
+    ]);
+    if (!r.ok) throw new HttpError(400, 'Could not create the account: ' + r.failures.join('; ').slice(0, 200));
+    const s = await signAndSend(ROOT, sponsor, USDC, [fnCall('storage_deposit', { account_id: id, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
+    await store.addActivity({ account: id, kind: 'signup', tx: r.hash, data: { near: process.env.SIGNUP_NEAR || '0.1', wallet: WALLET_CODE_HASH }, at: Date.now() });
+    return { account: id, hash: r.hash, usdcStorageTx: s?.hash || null, onchainLimits: true };
+  }
   const actions: Action[] = [
     actionCreators.createAccount(),
     actionCreators.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.05')),
@@ -227,7 +268,9 @@ export async function createAccount(username: string, publicKey: string, ip: str
 export function toDelegate(d: DelegateJson) {
   const actions: Action[] = d.actions.map((a) => a.type === 'transfer'
     ? actionCreators.transfer(BigInt(a.deposit))
-    : actionCreators.functionCall(a.method, Buffer.from(JSON.stringify(a.args)), BigInt(a.gas), BigInt(a.deposit)));
+    : a.type === 'addKey'
+      ? actionCreators.addKey(PublicKey.fromString(a.publicKey), actionCreators.functionCallAccessKey(d.senderId, a.methods, BigInt(a.allowance)))
+      : actionCreators.functionCall(a.method, Buffer.from(JSON.stringify(a.args)), BigInt(a.gas), BigInt(a.deposit)));
   return buildDelegateAction({ senderId: d.senderId, receiverId: d.receiverId, nonce: BigInt(d.nonce), maxBlockHeight: BigInt(d.maxBlockHeight), publicKey: PublicKey.fromString(d.publicKey), actions });
 }
 
@@ -238,9 +281,14 @@ export async function relay(d: DelegateJson, ip: string) {
   try { sig = bs58.decode(String(d.signature).replace(/^ed25519:/, '')); pub = bs58.decode(String(d.publicKey).replace(/^ed25519:/, '')); } catch { throw new HttpError(400, 'Bad key or signature encoding.'); }
   if (pub.length !== 32 || sig.length !== 64) throw new HttpError(400, 'Bad signature on the meta transaction.');
   if (!ed25519.verify(sig, sha256(encodeDelegateAction(da)), pub)) throw new HttpError(400, 'Bad signature on the meta transaction.');
-  await assertKeyOf(d.senderId, d.publicKey);
+  const own = d.receiverId === d.senderId;
+  const wp = own ? walletPolicy(d) : null;
+  // Restoring a device (AddKey) needs the recovery key, a full access key.
+  await assertKeyOf(d.senderId, d.publicKey, wp?.method === 'add_device_key');
   await limit('relay:' + d.senderId, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
+  if (wp?.method === 'trade') checkTradeMsg(d);
+  if (wp?.method === 'send_usdc') await ensureUsdcStorage(String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
   const refund = usd ? await spend(d.senderId, usd) : null;
   const signedDelegate = new SignedDelegate({ delegateAction: da, signature: new Signature({ keyType: 0, data: sig }) });
   const r = await settleOrRefund(refund, async () => {
@@ -248,6 +296,14 @@ export async function relay(d: DelegateJson, ip: string) {
     if (!res.ok) throw new HttpError(400, 'The network rejected it: ' + res.failures.join('; ').slice(0, 300));
     return res;
   });
+  if (wp) {
+    if (wp.method === 'trade') {
+      const why = r.logs.find((l) => l.startsWith('Pocket maker: refund'));
+      if (why || r.logs.some((l) => l.startsWith('Pocket: trade refunded'))) throw new HttpError(400, 'The trade did not go through and your tokens came back' + (why ? ': ' + why.replace('Pocket maker: refund, ', '') : '.'));
+    }
+    await walletActivity(d, wp.method, r.hash, r.ok);
+    return { hash: r.hash, relayer: RELAYER, onchain: true };
+  }
   const ft = d.actions.find((a) => a.type === 'functionCall' && a.method === 'ft_transfer') as { args: { receiver_id: string; amount: string; memo?: string } } | undefined;
   const nearT = d.actions.find((a) => a.type === 'transfer') as { deposit: string } | undefined;
   if (ft) {
@@ -259,6 +315,56 @@ export async function relay(d: DelegateJson, ip: string) {
     await store.addActivity({ account: d.senderId, kind: 'send', tx: r.hash, data, at: Date.now() });
   }
   return { hash: r.hash, relayer: RELAYER };
+}
+
+// The chain may still refuse a send the server allowed (its rules are the real ones). In that case
+// the outer transaction succeeds but the wallet call fails, so check the receipts.
+async function walletActivity(d: DelegateJson, method: string, hash: string, ok: boolean) {
+  if (!ok) return;
+  const a = d.actions[0] as { type: string; args?: Record<string, string> };
+  const x = a.args || {};
+  if (method === 'send_usdc' || method === 'send_token' || method === 'send_near') {
+    const tok = method === 'send_usdc' ? { symbol: 'USDC', decimals: USDC_DECIMALS } : method === 'send_near' ? { symbol: 'NEAR', decimals: 24 } : tokenByAsset(x.token_id)!;
+    const data = { token: tok.symbol, amount: fromUnits(BigInt(x.amount), tok.decimals, 8), to: x.receiver_id, memo: x.memo || null, gasPaidBy: RELAYER, limits: 'enforced by your wallet contract' };
+    await store.addActivity({ account: d.senderId, kind: 'send', tx: hash, data, at: Date.now() });
+    await store.addActivity({ account: x.receiver_id, kind: 'receive', tx: hash, data: { ...data, from: d.senderId }, at: Date.now() });
+  } else if (method === 'trade') {
+    try {
+      const q = JSON.parse(JSON.parse(x.msg).quote);
+      const pay = tokenByAsset(q.pay_token)!, get = tokenByAsset(q.get_token)!;
+      const side = pay.symbol === 'pUSD' ? 'buy' : 'sell';
+      const stock = side === 'buy' ? get : pay;
+      const data = { side, token: stock.symbol, qty: fromUnits(BigInt(side === 'buy' ? q.get_units : q.pay_units), stock.decimals, 8), usd: Number(fromUnits(BigInt(side === 'buy' ? q.pay_units : q.get_units), 6)), maker: MARKET };
+      await store.addActivity({ account: d.senderId, kind: side, tx: hash, data, at: Date.now() });
+    } catch { /* activity is best effort */ }
+  }
+}
+
+async function ensureUsdcStorage(account: string) {
+  const reg = await view<unknown>(USDC, 'storage_balance_of', { account_id: account }).catch(() => null);
+  if (reg) return;
+  await limit('usdcreg:all', 200, 86400);
+  await signAndSend(ROOT, need('SPONSOR'), USDC, [fnCall('storage_deposit', { account_id: account, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
+}
+
+// ---------- quotes signed for the market contract ----------
+const quoteSeed = () => keyFromString(need('QUOTE')).seed;
+export function signMarketQuote(q: Quote) {
+  const quote = JSON.stringify({ v: 1, maker: MARKET, id: q.id, account: q.account, pay_token: q.payAsset, pay_units: q.payUnits, get_token: q.getAsset, get_units: q.getUnits, deadline_ms: q.deadline });
+  const signature = Buffer.from(ed25519.sign(new TextEncoder().encode(quote), quoteSeed())).toString('base64');
+  return JSON.stringify({ quote, signature });
+}
+// Second layer for trades: the wallet message must carry a quote Pocket signed for this account.
+function checkTradeMsg(d: DelegateJson) {
+  const args = (d.actions[0] as unknown as { args: { msg: string; pay_token: string; pay_amount: string } }).args;
+  let m: { quote: string; signature: string }, q: { account: string; pay_token: string; pay_units: string; deadline_ms: number; maker: string };
+  try { m = JSON.parse(args.msg); q = JSON.parse(m.quote); } catch { throw new HttpError(400, 'Bad trade message.'); }
+  const pub = bs58.decode(QUOTE_KEY.replace(/^ed25519:/, ''));
+  let good = false;
+  try { good = ed25519.verify(Buffer.from(m.signature, 'base64'), new TextEncoder().encode(m.quote), pub); } catch { good = false; }
+  if (!good) throw new HttpError(400, 'That quote is not from Pocket.');
+  if (q.account !== d.senderId || q.maker !== MARKET || q.pay_token !== args.pay_token || q.pay_units !== args.pay_amount) throw new HttpError(400, 'The trade does not match its quote.');
+  if (!(q.deadline_ms > Date.now())) throw new HttpError(400, 'Quote expired. Get a new one.');
 }
 
 export async function chainInfo() {

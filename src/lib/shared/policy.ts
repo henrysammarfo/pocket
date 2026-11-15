@@ -2,7 +2,8 @@
 // Pocket policy engine: the pure, side effect free rules the server applies before it pays gas or
 // counts money against a limit. Kept free of I/O so every rule is unit and property tested
 // (tests/unit/policy.test.ts). The formal statement of each rule is in docs/POLICY.md.
-import { ROOT, TOKENS, USDC, VERIFIER } from './deployment';
+import { PUSD, ROOT, TOKENS, USDC, VERIFIER } from './deployment';
+import { DEVICE_ALLOWANCE, DEVICE_METHODS, OWNER_METHODS, TRADE_GAS } from './wallet';
 
 export class PolicyError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -16,7 +17,7 @@ export const MAX_NEAR_PER_DELEGATE = 5n * YOCTO;
 export const ONE_YOCTO = '1';
 export const USDC_STORAGE = (125n * 10n ** 19n).toString(); // 0.00125 NEAR
 const USDC_DECIMALS = 6;
-const SERVICE = ['admin', 'verifier', 'maker', 'faucet', 'relayer'];
+const SERVICE = ['admin', 'verifier', 'maker', 'faucet', 'relayer', 'market'];
 
 // NEAR account id grammar (nomicon), 2 to 64 chars.
 export const validAccountId = (a: unknown): a is string =>
@@ -34,7 +35,7 @@ const uint = (v: unknown): v is string => typeof v === 'string' && /^\d{1,40}$/.
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const ED25519 = /^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/;
 
-export type DelegateAction = { type: 'functionCall'; method: string; args: Record<string, unknown>; gas: string; deposit: string } | { type: 'transfer'; deposit: string };
+export type DelegateAction = { type: 'functionCall'; method: string; args: Record<string, unknown>; gas: string; deposit: string } | { type: 'transfer'; deposit: string } | { type: 'addKey'; publicKey: string; methods: string[]; allowance: string };
 export type DelegateJson = { senderId: string; receiverId: string; nonce: string; maxBlockHeight: string; publicKey: string; actions: DelegateAction[]; signature: string };
 
 /**
@@ -57,6 +58,7 @@ export function delegatePolicy(d: unknown): number {
   if (typeof d.publicKey !== 'string' || !ED25519.test(d.publicKey)) return deny(400, 'Bad public key.');
   const actions = d.actions;
   if (!Array.isArray(actions) || actions.length < 1 || actions.length > 2) return deny(400, 'One or two actions only.');
+  if (d.receiverId === d.senderId) return walletPolicy(d as unknown as DelegateJson).usd;
   let usd = 0;
   let near = 0n;
   for (const a of actions as unknown[]) {
@@ -79,6 +81,60 @@ export function delegatePolicy(d: unknown): number {
     return deny(403, `The relayer does not pay for ${d.receiverId}.${a.method}.`);
   }
   return usd;
+}
+
+const WALLET_METHODS: readonly string[] = [...DEVICE_METHODS, ...OWNER_METHODS];
+/**
+ * Relayer policy for calls to the user's own Pocket wallet contract (on chain limits). The chain
+ * enforces the rules; this is the second layer, so the relayer only pays for well formed calls:
+ *   R8  one function call on the sender's own account, deposit 0 (function call keys cannot
+ *       attach NEAR anyway), a wallet method, at most 280 Tgas, arguments well formed
+ *   R9  restore: one AddKey of a function call key scoped to the sender's own account with
+ *       exactly the device methods and the standard 0.25 NEAR gas allowance (needs a full key)
+ * Returns the dollar amount moved (pUSD or USDC sends), counted again against the server limit.
+ */
+export function walletPolicy(d: DelegateJson): { usd: number; method: string } {
+  const actions = d.actions;
+  if (!Array.isArray(actions) || actions.length !== 1) return deny(400, 'One action only.');
+  const a = actions[0] as unknown;
+  if (!isObj(a)) return deny(400, 'Bad action.');
+  if (a.type === 'addKey') {
+    const m = a.methods;
+    if (typeof a.publicKey !== 'string' || !ED25519.test(a.publicKey) || a.publicKey === d.publicKey) return deny(400, 'Bad device key.');
+    if (!Array.isArray(m) || m.length !== DEVICE_METHODS.length || !DEVICE_METHODS.every((x, i) => m[i] === x)) return deny(403, 'A new device key gets exactly the device methods.');
+    if (a.allowance !== DEVICE_ALLOWANCE) return deny(400, 'Bad gas allowance.');
+    return { usd: 0, method: 'add_device_key' };
+  }
+  if (a.type !== 'functionCall' || typeof a.method !== 'string' || !isObj(a.args) || !uint(a.gas) || a.deposit !== '0') return deny(400, 'Wallet calls carry no deposit.');
+  if (!WALLET_METHODS.includes(a.method)) return deny(403, `The relayer does not pay for ${a.method}.`);
+  if (BigInt(a.gas) > TRADE_GAS) return deny(400, 'Too much gas.');
+  const args = a.args;
+  const amt = (v: unknown) => (uint(v) && BigInt(v) > 0n ? BigInt(v) : deny(400, 'Bad amount.'));
+  const memo = (v: unknown) => (v == null || (typeof v === 'string' && v.length <= 256) ? true : deny(400, 'Memo too long.'));
+  switch (a.method) {
+    case 'send_near':
+      if (!validAccountId(args.receiver_id) || args.receiver_id === d.senderId) return deny(400, 'Bad receiver.');
+      amt(args.amount);
+      return { usd: 0, method: a.method };
+    case 'send_usdc':
+      if (!validAccountId(args.receiver_id) || args.receiver_id === d.senderId) return deny(400, 'Bad receiver.');
+      memo(args.memo);
+      return { usd: Number(amt(args.amount)) / 10 ** USDC_DECIMALS, method: a.method };
+    case 'send_token': {
+      if (!validAccountId(args.receiver_id) || args.receiver_id === d.senderId) return deny(400, 'Bad receiver.');
+      const tok = TOKENS.find((t) => t.assetId === args.token_id);
+      if (!tok) return deny(400, 'Unknown token.');
+      memo(args.memo);
+      const v = amt(args.amount);
+      return { usd: tok.assetId === PUSD.assetId ? Number(v) / 10 ** tok.decimals : 0, method: a.method };
+    }
+    case 'trade':
+      if (!TOKENS.some((t) => t.assetId === args.pay_token) || typeof args.msg !== 'string' || args.msg.length > 4096) return deny(400, 'Bad trade.');
+      amt(args.pay_amount);
+      return { usd: 0, method: a.method };
+    default:
+      return { usd: 0, method: a.method };
+  }
 }
 
 // A counter that can go up and down atomically (Postgres upsert or the in memory map).

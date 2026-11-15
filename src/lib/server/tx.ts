@@ -83,3 +83,33 @@ export async function txStatus(hash: string, sender: string) {
   const raw = await rpc('tx', { tx_hash: hash, sender_account_id: sender, wait_until: 'EXECUTED_OPTIMISTIC' });
   return summarize(raw, hash);
 }
+
+// Same as signAndSend, for actions @near-js/transactions 1.x cannot encode (UseGlobalContract).
+export async function signAndSendG(signerId: string, secret: string, receiverId: string, actions: import('./globaltx').GAction[]): Promise<TxResult> {
+  const { signTx } = await import('./globaltx');
+  const k = keyFromString(secret);
+  return withLock(signerId + k.publicKey, async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let nonce = nonces.get(k.publicKey);
+      if (nonce == null || attempt > 0) {
+        const ak = await viewAccessKey(signerId, k.publicKey);
+        if (!ak) throw new Error(`No access key for ${signerId}`);
+        nonce = BigInt(ak.nonce);
+      }
+      nonce += 1n;
+      const block = await rpc<{ header: { hash: string } }>('block', { finality: 'final' });
+      const t = signTx({ signerId, publicKey: k.publicKey, seed: k.seed, nonce, receiverId, blockHash: block.header.hash, actions });
+      try {
+        const raw = await rpc('send_tx', { signed_tx_base64: t.base64, wait_until: 'EXECUTED_OPTIMISTIC' });
+        nonces.set(k.publicKey, nonce);
+        return summarize(raw, t.hash);
+      } catch (e) {
+        const msg = String((e as Error).message) + JSON.stringify((e as { data?: unknown }).data || '');
+        if (/InvalidNonce|nonce/i.test(msg) && attempt < 2) { nonces.delete(k.publicKey); continue; }
+        if (/TIMEOUT|timeout/i.test(msg)) return { ok: false, hash: t.hash, failures: ['Timed out waiting for the network. Check the transaction.'], logs: [], raw: null };
+        throw e;
+      }
+    }
+    throw new Error('Could not get a fresh nonce');
+  });
+}

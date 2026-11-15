@@ -4,7 +4,9 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { keyFromString } from '../shared/nep413';
 
-export type Session = { account: string; username: string; secretKey: string; publicKey: string; createdAt: number };
+// onchain: the account runs the Pocket wallet contract and secretKey is a function call key that
+// can only call that contract's device methods. The recovery (full access) key is never stored here.
+export type Session = { account: string; username: string; secretKey: string; publicKey: string; createdAt: number; onchain?: boolean };
 export type Profile = { name: string; email: string; avatar: string };
 export type Contact = { id: string; name: string; address: string; network: 'near' | 'sol' | 'eth' | 'pol'; kind: 'pocket' | 'wallet'; sends?: number; lastAt?: number };
 export type Rules = { keep: number; limit: number; passkey: boolean; passkeyId?: string; speak?: boolean };

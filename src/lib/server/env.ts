@@ -1,6 +1,6 @@
 import 'server-only';
 // Server secrets come only from env. Never log them, never send them to the client.
-export type KeyName = 'SPONSOR' | 'RELAYER' | 'MAKER' | 'FAUCET';
+export type KeyName = 'SPONSOR' | 'RELAYER' | 'MAKER' | 'FAUCET' | 'QUOTE';
 export function secretKey(name: KeyName): string | null {
   const v = process.env[`${name}_PRIVATE_KEY`];
   return v && v.startsWith('ed25519:') ? v : null;

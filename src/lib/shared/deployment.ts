@@ -15,6 +15,13 @@ export const MAKER = swap(dep.maker);
 export const FAUCET = swap(dep.faucet);
 export const RELAYER = swap(dep.relayer);
 export const USDC = dep.usdc;
+const d2 = dep as typeof dep & { market?: string; walletCodeHash?: string; quoteKey?: string };
+/** Pocket maker contract: settles paper trades against signed quotes (contracts/maker). */
+export const MARKET = d2.market ? swap(d2.market) : '';
+/** Code hash of the Pocket wallet global contract every new account uses (contracts/wallet). */
+export const WALLET_CODE_HASH = process.env.NEXT_PUBLIC_WALLET_CODE_HASH || d2.walletCodeHash || '';
+export const QUOTE_KEY = d2.quoteKey || '';
+export const ONCHAIN_LIMITS = !!(MARKET && WALLET_CODE_HASH);
 export const USDC_DECIMALS = 6;
 export const VERIFIER_SHA256 = dep.verifierWasmSha256;
 export const VERIFIER_RELEASE = dep.verifierRelease;

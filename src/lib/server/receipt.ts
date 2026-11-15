@@ -66,6 +66,24 @@ export async function receipt(hash: string): Promise<Receipt> {
       const d = dl.delegate_action;
       for (const ia of d.actions) {
         const f = ia.FunctionCall;
+        if (f && d.receiver_id === d.sender_id) {
+          // A call to the user's own Pocket wallet contract: the limits were checked on chain.
+          const x = b64json(f.args);
+          const via = 'NEP-366 meta transaction to the Pocket wallet contract (limits enforced on chain)';
+          if (f.method_name === 'send_usdc') return { ...base, kind: 'send', token: 'USDC', amount: fromUnits(x.amount, USDC_DECIMALS), from: d.sender_id, to: x.receiver_id, memo: x.memo || null, via };
+          if (f.method_name === 'send_near') return { ...base, kind: 'send', token: 'NEAR', amount: fromUnits(x.amount, 24, 5), from: d.sender_id, to: x.receiver_id, via };
+          if (f.method_name === 'send_token') { const tok = tokenByAsset(x.token_id); return { ...base, kind: 'send', token: tok?.symbol || x.token_id, amount: fromUnits(x.amount, tok?.decimals ?? 0, 8), from: d.sender_id, to: x.receiver_id, memo: x.memo || null, via }; }
+          if (f.method_name === 'trade') {
+            try {
+              const q = JSON.parse(JSON.parse(x.msg).quote);
+              const pt = tokenByAsset(q.pay_token)!, gt = tokenByAsset(q.get_token)!;
+              const side = pt.symbol === 'pUSD' ? 'buy' : 'sell';
+              const st = side === 'buy' ? gt : pt;
+              return { ...base, kind: side, from: d.sender_id, trade: { side, token: st.symbol, qty: fromUnits(side === 'buy' ? q.get_units : q.pay_units, st.decimals, 8), usd: fromUnits(side === 'buy' ? q.pay_units : q.get_units, 6, 2), maker: q.maker }, via: 'Pocket wallet trade, settled by the market contract inside the NEAR Intents verifier' };
+            } catch { /* fall through */ }
+          }
+          return { ...base, kind: 'other', from: d.sender_id, to: d.receiver_id, memo: 'Pocket wallet: ' + f.method_name, via };
+        }
         if (f && d.receiver_id === USDC && f.method_name === 'ft_transfer') {
           const x = b64json(f.args);
           return { ...base, kind: 'send', token: 'USDC', amount: fromUnits(x.amount, USDC_DECIMALS), from: d.sender_id, to: x.receiver_id, memo: x.memo || null, via: 'NEP-366 meta transaction, ft_transfer on Circle USDC' };
