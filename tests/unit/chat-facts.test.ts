@@ -26,7 +26,7 @@ describe('stock price questions', () => {
     const r = priceReply('TSLA', live.shares.TSLA, live.tokens.TSLAon)!;
     expect(r).toContain('$250.12');
     expect(r).toContain('$251.37');
-    expect(r).toContain('Nasdaq.com');
+    expect(r).toContain('public market data');
     expect(r).not.toMatch(/can(no|')t|unable|sorry/i);
   });
   it('says so plainly when there is no live price, and never invents one', () => expect(priceReply('TSLA', null, null)).toBeNull());

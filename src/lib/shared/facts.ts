@@ -47,10 +47,10 @@ export function priceReply(ticker: string, share: SharePx, token: TokenPx): stri
   if (share && share.price != null && Number.isFinite(share.price)) {
     const when = share.lastTrade ? `, last trade ${share.lastTrade.replace(/^.*?(\w{3} \d{1,2}, \d{4}.*)$/, '$1')}` : '';
     const status = share.marketStatus ? `, market ${share.marketStatus.toLowerCase()}` : '';
-    parts.push(`${st.name} shares are ${usd(share.price)} on ${share.source || 'Nasdaq.com'}${when}${status}.`);
+    parts.push(`${st.name} shares are ${usd(share.price)} from public market data${when}${status}.`);
   }
   if (token && Number.isFinite(token.price) && token.price > 0) {
-    parts.push(`Pocket's paper ${st.token} token tracks it at ${usd(token.price)} (CoinGecko), and that is the price your trades use.`);
+    parts.push(`Pocket's paper ${st.token} token tracks it at ${usd(token.price)}, and that is the price your trades use.`);
   }
   if (!parts.length) return null;
   return parts.join(' ') + ' This is test money, not advice.';

@@ -122,7 +122,7 @@ function rules(input: ChatIn, why: 'off' | 'down'): ChatOut {
   if (dateAsk(text)) return { reply: dateReply(input.now || new Date(), ctx.tz), source: 'rules' };
   if (/\b(balance|how much|what do i have)\b/i.test(text)) return { reply: `You have $${ctx.dollars.toFixed(2)} in test dollars: ${ctx.pusd.toFixed(2)} pUSD and ${ctx.usdc.toFixed(2)} USDC.`, source: 'rules' };
   const pm = text.match(/price of ([a-z&\s0-9]+)/i);
-  if (pm && tickerOf(pm[1])) { const t = tickerOf(pm[1])!; return { reply: `${t} is about $${(ctx.prices[t] || 0).toFixed(2)} right now, from CoinGecko.`, source: 'rules' }; }
+  if (pm && tickerOf(pm[1])) { const t = tickerOf(pm[1])!; return { reply: `${t} is about $${(ctx.prices[t] || 0).toFixed(2)} right now, from public market data.`, source: 'rules' }; }
   if (/^(hi|hello|hey|good (morning|afternoon|evening)|how are you|wassup|what'?s up)\b/i.test(text)) return { reply: `Hi${ctx.name ? ' ' + ctx.name : ''}. I am doing well. Ask me to send money, buy a paper stock, or check your balance.`, source: 'rules' };
   return { reply: why === 'down' ? 'I could not reach the AI just now. Money commands still work, for example "send Mum 20 dollars" or "buy 10 dollars of Tesla".' : 'Open chat needs the AI, which is not set up on this server yet, so I can only read money commands for now. Try "send Mum 20 dollars", "buy 10 dollars of Tesla" or "what is my balance".', source: 'off' };
 }

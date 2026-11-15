@@ -36,7 +36,7 @@ export function SiteFooter() {
       </div>
       <div className="ft-bot">
         <p>© 2026 Pocket. Pocket uses test money on NEAR. Test dollars and paper stocks have no real value. Nothing here is financial advice.</p>
-        <p>Prices from CoinGecko and Nasdaq.com.</p>
+        <p>Prices from public market data.</p>
       </div>
     </footer>
   );

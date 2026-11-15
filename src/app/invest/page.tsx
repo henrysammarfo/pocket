@@ -50,9 +50,9 @@ function InvestInner() {
           {ready && (show ? <Chg d={v - base} base={base} when={RANGE_WORD[range]} /> : <span className="chg">You don&apos;t own any paper stocks yet. Pick one below.</span>)}
           {ready && sm.stocks > 0 ? <Chart pts={show} base={base} onScrub={setScrub} empty="The chart could not be loaded right now. Try again in a minute." /> : !ready ? <div className="chart"><div className="ld">{waited || q.error ? 'Prices could not be loaded right now. Try again in a minute.' : 'Loading prices'}</div></div> : null}
           {sm.stocks > 0 && <Ranges value={range} onChange={(r) => { setPts(null); setRange(r); }} />}
-          {sm.stocks > 0 && <div className="srcline" style={{ padding: 0 }}>{range === '1D' ? '1D from token prices (CoinGecko). Longer ranges use the share prices the tokens track (Nasdaq.com).' : 'Share prices from Nasdaq.com, scaled to your token holdings.'}</div>}
+          {sm.stocks > 0 && <div className="srcline" style={{ padding: 0 }}>Prices from public market data.</div>}
         </section>
-        <div className="ghead"><b>Stocks</b><span>Paper tokens priced from Ondo tokens</span></div>
+        <div className="ghead"><b>Stocks</b><span>Paper tokens, priced from public market data</span></div>
         <section className="group list">
           {STOCKS.map((s) => { const t = q.data?.tokens[s.token]; const sh = q.data?.stocks[s.ticker]; const h = sm.holdings[s.ticker] || 0; return (
             <Link key={s.token} className="row w-chev" href={`/invest/${s.ticker}`}>
@@ -72,7 +72,7 @@ function InvestInner() {
               <span className="chev2"><ChevronRight size={16} aria-hidden /></span>
             </Link>); })}
         </section>
-        <div className="src">{q.data ? `Live. Tokens: CoinGecko, ${ago(age)}. Shares: ${st ? st.source + ', ' + st.lastTrade.replace(/^.*\d{4} /, '') : 'not available'}. Paper money, not advice.` : (q.error || waited) ? 'Prices could not be loaded right now. Try again in a minute.' : 'Loading live prices'}</div>
+        <div className="src">{q.data ? `Live. Prices from public market data, ${ago(age)}. Paper money, not advice.` : (q.error || waited) ? 'Prices could not be loaded right now. Try again in a minute.' : 'Loading live prices'}</div>
       </main>
     </AppShell>
   );

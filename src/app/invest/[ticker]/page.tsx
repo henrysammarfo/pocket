@@ -71,9 +71,9 @@ function StockInner({ ticker }: { ticker: string }) {
         <div className="dock"><button className="btn ghost" disabled={!(hold > 0)} onClick={() => setSide('sell')}>Sell</button><button className="btn" disabled={!tok} onClick={() => setSide('buy')}>Buy</button></div>
         <div className="ghead"><b>About</b></div>
         <section className="group"><div className="about"><span>{ABOUT[st.ticker]}</span><div className="meta">{[s.Sector, s.Industry].filter(Boolean).map((x) => <span key={x} className="chip">{x}</span>)}</div></div></section>
-        <div className="ghead"><b>Key stats</b><span>Nasdaq.com</span></div>
+        <div className="ghead"><b>Key stats</b><span>Public market data</span></div>
         <section className="group stats">{stats.map(([k, v]) => <div key={k}><div className="k">{k}</div><div className="v">{d ? v : '…'}</div></div>)}</section>
-        <div className="srcline"><Info size={14} aria-hidden /><span>{sq ? `Share price: ${sq.source}, last trade ${sq.lastTrade.replace(/^.*\d{4} /, '')}. ` : ''}{tok ? `Token price: CoinGecko (${st.cg}), ${ago(tok.updatedAt)}. ` : ''}Paper money, not advice.</span></div>
+        <div className="srcline"><Info size={14} aria-hidden /><span>{sq ? `Share price from public market data, last trade ${sq.lastTrade.replace(/^.*\d{4} /, '')}. ` : ''}{tok ? `Token price from public market data, ${ago(tok.updatedAt)}. ` : ''}Paper money, not advice.</span></div>
       </div></main>
     </AppShell>
   );
