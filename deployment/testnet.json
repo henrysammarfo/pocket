@@ -266,5 +266,21 @@
       "label": "global wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz",
       "hash": "see pocket-7e2413.testnet"
     }
+  ],
+  "pool": "pool.pocket-7e2413.testnet",
+  "poolWasmSha256": "4f49a70dceadf26dda72fbb9e10a9105073917aab130ebf1f17c4936c1744190",
+  "poolTxs": [
+    {
+      "label": "create pool.pocket-7e2413.testnet",
+      "hash": "9pus9eodYmpx3QmEAvaq2qgem635duCNSutej8d4ZD72"
+    },
+    {
+      "label": "deploy pool",
+      "hash": "4H2CVLm5HKsihwaWYYsSuTVdYUwmcTQGZJbjZm4TQY2c"
+    },
+    {
+      "label": "init pool (0.1 NEAR notes)",
+      "hash": "FigLF6hSRFSgomJFqNAvQiV9A1WzdQCub2ZPyvxboayg"
+    }
   ]
 }

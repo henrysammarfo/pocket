@@ -127,6 +127,13 @@ export function walletPolicy(d: DelegateJson): { usd: number; method: string } {
       const v = amt(args.amount);
       return { usd: priced(args.price, 'near', v), method: a.method };
     }
+    case 'send_private': {
+      // Into the private pool: a decimal field element and exactly one 0.1 NEAR note.
+      if (typeof args.commitment !== 'string' || !/^[0-9]{1,78}$/.test(args.commitment)) return deny(400, 'Bad commitment.');
+      const v = amt(args.amount);
+      if (v !== 10n ** 23n) return deny(400, 'A private note is exactly 0.1 NEAR.');
+      return { usd: priced(args.price, 'near', v), method: a.method };
+    }
     case 'owner_action':
       if (typeof args.payload !== 'string' || args.payload.length > 8192 || typeof args.public_key !== 'string' || !ED25519.test(args.public_key) || typeof args.signature !== 'string' || !/^[0-9a-f]{128}$/.test(args.signature)) return deny(400, 'Bad owner message.');
       return { usd: 0, method: a.method };

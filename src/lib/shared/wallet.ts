@@ -33,6 +33,8 @@ export const microUsdOf = (units: bigint, p: PricePayload) => (units * BigInt(p.
 /** Gas allowance on the device key, in yocto NEAR: what the key may burn if it ever pays its own gas. */
 export const DEVICE_ALLOWANCE = (25n * 10n ** 22n).toString(); // 0.25 NEAR
 export const SEND_GAS = 60n * 10n ** 12n;
+/** send_private: the pool deposit hashes 20 tree levels with MiMC, so it needs more gas. */
+export const PRIVATE_GAS = 250n * 10n ** 12n;
 export const TRADE_GAS = 280n * 10n ** 12n;
 export const RULE_GAS = 50n * 10n ** 12n;
 

@@ -15,7 +15,10 @@ export const MAKER = swap(dep.maker);
 export const FAUCET = swap(dep.faucet);
 export const RELAYER = swap(dep.relayer);
 export const USDC = dep.usdc;
-const d2 = dep as typeof dep & { market?: string; walletCodeHash?: string; quoteKey?: string };
+const d2 = dep as typeof dep & { market?: string; walletCodeHash?: string; quoteKey?: string; pool?: string };
+/** Pocket private pool: 0.1 NEAR notes, Groth16 proofs checked on chain (contracts/pool). */
+export const POOL = d2.pool ? swap(d2.pool) : '';
+export const POOL_NOTE_NEAR = '0.1';
 /** Pocket maker contract: settles paper trades against signed quotes (contracts/maker). */
 export const MARKET = d2.market ? swap(d2.market) : '';
 /** Code hash of the Pocket wallet global contract every new account uses (contracts/wallet). */
