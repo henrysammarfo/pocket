@@ -1,13 +1,15 @@
 # On chain limits: testnet attack run
 
-Branch `onchain-limits`. Root `pocket-7e2413.testnet`, market `market.pocket-7e2413.testnet`, wallet global code hash `C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz`. Command: `npm run test:onchain` (`tests/onchain/limits.mts`). Every link opens the transaction on NearBlocks testnet.
+Branch `onchain-limits`, run on 15 Nov 2026 (Africa/Accra, UTC+0). Root `pocket-7e2413.testnet`, market `market.pocket-7e2413.testnet`, wallet global code hash `C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz`. Command: `npm run test:onchain` (`tests/onchain/limits.mts`). Every link opens the transaction on NearBlocks testnet.
+
+**Result: 67 passed, 0 failed.**
 
 ```text
 Pocket on chain limits, testnet attack run
 root pocket-7e2413.testnet wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz market market.pocket-7e2413.testnet
 
 1. signup makes a wallet account with a limited phone key
-   A olamwhe70xf.pocket-7e2413.testnet https://testnet.nearblocks.io/txns/CX5rSzhSxCv4VkKkrvM9GCtaQmoxw4YLqmfcQb5G6TFM
+   A olamwhenffw.pocket-7e2413.testnet https://testnet.nearblocks.io/txns/EEoGBJYyTTWuTWGqrZ8gENujZ7h1TWHp5MAgvDx4rUGT
   ok account runs the Pocket wallet global contract (code hash matches)
   ok phone key is a function call key for its own account only
   ok phone key may call only the device methods
@@ -17,7 +19,7 @@ root pocket-7e2413.testnet wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoK
   ok faucet paid 1,000 pUSD into the wallet
 
 2. a normal send through the relayer
-  ok send $50 pUSD gasless through the relayer https://testnet.nearblocks.io/txns/BtkBo6ah6gBysKBdBBetKKcpYTjvvJ4U99iBhWt3SCbo
+  ok send $50 pUSD gasless through the relayer https://testnet.nearblocks.io/txns/5oo6dD7qD3wwTTvZiq8mv6nnB391eUa3MNu9J8YjqpLd
   ok B received $50
   ok the wallet counted $50 against the 24 hour cap
 
@@ -29,7 +31,7 @@ root pocket-7e2413.testnet wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoK
 4. caps, signed by the phone key and sent straight to the chain
   ok a $150 send is refused on chain (per send cap $100)
   ok refused send changed nothing
-  ok $100 send within caps goes through https://testnet.nearblocks.io/txns/92791YoveBkXUwmrVTGxXegdPbrNC1orjhWyhPgipY24
+  ok $100 send within caps goes through https://testnet.nearblocks.io/txns/GfHt6LhfgMty9H9a9EWcRrBktfJe1Cy6dRajZ454i7uS
   ok USDC send fails (no USDC in the account), and the callback gives the reservation back
   ok failed USDC send does not count: still $150 used
   ok next $50 reaches exactly $200 for the day
@@ -73,7 +75,7 @@ root pocket-7e2413.testnet wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoK
 
 8. trades only with the market, all or nothing
   ok server signs the quote for the market contract
-  ok buy $20 of TSLAon through the wallet and the market https://testnet.nearblocks.io/txns/HeB2AfkhNngN3fD6q2SXKZv3YiqtmsudKckeqSMVehs3
+  ok buy $20 of TSLAon through the wallet and the market https://testnet.nearblocks.io/txns/5bbzbSjudbhTiNFCA31s1tZUnmkwm6jmmdw1jN87mrza
   ok a tampered quote is refunded in full by the market (server skipped)
   ok B's quote used by A is refunded in full
   ok a used quote replayed is refunded in full
@@ -83,6 +85,18 @@ root pocket-7e2413.testnet wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoK
   ok recovery key adds a new limited phone key, gasless
   ok the phone key cannot add keys, even through the relayer
 
-57 passed, 0 failed
-{"accounts":{"A":"olamwhe70xf.pocket-7e2413.testnet","B":"benmwhe7axr.pocket-7e2413.testnet","C":"cynmwhe8tyl.pocket-7e2413.testnet","D":"danmwhe9bsl.pocket-7e2413.testnet"},"pass":57,"fail":0}
+10. receiver check, request money link, receipts CSV
+  ok receiver check blocks a Pocket system contract: That is a Pocket system contract, not a person. Money sent there would be stuck.
+  ok receiver check blocks an account that does not exist on chain
+  ok receiver check warns on a first time receiver
+  ok receiver check blocks a mainnet name
+  ok the relayer refuses a send to a blocked receiver: Pocket will not send there: That is a Pocket system contract, not a person. Money sent there would be stuck.
+  ok a new request is pending
+  ok paying with the request memo marks it paid https://testnet.nearblocks.io/txns/3XgXvmix7kspgCtcLDQpoDaZ5CAGp6TFFepXjtqz4Ugi
+  ok after paying once, the receiver check allows B
+  ok sending it back with the refund memo marks it refunded https://testnet.nearblocks.io/txns/Haq6fkQsPJvi37hsecZF4zXf3nZddXd5pemokFVUSHEy
+  ok receipts CSV for E has 4 rows including the request payment
+
+67 passed, 0 failed
+{"accounts":{"A":"olamwhenffw.pocket-7e2413.testnet","B":"benmwhenpgj.pocket-7e2413.testnet","C":"cynmwhep886.pocket-7e2413.testnet","D":"danmwhepqe0.pocket-7e2413.testnet","E":"elimwheqs5q.pocket-7e2413.testnet"},"pass":67,"fail":0}
 ```

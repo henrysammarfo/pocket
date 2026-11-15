@@ -486,3 +486,78 @@ fn relayed_owner_call_is_guarded_by_the_access_key() {
     w.propose_limits(l);
     assert!(w.get_pending().is_some(), "still waits for the delay");
 }
+
+// ---------- model based checks: random sends over random hours against a simple reference ----------
+// A small deterministic generator, so failures repeat exactly.
+struct Lcg(u64);
+impl Lcg { fn next(&mut self) -> u64 { self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); self.0 >> 33 } }
+
+fn model_run(seed: u64) {
+    let (mut w, mut c) = setup();
+    let mut r = Lcg(seed);
+    let mut log: Vec<(u64, u128)> = vec![]; // (hour, amount) of sends that got through
+    let mut hour = 0u64;
+    for _ in 0..60 {
+        hour += r.next() % 5; // 0 to 4 hours later
+        c.ts = T0 + hour * HOUR;
+        c.apply();
+        let amt = (r.next() % 130 + 1) as u128 * USD; // 1 to 130 dollars, some over the per send cap
+        let window: u128 = log.iter().filter(|(h, _)| hour < h + 24).map(|(_, a)| *a).sum();
+        let want_ok = amt <= 100 * USD && window + amt <= 200 * USD;
+        let got = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| { w.send_token(PUSD.into(), bob(), U128(amt), None); })).is_ok();
+        assert_eq!(got, want_ok, "seed {seed} hour {hour} amount {amt} window {window}");
+        if got { log.push((hour, amt)); }
+        let window_after: u128 = log.iter().filter(|(h, _)| hour < h + 24).map(|(_, a)| *a).sum();
+        assert_eq!(w.get_spent().usd.0, window_after, "seed {seed}: spent matches the model");
+        assert!(window_after <= 200 * USD, "seed {seed}: never over the daily cap");
+    }
+}
+#[test] fn model_seed_1() { model_run(1); }
+#[test] fn model_seed_2() { model_run(2); }
+#[test] fn model_seed_3() { model_run(3); }
+#[test] fn model_seed_4() { model_run(4); }
+#[test] fn model_seed_5() { model_run(5); }
+#[test] fn model_seed_6() { model_run(6); }
+#[test] fn model_seed_7() { model_run(7); }
+#[test] fn model_seed_8() { model_run(8); }
+#[test] fn model_many_seeds() { for s in 100..140 { model_run(s); } }
+
+#[test]
+fn model_failed_sends_are_given_back_in_any_order() {
+    // Reserve several sends, then fail some of the callbacks; the window must equal the successes.
+    let (mut w, mut c) = setup();
+    let mut r = Lcg(99);
+    let mut keep = 0u128;
+    for _ in 0..20 {
+        c.results = None; c.apply();
+        let amt = (r.next() % 9 + 1) as u128 * USD;
+        if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| { w.send_token(PUSD.into(), bob(), U128(amt), None); })).is_err() { continue; }
+        let ok = r.next() % 2 == 0;
+        c.results = Some(ok); c.apply();
+        w.on_sent("usd".into(), (T0 / 1_000_000_000) / 3600, U128(amt));
+        if ok { keep += amt; }
+    }
+    c.results = None; c.apply();
+    assert_eq!(w.get_spent().usd.0, keep);
+}
+
+#[test]
+fn model_lowering_never_lets_more_through() {
+    for s in 0..20u64 {
+        let (mut w, c) = setup();
+        let mut r = Lcg(s);
+        let mut l = limits();
+        l.usd_per_day = U128((r.next() % 200) as u128 * USD);
+        l.usd_per_send = U128(((r.next() % 100) as u128).min(l.usd_per_day.0 / USD) * USD);
+        w.lower_limits(l.clone());
+        let mut total = 0u128;
+        for _ in 0..30 {
+            c.apply();
+            let amt = (r.next() % 60 + 1) as u128 * USD;
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| { w.send_token(PUSD.into(), bob(), U128(amt), None); })).is_ok() {
+                assert!(amt <= l.usd_per_send.0); total += amt;
+            }
+        }
+        assert!(total <= l.usd_per_day.0, "seed {s}");
+    }
+}

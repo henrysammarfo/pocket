@@ -9,7 +9,10 @@ import bs58 from 'bs58';
 import { newKey, keyFromString, b64encode, signNep413 } from '../../src/lib/shared/nep413';
 import { buildPayload } from '../../src/lib/shared/intents';
 import { MARKET, PUSD, ROOT, STOCK_TOKENS, USDC, VERIFIER, WALLET_CODE_HASH, txUrl } from '../../src/lib/shared/deployment';
-import { createAccount, faucet, quote, relay, submitTransfer, type DelegateJson } from '../../src/lib/server/pool';
+import { createAccount, faucet, quote, relay, receiverCheck, submitTransfer, type DelegateJson } from '../../src/lib/server/pool';
+import { store } from '../../src/lib/server/store';
+import { newRequestId, refundMemo, requestMemo, requestStatus } from '../../src/lib/shared/request';
+import { receiptsCsv, parseCsv } from '../../src/lib/shared/csv';
 import { DEVICE_ALLOWANCE, DEVICE_METHODS, RULE_GAS, SEND_GAS, TRADE_GAS, defaultLimits, withDaily, type Limits } from '../../src/lib/shared/wallet';
 import { rpc, view, viewAccessKey, viewAccount, latestBlock } from '../../src/lib/shared/rpc';
 import { summarize, fnCall, signAndSend } from '../../src/lib/server/tx';
@@ -17,7 +20,10 @@ import { summarize, fnCall, signAndSend } from '../../src/lib/server/tx';
 let pass = 0, fail = 0;
 const results: string[] = [];
 let lastErr = '';
-const ok = (c: unknown, m: string) => { if (c) { pass++; results.push('PASS ' + m); console.log('  ok', m); } else { fail++; results.push('FAIL ' + m); console.log('  FAIL', m, '\n     last error:', lastErr.slice(0, 400)); } };
+// The latest transaction this check sent, so the log links refused attacks on NearBlocks too.
+let lastHash = '';
+const ok = (c: unknown, m0: string) => {
+  const m = lastHash && !m0.includes('nearblocks') ? `${m0} ${txUrl(lastHash)}` : m0; lastHash = ''; if (c) { pass++; results.push('PASS ' + m); console.log('  ok', m); } else { fail++; results.push('FAIL ' + m); console.log('  FAIL', m, '\n     last error:', lastErr.slice(0, 400)); } };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const USD = 1_000_000n;
 const pusd = async (a: string) => BigInt(await view<string>(VERIFIER, 'mt_balance_of', { account_id: a, token_id: PUSD.assetId }));
@@ -45,6 +51,7 @@ async function direct1(signer: string, k: K, receiver: string, actions: Action[]
   try {
     const raw = await rpc('send_tx', { signed_tx_base64: b64encode(signed.encode()), wait_until: wait ? 'EXECUTED_OPTIMISTIC' : 'INCLUDED' });
     const s = summarize(raw, hash);
+    lastHash = hash;
     lastErr = s.failures.join(' ') + ' logs: ' + s.logs.join(' | ');
     return { ok: s.ok, err: s.failures.join(' '), hash, logs: s.logs };
   } catch (e) {
@@ -257,6 +264,34 @@ ok(rest.ok && fk?.permission?.FunctionCall?.receiver_id === A.account, 'recovery
 const badRestore = await relayTry(await delegate(A.account, A.device, A.account, [{ type: 'addKey', publicKey: newKey().publicKey, methods: [...DEVICE_METHODS], allowance: DEVICE_ALLOWANCE }]), ip());
 ok(!badRestore.ok, 'the phone key cannot add keys, even through the relayer');
 
+// ---------- 10. receiver check, request links, receipts CSV ----------
+console.log('\n10. receiver check, request money link, receipts CSV');
+const E = await user('eli');
+const rc1 = await receiverCheck(E.account, VERIFIER);
+ok(rc1.verdict === 'block' && rc1.reasons.some((x) => x.code === 'service'), 'receiver check blocks a Pocket system contract: ' + rc1.reasons.map((x) => x.text).join(' '));
+const rc2 = await receiverCheck(E.account, `nobody${Date.now().toString(36)}.testnet`);
+ok(rc2.verdict === 'block' && rc2.reasons.some((x) => x.code === 'missing'), 'receiver check blocks an account that does not exist on chain');
+const rc3 = await receiverCheck(E.account, A.account);
+ok(rc3.verdict === 'warn' && rc3.reasons.some((x) => x.code === 'first_time'), 'receiver check warns on a first time receiver');
+const rc4 = await receiverCheck(E.account, 'bob.near');
+ok(rc4.verdict === 'block' && rc4.reasons[0].code === 'mainnet', 'receiver check blocks a mainnet name');
+const toVerifier = await relayTry(await delegate(E.account, E.device, E.account, [sendTok(VERIFIER, 1n * USD)]), ip());
+ok(!toVerifier.ok && /will not send there/.test(toVerifier.err), 'the relayer refuses a send to a blocked receiver: ' + toVerifier.err.slice(0, 120));
+const req = { id: newRequestId(), account: B.account, amount: '5', token: 'pUSD' as const, note: 'test lunch', at: Date.now() };
+await store.addRequest(req);
+ok(requestStatus(req, await store.activity(B.account, 500)).status === 'pending', 'a new request is pending');
+const payReq = await relayTry(await delegate(E.account, E.device, E.account, [{ ...sendTok(B.account, 5n * USD), args: { ...sendTok(B.account, 5n * USD).args, memo: requestMemo(req.id) } }]), ip());
+const st1 = requestStatus(req, await store.activity(B.account, 500));
+ok(payReq.ok && st1.status === 'paid' && st1.payer === E.account, 'paying with the request memo marks it paid ' + (payReq.r ? txUrl(payReq.r.hash) : payReq.err));
+const rc5 = await receiverCheck(E.account, B.account);
+ok(rc5.verdict === 'allow', 'after paying once, the receiver check allows B');
+await sleep(1500);
+const refund = await relayTry(await delegate(B.account, B.device, B.account, [{ ...sendTok(E.account, 5n * USD), args: { ...sendTok(E.account, 5n * USD).args, memo: refundMemo(req.id) } }]), ip());
+const st2 = requestStatus(req, await store.activity(B.account, 500));
+ok(refund.ok ? st2.status === 'refunded' : /daily|limit|cap/i.test(refund.err), refund.ok ? 'sending it back with the refund memo marks it refunded ' + txUrl(refund.r!.hash) : 'refund refused only because B is at its daily cap: ' + refund.err.slice(0, 100));
+const csv = parseCsv(receiptsCsv(await store.activity(E.account, 500), 'https://pocket.test'));
+ok(csv.length >= 3 && csv.slice(1).some((r) => r.includes(payReq.r?.hash || 'x')), `receipts CSV for E has ${csv.length - 1} rows including the request payment`);
+
 console.log(`\n${pass} passed, ${fail} failed`);
-console.log(JSON.stringify({ accounts: { A: A.account, B: B.account, C: C.account, D: D.account }, pass, fail }));
+console.log(JSON.stringify({ accounts: { A: A.account, B: B.account, C: C.account, D: D.account, E: E.account }, pass, fail }));
 process.exit(fail ? 1 : 0);

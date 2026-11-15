@@ -67,21 +67,37 @@ Sends reserve the amount before the token call and the callback gives it back if
 
 ```bash
 npm run verify:chain     # market code and the wallet global code hash match vendor/pocket_maker.wasm and vendor/pocket_wallet.wasm
-npm run test:contracts   # Rust unit tests for the wallet (40) and market (13) contracts
-npm run test:onchain     # testnet attack suite (needs .env.local from npm run setup): 57 checks
+npm run test:contracts   # Rust unit tests for the wallet (51, including model based checks) and market (13) contracts
+npm run test:onchain     # testnet attack suite (needs .env.local from npm run setup): 67 checks
 ```
 
 
-**Explorer links from the latest testnet attack run** (57 passed, 0 failed):
+**Explorer links from the latest testnet attack run** (67 passed, 0 failed):
 
 | Step | Transaction |
 | --- | --- |
-| A olamwhe70xf.pocket-7e2413.testnet | [tx](https://testnet.nearblocks.io/txns/CX5rSzhSxCv4VkKkrvM9GCtaQmoxw4YLqmfcQb5G6TFM) |
-| send $50 pUSD gasless through the relayer | [tx](https://testnet.nearblocks.io/txns/BtkBo6ah6gBysKBdBBetKKcpYTjvvJ4U99iBhWt3SCbo) |
-| $100 send within caps goes through | [tx](https://testnet.nearblocks.io/txns/92791YoveBkXUwmrVTGxXegdPbrNC1orjhWyhPgipY24) |
-| buy $20 of TSLAon through the wallet and the market | [tx](https://testnet.nearblocks.io/txns/HeB2AfkhNngN3fD6q2SXKZv3YiqtmsudKckeqSMVehs3) |
+| olamwhenffw.pocket-7e2413.testnet | [tx](https://testnet.nearblocks.io/txns/EEoGBJYyTTWuTWGqrZ8gENujZ7h1TWHp5MAgvDx4rUGT) |
+| send $50 pUSD gasless through the relayer | [tx](https://testnet.nearblocks.io/txns/5oo6dD7qD3wwTTvZiq8mv6nnB391eUa3MNu9J8YjqpLd) |
+| $100 send within caps goes through | [tx](https://testnet.nearblocks.io/txns/GfHt6LhfgMty9H9a9EWcRrBktfJe1Cy6dRajZ454i7uS) |
+| buy $20 of TSLAon through the wallet and the market | [tx](https://testnet.nearblocks.io/txns/5bbzbSjudbhTiNFCA31s1tZUnmkwm6jmmdw1jN87mrza) |
+| paying with the request memo marks it paid | [tx](https://testnet.nearblocks.io/txns/3XgXvmix7kspgCtcLDQpoDaZ5CAGp6TFFepXjtqz4Ugi) |
+| sending it back with the refund memo marks it refunded | [tx](https://testnet.nearblocks.io/txns/Haq6fkQsPJvi37hsecZF4zXf3nZddXd5pemokFVUSHEy) |
 
 Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
+
+## Receipts export, request links and receiver checks (this branch)
+
+**Receipts as CSV.** Activity has a download button that saves every receipt as a CSV file: date in UTC, type, asset, amount (minus for money out), dollars for trades, the other account, the memo, the transaction id, a link to the Pocket receipt and a link to NearBlocks. Text that a spreadsheet would run as a formula gets a leading apostrophe, so a memo someone sent you cannot run code in Excel or Google Sheets. Code: `src/lib/shared/csv.ts`, tests: `tests/unit/receipts.test.ts`.
+
+**Request money links.** Wallet, Request money makes a link like `/pay/ama?r=k3j9x0q2m1zp` for an amount in pUSD or USDC with an optional note. The payer opens it, sees who is asking and how much, and pays with one hold. The payment carries the memo `pocket request <id>`, and the link and your list show **Pending**, then **Paid** with the payer and the receipt, and **Refunded** once you send the same amount back to the payer with one tap (memo `pocket refund <id>`). The status is worked out from transactions the chain accepted, never from what someone typed. Code: `src/lib/shared/request.ts`, tests: `tests/unit/requests.test.ts` and section 10 of the testnet run.
+
+**Receiver check: allow, warn or block, with reasons.** Before every send Pocket looks at who gets the money.
+
+* **Block:** not a valid NEAR name, your own account, a NEAR mainnet name (Pocket is testnet only), a Pocket system or token contract, an account on your block list, an account outside your allow only list, or a named account that does not exist on chain.
+* **Warn:** you never paid them before, the account is outside Pocket, it is a smart contract rather than a Pocket wallet, it is an unused implicit address, Pocket could not reach the chain, or the name looks like someone you paid before (one letter off, swapped letters, 0 for o, 1 for l, rn for m, the same name under another root).
+* **Allow:** a saved contact or someone you paid before.
+
+The send screen shows the reasons and will not let you hold to send on a block. The server runs the same check again before it pays gas and refuses a block, so a modified app cannot skip it; the wallet contract enforces your block and allow lists on chain as well. Code: `src/lib/shared/receiver.ts`, tests: `tests/unit/receiver.test.ts`.
 
 ## How it works
 
