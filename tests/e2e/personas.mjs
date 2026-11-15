@@ -69,6 +69,7 @@ if (run('efua')) {
   await P.step('welcome and chat fit the phone', async () => { await P.overflow('chat'); await P.jargon('chat'); await P.shot('chat'); });
   await P.step('wallet shows money in plain dollars', async () => { await P.funded(); await P.overflow('wallet'); await P.jargon('wallet'); await P.shot('wallet'); P.ok(/\$/.test(await P.p.locator('.pcard').innerText()), 'wallet card shows a dollar balance'); });
   await P.step('asks what a recovery key is', async () => { const r = await P.ask('I am new to crypto. What is my recovery key and what happens if I lose my phone?'); const wrong = /\b(12|24)[ -]word|seed phrase|word phrase you were given|under security|find it in (your )?settings/i.exec(r.reply); P.ok(/recover|key|phone/i.test(r.reply) && /backup key|new phone|another phone/i.test(r.reply) && !(wrong && !/not (a|in)|isn.t|never/i.test(r.reply.slice(Math.max(0, wrong.index - 40), wrong.index))), 'explains the recovery key correctly: ' + r.reply.slice(0, 160).replace(/\s+/g, ' ')); if (JARGON.test(r.reply)) P.snag('reply uses jargon: ' + r.reply.match(JARGON)[0]); });
+  await P.step('private balance page fits the phone', async () => { await P.p.goto(BASE + '/private'); await P.p.locator('[data-testid="private-balance"]').waitFor({ timeout: 30000 }); await P.p.waitForTimeout(2500); await P.overflow('private'); await P.jargon('private'); await P.shot('private'); P.ok(/NEAR/.test(await P.p.locator('[data-testid="private-balance"]').innerText()), 'private balance shows a NEAR amount'); });
   await P.step('settings fit and explain limits', async () => { await P.p.goto(BASE + '/settings'); await P.p.waitForTimeout(2500); await P.overflow('settings'); await P.jargon('settings'); await P.shot('settings'); });
   await P.step('tap targets', async () => { const small = await P.p.evaluate(() => [...document.querySelectorAll('button, a, input[type=checkbox]')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (r.width < 24 || r.height < 24); }).map((e) => (e.getAttribute('aria-label') || e.textContent || e.tagName).trim().slice(0, 30))); if (small.length) P.snag('small tap targets on settings: ' + small.slice(0, 5).join(', ')); else P.ok(true, 'all tap targets at least 24px'); });
   await P.close();
@@ -152,6 +153,15 @@ if (run('ama')) {
   await P.step('asks what is stored', async () => { await P.p.goto(BASE + '/chat'); const r = await P.ask('What do you store about me and who can see my chats?'); P.ok(/browser|device|enclave/i.test(r.reply) && /public/i.test(r.reply) || /browser|enclave/i.test(r.reply), 'answer: ' + r.reply.slice(0, 200).replace(/\s+/g, ' ')); });
   await P.step('chat text not sent to third parties', async () => { if (P.hosts.has('vercel.live')) P.snag('vercel.live (the Vercel preview toolbar) loads on preview deployments only; production does not load it');
     const third = [...P.hosts].filter((h) => !h.endsWith('vercel.app') && h !== 'vercel.live' && !/fastnear|near\.org|nearblocks|googleapis|gstatic|vercel-insights|vercel-scripts/.test(h)); P.ok(third.length === 0, 'hosts contacted by the browser: ' + [...P.hosts].join(', ')); });
+  await P.step('private balance page says what is hidden and what is not', async () => {
+    await P.p.goto(BASE + '/private'); await P.p.locator('[data-testid="private-balance"]').waitFor({ timeout: 30000 }); await P.p.waitForTimeout(3000); await P.shot('private-page');
+    const t = await P.p.locator('body').innerText();
+    P.ok(/Hidden: which deposit paid which receiver/.test(t) && /Not hidden/.test(t) && /timing/i.test(t) && /limits still apply/i.test(t), 'page lists hidden, not hidden, the timing risk and that limits still apply');
+    P.ok(/pool\.pocket-7e2413\.testnet/.test(t), 'page links the pool contract');
+    if (await P.p.locator('[data-testid="needs-v3"]').count()) P.snag('Add to private balance is off for this account: preview signups still get wallet v1 code until wallet v3 is deployed as the global contract (needs about 22.5 testnet NEAR)');
+    else P.ok(true, 'this account can add to a private balance');
+  });
+  await P.step('asks how to send privately', async () => { const r = await P.ask('Can I send money so people on the blockchain cannot see who paid whom?'); P.ok(/private balance|private send|private pool/i.test(r.reply) && /0\.1 NEAR|visible|still see|timing/i.test(r.reply), 'chat explains private send and what stays visible: ' + r.reply.slice(0, 200).replace(/\s+/g, ' ')); });
   await P.step('balances are public on chain', async () => { await P.p.goto(BASE + '/privacy'); await P.p.waitForTimeout(1500); const t = await P.p.locator('body').innerText(); if (!/public/i.test(t)) P.snag('privacy page does not say that balances and sends are public on NEAR'); else P.ok(true, 'privacy page says balances and sends are public on chain'); await P.shot('privacy-page'); });
   await P.close();
 }
@@ -196,6 +206,11 @@ if (run('mallory')) {
     P.ok(o.status() >= 400, `fake owner message refused (${o.status()}): ${(await o.text()).slice(0, 100)}`);
     const pr = await rq.get(BASE + '/api/price?token=nep141:pusd.' + ROOT);
     P.ok(pr.status() === 400, `Pocket will not sign a pUSD price (${pr.status()})`);
+    const g = await rq.post(BASE + '/api/pool/withdraw', { data: { proof: { pi_a: ['1'], pi_b: [], pi_c: [] }, root: 'x', nullifier_hash: '1', recipient: 'mal.testnet' } });
+    P.ok(g.status() === 400, `garbage proof refused by the pool route (${g.status()})`);
+    const vec = JSON.parse(fs.readFileSync(new URL('../../contracts/pool/tests/vector.json', import.meta.url), 'utf8')).withdraw;
+    const f = await rq.post(BASE + '/api/pool/withdraw', { data: { ...vec, recipient: me } });
+    P.ok(f.status() >= 400 && /pool refused|root|proof/i.test(await f.text()), `a real proof for another tree and receiver is refused on chain (${f.status()})`);
     const x = await rq.get(`${BASE}/send/to?to=${encodeURIComponent('<img src=x onerror=alert(1)>')}`);
     P.ok(!(await x.text()).includes('<img src=x onerror'), 'script in the to field is not reflected raw');
   });
@@ -228,6 +243,15 @@ if (run('judge')) {
     const pkg = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
     const cmds = [...md.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]); const missing = [...new Set(cmds)].filter((c) => !pkg.scripts[c]);
     P.ok(missing.length === 0, `npm commands in README exist (${new Set(cmds).size})` + (missing.length ? ', missing: ' + missing.join(', ') : ''));
+  });
+  await P.step('README private pool claims check out on chain', async () => {
+    const md = fs.readFileSync(new URL('../../README.md', import.meta.url), 'utf8');
+    P.ok(/## Private pool/.test(md) && /What is hidden/i.test(md) && /What is not hidden/i.test(md) && /trust/i.test(md), 'README has a private pool section with hidden, not hidden and trust assumptions');
+    const q = await fetch('https://rpc.testnet.fastnear.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'call_function', finality: 'final', account_id: 'pool.' + ROOT, method_name: 'get_info', args_base64: btoa('{}') } }) }).then((x) => x.json());
+    const info = JSON.parse(Buffer.from(q.result.result).toString());
+    P.ok(info.denomination === '100000000000000000000000' && info.leaves >= 6, `pool on chain: 0.1 NEAR notes, ${info.leaves} deposits`);
+    const keys = await fetch('https://rpc.testnet.fastnear.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'view_access_key_list', finality: 'final', account_id: 'pool.' + ROOT } }) }).then((x) => x.json());
+    const n = (keys.result?.keys || []).length; if (n) P.snag(`pool account still has ${n} access key(s); README must say so`); else P.ok(true, 'pool account has no access keys, so nobody can change its code');
   });
   await P.step('live app from the README', async () => {
     await P.p.goto(BASE + '/'); await P.p.waitForTimeout(2500); await P.shot('landing');
