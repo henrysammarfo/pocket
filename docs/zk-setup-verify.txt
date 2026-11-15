@@ -1,0 +1,31 @@
+[INFO]  snarkJS: Reading r1cs
+[INFO]  snarkJS: Reading tauG1
+[INFO]  snarkJS: Reading tauG2
+[INFO]  snarkJS: Reading alphatauG1
+[INFO]  snarkJS: Reading betatauG1
+[INFO]  snarkJS: Circuit hash: 
+		5349c479 2acb77d2 ff609698 6bc81948
+		9e182620 684c7a67 c58a85e8 c8cc672d
+		df1c3f84 1bb451ae 44adf89d e215783c
+		966f9f8b 10a01ad6 6ab2ea90 4db4b847
+[INFO]  snarkJS: Circuit Hash: 
+		5349c479 2acb77d2 ff609698 6bc81948
+		9e182620 684c7a67 c58a85e8 c8cc672d
+		df1c3f84 1bb451ae 44adf89d e215783c
+		966f9f8b 10a01ad6 6ab2ea90 4db4b847
+[INFO]  snarkJS: -------------------------
+[INFO]  snarkJS: contribution #2 final beacon:
+		7e8acb5e 80316074 53077c70 3cb85df5
+		6334d21c 07e4e262 36d92c04 cbe06c0b
+		8d342756 a177a527 09faac02 f3adca89
+		90436667 ac8d8b81 e70a79fa 0d59547e
+[INFO]  snarkJS: Beacon generator: 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+[INFO]  snarkJS: Beacon iterations Exp: 10
+[INFO]  snarkJS: -------------------------
+[INFO]  snarkJS: contribution #1 pocket testnet:
+		3d2aaa2d 3c46f0fc 0cbda820 e8006418
+		54fb5271 86f548f1 7e28d5b8 6b497de2
+		9b54e811 cfdb2146 c8962392 3b22eb5c
+		fbdeca9a 7a9ba9d8 b6b83428 787d1f97
+[INFO]  snarkJS: -------------------------
+[INFO]  snarkJS: ZKey Ok!

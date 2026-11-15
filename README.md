@@ -26,7 +26,7 @@ This branch, `onchain-limits`, moves the spending rules from Pocket's server int
 
 **How it works.** At signup Pocket creates your account, points it at the Pocket wallet contract (a NEAR global contract fixed by its code hash, so nobody can swap the code under you), and adds two keys in one transaction:
 
-1. A **phone key** kept in the browser. It is a function call access key that can only call your own account, only these methods: `send_near`, `send_usdc`, `send_token`, `trade`, `lower_limits`, `cancel_pending`. It has a gas allowance of 0.25 NEAR and it cannot attach a deposit, add keys, deploy code or call any other contract.
+1. A **phone key** kept in the browser. It is a function call access key that can only call your own account, only these methods: `send_near`, `send_usdc`, `send_token`, `trade`, `lower_limits`, `cancel_pending`, `owner_action`, and on the `private-pool` branch `send_private` ([list in code](src/lib/shared/wallet.ts)). It has a gas allowance of 0.25 NEAR and it cannot attach a deposit, add keys, deploy code or call any other contract.
 2. A **recovery key**, the only full access key. Pocket shows it once, you copy or download it, and it is never stored in the browser.
 
 Pocket still pays gas for normal use through the relayer (NEP-366 meta transactions), so the phone key's allowance is only spent if you send a transaction yourself.
@@ -129,7 +129,45 @@ Trade off, said plainly: with no full access key nobody can redeploy or delete t
 
 **Private AI only, on by default.** Chat, photos and voice run only on NEAR AI Cloud inside an attested TEE. If NEAR AI is busy or at Pocket's daily cap, Pocket fails closed: chat answers with its built in helper and nothing goes to Groq. You can turn this off in Settings, Privacy. Settings, Private AI now checks the TEE evidence in your own browser, straight against NEAR AI Cloud with a fresh random nonce, so the check does not depend on Pocket's server.
 
-**What stays public.** Balances and sends on NEAR testnet are public, like any public ledger; anyone who knows your account name can see them. NEAR's Confidential Intents would hide that, but it runs on mainnet only and NEAR Intents has no testnet, so Pocket does not claim it. It is the planned path for a mainnet version.
+**What stays public.** Normal balances and sends on NEAR testnet are public, like any public ledger; anyone who knows your account name can see them. The `private-pool` branch adds a private balance and private sends, see [Private pool](#private-pool-branch-private-pool). NEAR's Confidential Intents would hide more, but it runs on mainnet only and NEAR Intents has no testnet, so Pocket does not claim it.
+
+## Private pool (branch `private-pool`)
+
+Built after the deadline on its own branch, like the sections above. `main` as submitted is unchanged and still works. Preview: https://pocket-git-private-pool-teamtitanlink.vercel.app (its own env vars and its own preview database, `pocket_onchain_preview`, never production's).
+
+**What it is.** A fixed size note pool in the [tornado-core](https://github.com/tornadocash/tornado-core) design, built from the [hideyour.cash](https://github.com/hideyour-cash/hideyour-cash/tree/6f27e38ec543bc392c00c9201c19f783a485b655) NEAR mixer's MIT code: its withdraw circuit, its Groth16 verifier crate and its MiMC crate, ported to near-sdk 5. Every file says what it took and from which commit; the full list is [docs/SOURCES.md](docs/SOURCES.md). Contract: [`pool.pocket-7e2413.testnet`](https://testnet.nearblocks.io/address/pool.pocket-7e2413.testnet) ([source](contracts/pool/src/lib.rs)).
+
+1. **Add to private balance.** The phone makes a random secret and nullifier and keeps them. The wallet's `send_private` ([code](contracts/wallet/src/lib.rs)) checks the same caps as a NEAR send, then puts exactly 0.1 NEAR and the commitment MiMC(secret, nullifier) into the pool, which adds it to a depth 20 Merkle tree on chain.
+2. **Private send.** The phone builds a Groth16 proof in the browser ([code](src/lib/shared/zkpool.ts)) that it knows the secret of *some* leaf, without saying which, bound to the receiver. Pocket's relayer submits it ([route](src/app/api/pool/withdraw/route.ts)); the pool checks the proof with NEAR's alt_bn128 host functions, records the nullifier hash and pays the receiver 0.1 NEAR. The note's secret never reaches Pocket's server.
+
+**Proof on the explorer.** Deposits: [GoWrSmLw…](https://testnet.nearblocks.io/txns/GoWrSmLwCNSAZ9FaeT814v4pd7T4qd9wZ2PFEVdwt5pg) and [EV39AmU7…](https://testnet.nearblocks.io/txns/EV39AmU7j3nNNd6nXgjgBXtJvM2yAStKRXUS2hPtGpTF) show who put 0.1 NEAR in. The withdrawal [EtZX2gJG…](https://testnet.nearblocks.io/txns/EtZX2gJGhRweNXQ2zZ9QFQYpiRXCXB5pXCHsAW2sFy63) shows the relayer calling the pool and the pool paying a brand new account; its arguments are a proof, a root and a nullifier hash, and nothing in it names a depositor. No single transaction shows sender, receiver and amount together.
+
+**Limits still hold for private sends** (Henry's requirement). Money enters the pool only through `send_private`, which reserves the amount against the wallet's NEAR caps and its dollar caps (at a Pocket signed price) before the deposit, the same counters as public sends. Live run on a wallet capped at 0.1 NEAR per send and 0.2 per day: two private sends passed, a third was [refused on chain](https://testnet.nearblocks.io/txns/J2XZMLz3DBoyCQTGwXzwuYFT2kAcCihDnKgVhZLnxBiK), a 0.2 NEAR one was [refused](https://testnet.nearblocks.io/txns/44gXFiu3T2pqztwQaXbWbu9sZCqNdvA3jDXyVHNaLW2N), and a public send after them was [refused](https://testnet.nearblocks.io/txns/3Ab5uQ93DX7R3m6CpnXdWjaKkDZBT667Q8dbcKsPPptu) too. Full table: [docs/TEST_REPORT.pool.md](docs/TEST_REPORT.pool.md).
+
+**What is hidden.** Which deposit paid which receiver. The size of your private balance: it is notes on your phone, not a number on chain.
+
+**What is not hidden.**
+* That your account put 0.1 NEAR into the pool, and that the receiver got 0.1 NEAR out. All notes are the same size, so the amount does not link them, but it is visible.
+* The crowd you hide in is everyone who used this pool: 6 deposits on testnet today ([`get_info`](https://testnet.nearblocks.io/address/pool.pocket-7e2413.testnet)). With so few, timing can link a deposit to a send. Waiting between the two helps; a busy mainnet pool would help more.
+* Pocket's relayer sees your IP address and the receiver when it submits a private send (both are public on chain anyway, the IP is not).
+* Only NEAR, only 0.1 NEAR notes. pUSD, USDC and stocks are not private.
+
+**Trust assumptions.**
+* The Groth16 setup's phase 2 was one contribution by this project ([verify log](docs/zk-setup-verify.txt)); phase 1 is the public [PSE perpetual powers of tau](https://github.com/privacy-scaling-explorations/perpetualpowersoftau). Whoever runs a single party phase 2 could forge proofs if they kept its secret. We did not, but you must trust that; real money needs a multi party ceremony.
+* Neither the circuit nor the contracts have been audited. They pass the tests listed in the report.
+* The pool account still has its deploy key while Henry reviews this branch (see the report for whether it has been removed). While it exists, whoever holds it could replace the code.
+* Losing the phone loses the notes. The Private balance page has Copy my notes; anyone with that text can spend them.
+
+**What does not work yet, said plainly.** Preview signups still get the older wallet code, so their Add to private balance button is off with a plain reason; they can receive private sends. Deploying wallet v3 as the global contract needs about 22.5 testnet NEAR and the testnet faucet answered 429 all day ([failed attempt](https://testnet.nearblocks.io/txns/E1CQAotyW57L2XvtdsETXdz2D4UcvkZefJXhhygS1f3o)). Once funded, `node scripts/bootstrap-pool.mjs` deploys it and new signups get private sends with no code change.
+
+**Check it yourself.**
+
+```bash
+npm run test:contracts                  # wallet (83, 8 of them send_private), market (13), pool (19, with a real proof)
+npm test                                 # 343 TypeScript unit tests, 6 for the pool
+npx tsx scripts/pool-testnet.mts         # deposit, private withdraw and 5 attacks on testnet (needs testnet keys)
+npx tsx scripts/pool-limits-testnet.mts  # private sends against a wallet's caps on testnet
+```
 
 ## Receipts export, request links and receiver checks (this branch)
 

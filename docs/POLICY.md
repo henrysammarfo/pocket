@@ -105,3 +105,22 @@ On the `onchain-limits` branch the caps above are enforced by the contract. What
 * The rolling day uses hourly slots (23 to 24 hours).
 * Accounts made on `main` keep the older server enforced flow (L1, R3 to R6 above), where the browser key is a full access key.
 * Rate limits, the faucet and the keep floor remain server and client rules.
+
+## Private pool rules (branch `private-pool`)
+
+Enforced by `contracts/pool/src/lib.rs` (**chain**) and `contracts/wallet/src/lib.rs` `send_private` (**chain**), with a shape check in the relayer (**server**). Tests named are in `contracts/pool/src/tests.rs`, `contracts/wallet/src/tests.rs` and `tests/unit/private-pool.test.ts`; live runs in [TEST_REPORT.pool.md](TEST_REPORT.pool.md).
+
+| Id | Rule | Where | Test |
+| --- | --- | --- | --- |
+| Z1 | A deposit attaches exactly one note (0.1 NEAR) | chain, `deposit` | `wrong_deposit_amount_is_refused` |
+| Z2 | A commitment is a field element and can be deposited once | chain, `deposit` | `commitment_outside_the_field_is_refused`, `same_commitment_twice_is_refused` |
+| Z3 | A withdrawal needs a Groth16 proof that verifies against the verifying key fixed at init, for one of the last 30 roots | chain, `withdraw` | `valid_proof_pays_once`, `forged_proof_is_refused`, `unknown_root_is_refused`, `proof_before_the_note_exists_is_refused`; testnet [EE6JEmUh…](https://testnet.nearblocks.io/txns/EE6JEmUhtDNWGN5sg5FgWHwNbzX1gEekRsWqpEu1zCqH) |
+| Z4 | A nullifier hash pays once | chain, `withdraw` | `double_spend_is_refused`; testnet [4pRuESDg…](https://testnet.nearblocks.io/txns/4pRuESDgFN2zpUehAzAXBtgqnCXKMG1yfLroecwy1fYi) |
+| Z5 | Recipient, relayer and fee are public inputs of the proof, so nobody can redirect a payout or add a fee | chain + circuit | `changing_the_recipient_breaks_the_proof`, `changing_the_fee_breaks_the_proof`, `changing_the_relayer_breaks_the_proof`; testnet [Cm2M13QH…](https://testnet.nearblocks.io/txns/Cm2M13QHXotyGM7fcjqPJTc2oWNSvgpaiQkdZbCgNTte), [3ZiRa1UV…](https://testnet.nearblocks.io/txns/3ZiRa1UVr8DJQmuq4eKA544Pfs5peGbEuhYniYzGatAV) |
+| Z6 | A failed payout makes the note spendable again | chain, `on_payout` | `failed_payout_frees_the_note` |
+| Z7 | The pool has no owner and no admin method | chain | read `contracts/pool/src/lib.rs`; whether the deploy key is still on the account is stated in the README |
+| L1 | Money enters the pool from a Pocket wallet only through `send_private`, which checks NEAR on, the receiver rules (block list, allow list), the NEAR per send and 24 hour caps and the dollar caps at a Pocket signed price, before the deposit, sharing the counters with public sends | chain, wallet | `private_send_*` tests; testnet [J2XZMLz3…](https://testnet.nearblocks.io/txns/J2XZMLz3DBoyCQTGwXzwuYFT2kAcCihDnKgVhZLnxBiK), [44gXFiu3…](https://testnet.nearblocks.io/txns/44gXFiu3T2pqztwQaXbWbu9sZCqNdvA3jDXyVHNaLW2N), [3Ab5uQ93…](https://testnet.nearblocks.io/txns/3Ab5uQ93DX7R3m6CpnXdWjaKkDZBT667Q8dbcKsPPptu) |
+| L2 | A failed pool deposit gives the reserved cap back | chain, wallet `on_sent` | `failed_pool_deposit_gives_the_cap_back` |
+| R-Z | The relayer pays for `send_private` only with a numeric commitment and exactly 0.1 NEAR, and for pool withdrawals only with a well formed proof (20 per hour per IP) | server, `walletPolicy`, `poolWithdraw` | `tests/unit/private-pool.test.ts`; persona Mallory |
+
+What these rules do not cover: once money is in the pool, spending a note is not capped, because a capped withdrawal would have to say which wallet it came from, which is exactly what the pool hides. A thief with the phone and its notes can spend the private balance, which is at most what went in under the caps. Keep the private balance small, as with cash.
