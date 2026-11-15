@@ -94,6 +94,11 @@ Every commit below was made after the deadline, on 15 Nov 2026 UTC, first on the
 - [`fef935a`](https://github.com/henrysammarfo/pocket/commit/fef935a7dafe2966e2f559ddbb50165f4eb9b23f) Larger tap targets, Verify no longer clips, and the landing badge sits higher so it does not cover the chat bubble.
 - [`43b8f3a`](https://github.com/henrysammarfo/pocket/commit/43b8f3a552c74c343ad8df0ecf5a0f9fd4900fba) Invest and charts show a plain fallback if prices cannot be loaded, instead of staying on Connecting.
 - [`d89d707`](https://github.com/henrysammarfo/pocket/commit/d89d7072747cb75bfcfb5dc0bc45c5ab5eca8c4a) Landing mockups use Test money, Sending is free, and @username, with the model name removed.
+- [`3ab27b1`](https://github.com/henrysammarfo/pocket/commit/3ab27b1a3919797a1c2f0b0d5eaebfd51ecb556e) README: add the post-deadline UI fix commits to the After the deadline list
+- [`d56f109`](https://github.com/henrysammarfo/pocket/commit/d56f1095a5bbd321a9e9cb17cae08443c0c9d467) Load the NEAR chart from CoinGecko in parallel, fall back to Coinbase Exchange candles, and only show the plain fallback after the request finishes.
+- [`3933a12`](https://github.com/henrysammarfo/pocket/commit/3933a12d8ee5c8d24d0416f54af2150c6229935c) Show Prices from public market data in the app. Named sources stay in the docs.
+- [`b176707`](https://github.com/henrysammarfo/pocket/commit/b17670782f5526e10e1e9719587098310292d5db) Profile shows @username and a single line account id with ellipsis and a copy button. Settings no longer repeats the username.
+- [`28553be`](https://github.com/henrysammarfo/pocket/commit/28553be0dac9683c9480982f480c6afc0983b069) Make chart range chips, swap tokens, Get started, the landing pill, Contacts and See all, and settings switches at least 44px.
 - This commit, which adds the later main commits to this list.
 
 ## On chain spending limits (this branch)
