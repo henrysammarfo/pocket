@@ -37,6 +37,7 @@ function Pay({ user }: { user: string }) {
           <div className="fine">@{u} asks for</div>
           <div style={{ fontSize: '2.4rem', fontWeight: 700, lineHeight: 1.1 }}>{fmt(Number(req.amount))} <span style={{ fontSize: '.45em', opacity: 0.6 }}>{req.token}</span></div>
           {req.note && <div>&ldquo;{req.note}&rdquo;</div>}
+          {req.due && req.status === 'pending' && <div className={req.overdue ? 'errline' : 'fine'} data-testid="due">{req.overdue ? 'Overdue: it was due ' : 'Due by '}{new Date(req.due).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</div>}
           <div><StatusChip status={req.status} /></div>
           {req.status !== 'pending' && req.paidTx && <div className="fine">Paid by {req.payer}. <Link href={`/r/${req.paidTx}`}>Receipt</Link></div>}
           {req.status === 'refunded' && req.refundTx && <div className="fine">Refunded. <Link href={`/r/${req.refundTx}`}>Refund receipt</Link></div>}

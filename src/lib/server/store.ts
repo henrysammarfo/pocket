@@ -69,6 +69,7 @@ class Neon implements Store {
       await this.sql`create index if not exists pocket_chat_thread on pocket_chat (account, thread, id desc)`;
       await this.sql`create table if not exists pocket_request (id text primary key, account text not null, amount text not null, token text not null, note text not null, at timestamptz not null default now())`;
       await this.sql`create index if not exists pocket_request_account on pocket_request (account, at desc)`;
+      await this.sql`alter table pocket_request add column if not exists due timestamptz`;
       await this.sql`create table if not exists pocket_thread (account text not null, id text not null, title text not null, primary key (account, id))`;
     })();
   }
@@ -112,9 +113,9 @@ Neon.prototype.clearChat = async function (this: Neon, account: string, thread?:
   if (!thread) { await this.sql`delete from pocket_chat where account = ${account}`; await this.sql`delete from pocket_thread where account = ${account}`; return; }
   await this.sql`delete from pocket_chat where account = ${account} and thread = ${thread}`; await this.sql`delete from pocket_thread where account = ${account} and id = ${thread}`;
 };
-const toReq = (x: Record<string, unknown>): PayRequest => ({ id: String(x.id), account: String(x.account), amount: String(x.amount), token: x.token as PayRequest['token'], note: String(x.note), at: new Date(x.at as string).getTime() });
+const toReq = (x: Record<string, unknown>): PayRequest => ({ id: String(x.id), account: String(x.account), amount: String(x.amount), token: x.token as PayRequest['token'], note: String(x.note), due: x.due ? new Date(x.due as string).getTime() : null, at: new Date(x.at as string).getTime() });
 Neon.prototype.addRequest = async function (this: Neon, r: PayRequest) {
-  await this.ready; await this.sql`insert into pocket_request (id, account, amount, token, note, at) values (${r.id}, ${r.account}, ${r.amount}, ${r.token}, ${r.note}, ${new Date(r.at).toISOString()})`;
+  await this.ready; await this.sql`insert into pocket_request (id, account, amount, token, note, at, due) values (${r.id}, ${r.account}, ${r.amount}, ${r.token}, ${r.note}, ${new Date(r.at).toISOString()}, ${r.due ? new Date(r.due).toISOString() : null})`;
 };
 Neon.prototype.getRequest = async function (this: Neon, id: string) {
   await this.ready; const r = await this.sql`select * from pocket_request where id = ${id}`; return r.length ? toReq(r[0]) : null;

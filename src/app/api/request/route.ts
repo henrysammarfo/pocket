@@ -16,7 +16,7 @@ export const POST = handler(async (req) => {
   await limit('req:' + a, 30, 3600);
   const c = cleanRequest(await body(req));
   if (!c.ok) throw new HttpError(400, c.reason);
-  const r = { id: newRequestId(), account: a, amount: c.amount, token: c.token, note: c.note, at: Date.now() };
+  const r = { id: newRequestId(), account: a, amount: c.amount, token: c.token, note: c.note, due: c.due, at: Date.now() };
   await store.addRequest(r);
   return { ...r, status: 'pending', path: requestPath(a.slice(0, -ROOT.length - 1), r.id) };
 });

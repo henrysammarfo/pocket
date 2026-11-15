@@ -264,6 +264,6 @@ export function downloadReceiptsCsv(items: ReceiptItem[]) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 export type RequestView = PayRequest & RequestStatus & { path?: string };
-export const createRequest = (amount: string, token: 'pUSD' | 'USDC', note: string) => api<RequestView>('/api/request', { amount, token, note });
+export const createRequest = (amount: string, token: 'pUSD' | 'USDC', note: string, due = '') => api<RequestView>('/api/request', { amount, token, note, due: due || undefined });
 export const myRequests = () => api<{ items: RequestView[] }>('/api/request');
 export const getRequest = (id: string) => api<RequestView>(`/api/request/${encodeURIComponent(id)}`);

@@ -75,3 +75,17 @@ describe('requestStatus', () => {
     }
   });
 });
+
+import { cleanDue } from '@/lib/shared/request';
+describe('request due dates', () => {
+  const now = Date.parse('2026-11-15T07:00:00Z');
+  it('no due date is fine', () => expect(cleanDue('', now)).toEqual({ ok: true, due: null }));
+  it('today counts until the end of the day in UTC', () => expect(cleanDue('2026-11-15', now)).toEqual({ ok: true, due: Date.parse('2026-11-15T23:59:59Z') }));
+  it('a date next week', () => expect(cleanDue('2026-11-22', now).ok).toBe(true));
+  it.each(['2026-11-14', '2025-01-01'])('a past date %s is refused', (d) => expect(cleanDue(d, now)).toMatchObject({ ok: false, reason: expect.stringMatching(/passed/) }));
+  it.each(['2026-02-30', '2026-13-01', '15/11/2026', 'tomorrow', '2026-1-5'])('a bad date %s is refused', (d) => expect(cleanDue(d, now).ok).toBe(false));
+  it('more than a year ahead is refused', () => expect(cleanDue('2028-01-01', now)).toMatchObject({ ok: false, reason: expect.stringMatching(/year/) }));
+  it('cleanRequest carries the due date', () => expect(cleanRequest({ amount: '5', due: '2026-11-20' }, now)).toMatchObject({ ok: true, due: Date.parse('2026-11-20T23:59:59Z') }));
+  it('a pending request past its due date is overdue', () => expect(requestStatus({ id: 'abcdefghijkl', account: 'a.testnet', amount: '5', token: 'pUSD', note: '', at: now - 864e5 * 3, due: now - 1000 }, [], now)).toEqual({ status: 'pending', overdue: true }));
+  it('before the due date it is just pending', () => expect(requestStatus({ id: 'abcdefghijkl', account: 'a.testnet', amount: '5', token: 'pUSD', note: '', at: now, due: now + 1000 }, [], now)).toEqual({ status: 'pending' }));
+});
