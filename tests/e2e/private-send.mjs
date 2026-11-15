@@ -50,6 +50,9 @@ const canSend = !!(note || hid);
 // The normal Send screen with the Send privately toggle, as a user would do it.
 const to = crypto.randomBytes(32).toString('hex');
 await p.goto(BASE + `/send/to?to=${to}&amt=0.1&asset=NEAR`);
+const cont = p.locator('button:has-text("Continue")');
+await Promise.race([cont.waitFor({ timeout: 60000 }), p.locator('[data-testid="send-privately"]').waitFor({ timeout: 60000 })]).catch(() => {});
+if (await cont.count()) { await cont.first().click(); }
 const tg = p.locator('[data-testid="send-privately"]');
 await tg.waitFor({ timeout: 60000 });
 await p.waitForFunction(() => !document.querySelector('[data-testid="send-privately"]')?.disabled, null, { timeout: 30000 }).catch(() => {});

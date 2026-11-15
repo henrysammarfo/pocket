@@ -79,7 +79,7 @@ function XSend() {
     if (d.kind === 'solana') { setNet('sol'); setTgt({ account: d.address, label: short(d.address), net: 'sol', kind: 'Solana address', why: 'Base58, 32 to 44 characters', pocket: false, exists: true }); return; }
     if (d.kind === 'evm-or-near') {
       const nn = forceNet || net; if (!nn) { setSheet('network'); setTgt({ account: d.address, label: short(d.address), net: 'eth', kind: '0x address', why: 'Could be Ethereum, Polygon or a NEAR 0x account. Pick the network.', pocket: false, exists: true }); return; }
-      setTgt({ account: d.address, label: short(d.address), net: nn, kind: nn === 'near' ? 'NEAR 0x account' : NETS[nn].n + ' address', why: nn === 'near' ? 'NEAR account made from this address' : 'You picked ' + NETS[nn].n, pocket: false, exists: true }); return;
+      setTgt({ account: d.address, label: short(d.address), net: nn, kind: nn === 'near' ? 'NEAR address' : NETS[nn].n + ' address', why: nn === 'near' ? 'NEAR account made from this address' : 'You picked ' + NETS[nn].n, pocket: false, exists: true }); return;
     }
     const qy = d.kind === 'username' ? d.username : d.account;
     try {
@@ -87,7 +87,7 @@ function XSend() {
       if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not existnet.`); return; }
       if (r.account === s.account) { setDerr('That is you.'); return; }
       setNet('near');
-      setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR implicit account' : 'NEAR testnet account', why: r.exists ? r.account : 'This address has never been used on NEAR testnet', pocket: r.pocket, exists: r.exists });
+      setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR address' : 'NEAR account', why: r.exists ? r.account : 'This address has never been used', pocket: r.pocket, exists: r.exists });
     } catch (e) { setDerr(e instanceof Error ? e.message : String(e)); }
   };
   useEffect(() => { const t = sp.get('to'); if (t) runDetect(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
