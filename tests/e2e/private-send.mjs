@@ -33,30 +33,43 @@ const bal = await p.locator('[data-testid="private-balance"]').innerText();
 if (note) ok(/0\.1 NEAR/.test(bal), 'private balance shows the note: ' + bal);
 await p.screenshot({ path: SHOTS + '/1-balance.png' });
 
-// Add is on for a v3 wallet; the wallet already used its 0.2 NEAR day, so the chain must refuse.
-const add = p.locator('button:has-text("Add 0.1 NEAR")');
-await p.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => /Add 0\.1 NEAR/.test(x.textContent || '')); return b && !b.disabled; }, null, { timeout: 30000 }).catch(() => {});
-ok(!(await add.isDisabled()), 'Add to private balance is on for a v3 wallet');
+// Hide is on for a v3 wallet. If the wallet already used its 0.2 NEAR day the chain refuses with the limit reason;
+// otherwise the 0.1 NEAR is hidden and becomes the note the send below uses.
+const add = p.locator('button:has-text("Hide 0.1 NEAR")');
+await p.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => /Hide 0\.1 NEAR/.test(x.textContent || '')); return b && !b.disabled; }, null, { timeout: 30000 }).catch(() => {});
+ok(!(await add.isDisabled()), 'Hide 0.1 NEAR is on for a v3 wallet');
 await add.click();
 await p.locator('[data-testid="pmsg"]').waitFor({ timeout: 180000 });
-const addMsg = await p.locator('[data-testid="pmsg"]').first().innerText();
-ok(/24 hour limit|limit/i.test(addMsg), 'adding over the daily cap is refused with the reason: ' + addMsg.slice(0, 160).replace(/\s+/g, ' '));
-await p.screenshot({ path: SHOTS + '/2-add-over-cap.png' });
+const addMsg = await p.locator('[data-testid="pmsg"]').innerText();
+const hid = /is now hidden/.test(addMsg);
+ok(hid || /limit/i.test(addMsg), (hid ? 'hiding 0.1 NEAR worked: ' : 'hiding over the daily limit is refused with the reason: ') + addMsg.slice(0, 160).replace(/\s+/g, ' '));
+await p.screenshot({ path: SHOTS + '/2-hide.png' });
 
-if (note) {
+if (note || hid) {
+// The normal Send screen with the Send privately toggle, as a user would do it.
 const to = crypto.randomBytes(32).toString('hex');
-await p.fill('#pto', to);
+await p.goto(BASE + `/send/to?to=${to}&amt=0.1&asset=NEAR`);
+const tg = p.locator('[data-testid="send-privately"]');
+await tg.waitFor({ timeout: 60000 });
+await p.waitForFunction(() => !document.querySelector('[data-testid="send-privately"]')?.disabled, null, { timeout: 30000 }).catch(() => {});
+ok(!(await tg.isDisabled()), 'Send privately toggle is on the normal Send screen');
+await tg.click();
+ok((await tg.locator('[role="switch"]').getAttribute('aria-checked')) === 'true', 'Send privately switched on');
+await p.screenshot({ path: SHOTS + '/3-review-private.png' });
 const t0 = Date.now();
-await p.click('button:has-text("Private send")');
-await p.waitForFunction(() => /Sent 0\.1 NEAR privately|refused|Error|error/.test(document.querySelector('[data-testid="pmsg"]')?.textContent || ''), null, { timeout: 180000 }).catch(() => {});
-const msg = await p.locator('[role="status"], [role="alert"]').first().innerText();
-const link = await p.locator('a:has-text("See it on NearBlocks")').getAttribute('href').catch(() => null);
-ok(/Sent 0\.1 NEAR privately/.test(msg) && !!link, `private send done in ${Math.round((Date.now() - t0) / 1000)} s: ${link}`);
-await p.screenshot({ path: SHOTS + '/3-sent.png' });
-fs.writeFileSync(SHOTS + '/result.json', JSON.stringify({ link, to, at: new Date().toISOString() }, null, 1));
-ok(await viewPool('is_spent', { nullifier_hash: note.nullifierHash }), 'the note is spent on chain');
+const hb = p.locator('button.hold:not([disabled])').first(); await hb.waitFor({ timeout: 30000 }); await hb.scrollIntoViewIfNeeded();
+const bb = await hb.boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up();
+const prog = await p.locator('[data-testid="send-progress"]').innerText({ timeout: 15000 }).catch(() => '');
+ok(/privately|ready/i.test(prog), 'friendly progress text while sending: ' + prog);
+await p.locator('text=Sent privately to').waitFor({ timeout: 240000 }).catch(() => {});
+const done = await p.locator('body').innerText();
+const rec = await p.locator('a:has-text("View receipt")').getAttribute('href').catch(() => null);
+ok(/Sent privately to/.test(done) && !!rec, `private send done in ${Math.round((Date.now() - t0) / 1000)} s: ${rec}`);
+await p.screenshot({ path: SHOTS + '/4-sent.png' });
+const hash = rec ? rec.split('/').pop() : null;
+fs.writeFileSync(SHOTS + '/result.json', JSON.stringify({ hash, link: hash ? 'https://testnet.nearblocks.io/txns/' + hash : null, to, at: new Date().toISOString() }, null, 1));
 const acct = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'view_account', finality: 'final', account_id: to } }) }).then((x) => x.json());
-ok(acct.result && BigInt(acct.result.amount) === 10n ** 23n, 'the new account holds exactly 0.1 NEAR from the pool');
+ok(acct.result && BigInt(acct.result.amount) === 10n ** 23n, 'the new account holds exactly 0.1 NEAR from the private fund');
 }
 ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
 

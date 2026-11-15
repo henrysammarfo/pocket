@@ -9,7 +9,10 @@ const ONLY = (process.env.ONLY || '').split(',').filter(Boolean);
 const log = []; let fails = 0, snags = 0;
 const out = (who, kind, m) => { const line = `[${who}] ${kind} ${m}`; console.log(line); log.push(line); if (kind === 'FAIL') fails++; if (kind === 'SNAG') snags++; };
 const b = await chromium.launch();
-const JARGON = /\b(ed25519|nonce|yocto|delegate action|NEP-\d+|meta transaction|access key|function call key|borsh|wasm|global contract)\b/i;
+// Words a family money app should not show. Account names (like ama.pocket-7e2413.testnet) are removed before the scan.
+const JARGON = /\b(ed25519|nonce|yocto|delegate action|NEP-\d+|meta ?transactions?|meta tx|access keys?|function call key|borsh|wasm|global contract|smart contracts?|wallet contract|contracts?|pool|proofs?|zero knowledge|zk|nullifiers?|relayers?|wallet v\d|commitments?|on ?chain|blockchain|testnet|mainnet|gas|tgas|implicit account|groth16|merkle)\b/i;
+const ACCOUNT_IDS = /\b[a-z0-9_-]+(\.[a-z0-9_-]+)*\.testnet\b|\b[0-9a-f]{64}\b/gi;
+export const findJargon = (t) => t.replace(ACCOUNT_IDS, ' ').match(JARGON);
 
 async function persona(who, ctxOpts) {
   const ctx = await b.newContext({ acceptDownloads: true, ...ctxOpts });
@@ -21,7 +24,7 @@ async function persona(who, ctxOpts) {
   const shot = (n) => p.screenshot({ path: `${SHOTS}/${who}-${n}.png`, fullPage: false }).catch(() => {});
   const step = async (name, fn) => { try { await fn(); } catch (e) { ok(false, `${name}: ${String(e.message).split('\n')[0].slice(0, 220)}`); await shot('error-' + name.replace(/\W+/g, '-')); } };
   const overflow = async (where) => { const w = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth); if (w > 2) snag(`${where}: page is ${w}px wider than the screen (sideways scroll)`); };
-  const jargon = async (where) => { const t = await p.evaluate(() => document.body.innerText); const m = t.match(JARGON); if (m) snag(`${where}: jargon on screen: "${m[0]}"`); };
+  const jargon = async (where) => { const t = await p.evaluate(() => document.body.innerText); const m = findJargon(t); ok(!m, `${where}: no jargon on screen${m ? ` (found "${m[0]}")` : ''}`); };
   const signup = async (u, name) => {
     await p.goto(BASE + '/welcome');
     await p.fill('input[aria-label="Pick a username"]', u); if (name) await p.fill('input[aria-label="Your first name"]', name);
@@ -144,6 +147,9 @@ if (run('ama')) {
   const P = await persona('ama-privacy', { viewport: { width: 1280, height: 800 } });
   let r0;
   await P.step('sign up', async () => { r0 = await P.signup('ama' + tag, ''); P.ok(!!r0.account, 'signed up ' + r0.account); });
+  await P.step('no jargon on any screen', async () => {
+    for (const path of ['/', '/chat', '/wallet', '/send', '/private', '/activity', '/invest', '/swap', '/request', '/contacts', '/profile', '/settings']) { await P.p.goto(BASE + path); await P.p.waitForTimeout(2500); await P.jargon(path); }
+  });
   await P.step('recovery key not stored', async () => { const st = await P.p.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage })); const k = r0.rec.match(/ed25519:[1-9A-HJ-NP-Za-km-z]+/)?.[0] || 'none'; P.ok(!st.includes(k), 'recovery key is in neither localStorage nor sessionStorage'); });
   await P.step('private AI only is on', async () => {
     await P.p.goto(BASE + '/settings'); const sw = P.p.locator('input[aria-label="Private AI only"]'); await sw.waitFor({ timeout: 20000 });
@@ -156,12 +162,12 @@ if (run('ama')) {
   await P.step('private balance page says what is hidden and what is not', async () => {
     await P.p.goto(BASE + '/private'); await P.p.locator('[data-testid="private-balance"]').waitFor({ timeout: 30000 }); await P.p.waitForTimeout(3000); await P.shot('private-page');
     const t = await P.p.locator('body').innerText();
-    P.ok(/Hidden: which deposit paid which receiver/.test(t) && /Not hidden/.test(t) && /timing/i.test(t) && /limits still apply/i.test(t), 'page lists hidden, not hidden, the timing risk and that limits still apply');
-    P.ok(/pool\.pocket-7e2413\.testnet/.test(t), 'page links the pool contract');
+    P.ok(/Private: who you paid/.test(t) && /Not private/.test(t) && /easier to guess/i.test(t) && /daily limit still applies/i.test(t), 'page lists what is private, what is not, the timing risk and that the daily limit still applies');
+    P.ok(await P.p.locator('a', { hasText: 'How it works' }).count() > 0, 'page links How it works (the README section)');
     if (await P.p.locator('[data-testid="needs-v3"]').count()) P.snag('Add to private balance is off for this account: preview signups still get wallet v1 code until wallet v3 is deployed as the global contract (needs about 22.5 testnet NEAR)');
     else P.ok(true, 'this account can add to a private balance');
   });
-  await P.step('asks how to send privately', async () => { const r = await P.ask('Can I send money so people on the blockchain cannot see who paid whom?'); P.ok(/private balance|private send|private pool/i.test(r.reply) && /0\.1 NEAR|visible|still see|timing/i.test(r.reply), 'chat explains private send and what stays visible: ' + r.reply.slice(0, 200).replace(/\s+/g, ' ')); });
+  await P.step('asks how to send privately', async () => { const r = await P.ask('Can I send money so people on the blockchain cannot see who paid whom?'); const jj = findJargon(r.reply); P.ok(!jj, 'chat answer has no jargon' + (jj ? ` (found "${jj[0]}")` : '')); P.ok(/send privately|private send|hidden balance/i.test(r.reply) && /0\.1 NEAR|visible|still see|timing/i.test(r.reply), 'chat explains private send and what stays visible: ' + r.reply.slice(0, 200).replace(/\s+/g, ' ')); });
   await P.step('balances are public on chain', async () => { await P.p.goto(BASE + '/privacy'); await P.p.waitForTimeout(1500); const t = await P.p.locator('body').innerText(); if (!/public/i.test(t)) P.snag('privacy page does not say that balances and sends are public on NEAR'); else P.ok(true, 'privacy page says balances and sends are public on chain'); await P.shot('privacy-page'); });
   await P.close();
 }
