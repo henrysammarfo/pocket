@@ -5,6 +5,7 @@ import { api } from '@/lib/client/api';
 import { useLive, useLocalActivity, useSession, getContacts } from '@/lib/client/session';
 import { fmt } from './kit';
 import { when } from '@/lib/client/data';
+import { ROOT } from '@/lib/shared/deployment';
 
 type Item = { kind: string; tx: string; data: Record<string, unknown>; at: number };
 export function useActivity() {
@@ -17,7 +18,7 @@ export function useActivity() {
     .sort((a, b) => b.at - a.at);
   return { items: all, loading: !srv.data && !srv.error && local.length === 0 };
 }
-const nameOf = (acct: string) => getContacts().find((c) => c.address === acct)?.name || (acct.endsWith('.pocketnear.testnet') ? '@' + acct.split('.')[0] : acct.length > 24 ? acct.slice(0, 8) + '…' + acct.slice(-6) : acct);
+const nameOf = (acct: string) => getContacts().find((c) => c.address === acct)?.name || (acct.endsWith('.' + ROOT) ? '@' + acct.split('.')[0] : acct.length > 24 ? acct.slice(0, 8) + '…' + acct.slice(-6) : acct);
 export function ActivityRow({ a }: { a: Item }) {
   const d = a.data as Record<string, string>;
   const [Icon, title, val, up] =
