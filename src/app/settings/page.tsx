@@ -115,7 +115,7 @@ function SettingsInner() {
         </section>
         <CreditsMeter />
         <div className="ghead"><b>Sending</b></div>
-        <section className="group"><Link className="cell" href="/contacts"><div className="lft"><span className="ic"><BookUser size={17} aria-hidden /></span><div className="ct">Contacts and saved addresses</div></div><span className="cv">{contacts.length} <ChevronRight size={16} aria-hidden /></span></Link>{cell(Globe, 'Network', 'NEAR testnet', () => setSheet('network'))}</section>
+        <section className="group"><Link className="cell" href="/contacts"><div className="lft"><span className="ic"><BookUser size={17} aria-hidden /></span><div className="ct">Contacts and saved addresses</div></div><span className="cv">{contacts.length} <ChevronRight size={16} aria-hidden /></span></Link>{cell(Globe, 'Network', 'NEAR, test money', () => setSheet('network'))}</section>
         <div className="ghead"><b>Appearance</b><span>Showing {eff === 'black' ? 'black' : 'light'}</span></div>
         <section className="group"><div className="opt3" role="radiogroup" aria-label="Theme">
           {([['light', 'Light', 'l'], ['black', 'Black', 'k'], ['system', 'System', 's']] as const).map(([v, l, c]) => <button key={v} role="radio" aria-checked={pref === v} onClick={() => window.setTheme?.(v)}><span className={'pv ' + c}><i /><i /><i /><b /></span><span>{l}</span><span className="rad"><Check size={14} strokeWidth={3} aria-hidden /></span></button>)}

@@ -11,7 +11,7 @@ const out = (who, kind, m) => { const line = `[${who}] ${kind} ${m}`; console.lo
 const b = await chromium.launch();
 // Words a family money app should not show. Account names (like ama.pocket-7e2413.testnet) are removed before the scan.
 const JARGON = /\b(ed25519|nonce|yocto|delegate action|NEP-\d+|meta ?transactions?|meta tx|access keys?|function call key|borsh|wasm|global contract|smart contracts?|wallet contract|contracts?|pool|proofs?|zero knowledge|zk|nullifiers?|relayers?|wallet v\d|commitments?|on ?chain|blockchain|testnet|mainnet|gas|tgas|implicit account|groth16|merkle)\b/i;
-const ACCOUNT_IDS = /\b[a-z0-9_-]+(\.[a-z0-9_-]+)*\.testnet\b|\b[0-9a-f]{64}\b/gi;
+const ACCOUNT_IDS = /\b[a-z0-9_-]+(\.[a-z0-9_-]+)*\.testnet\b|\b[0-9a-f]{64}\b|https?:\/\/\S+|\b[a-z0-9-]+\.vercel\.app\S*/gi; // account names, addresses and links are not prose
 export const findJargon = (t) => t.replace(ACCOUNT_IDS, ' ').match(JARGON);
 
 async function persona(who, ctxOpts) {
