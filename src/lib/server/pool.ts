@@ -124,7 +124,7 @@ export async function setLimit(signed: SignedNep413) {
 // A user signed transfer inside the verifier: pUSD or a paper stock token, to any NEAR testnet account.
 export async function submitTransfer(signed: SignedNep413, ip: string) {
   const m = checkSigned(signed, 600);
-  if (!isPocketUser(m.signer_id)) throw new HttpError(403, 'Only Pocket accounts can use the Pocket relayer.');
+  if (!isPocketUser(m.signer_id)) throw new HttpError(403, 'Only Pocket accounts get free sends.');
   if (m.intents.length !== 1 || m.intents[0].intent !== 'transfer') throw new HttpError(400, 'Only one transfer per request.');
   const t = m.intents[0];
   const entries = Object.entries(t.tokens || {});
@@ -132,7 +132,7 @@ export async function submitTransfer(signed: SignedNep413, ip: string) {
   const [asset, amt] = entries[0];
   const tok = tokenByAsset(asset);
   if (!tok || !/^\d+$/.test(amt) || BigInt(amt) <= 0n) throw new HttpError(400, 'Unknown token or bad amount.');
-  if (!validAccountId(t.receiver_id) || t.receiver_id === m.signer_id) throw new HttpError(400, 'Bad receiver.');
+  if (!validAccountId(t.receiver_id) || t.receiver_id === m.signer_id) throw new HttpError(400, 'That receiver name is not valid.');
   await limit('relay:' + m.signer_id, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
   await assertKeyOf(m.signer_id, signed.public_key);
@@ -149,9 +149,9 @@ export async function submitTransfer(signed: SignedNep413, ip: string) {
 // ---------- faucet ----------
 export const FAUCET_AMOUNT = '1000';
 export async function faucet(account: string, ip: string) {
-  if (!validAccountId(account) || !account.endsWith('.testnet')) throw new HttpError(400, 'Enter a NEAR testnet account.');
+  if (!validAccountId(account) || !account.endsWith('.testnet')) throw new HttpError(400, 'Enter a NEAR account.');
   if (!isPocketUser(account)) throw new HttpError(403, 'The Pocket faucet is for Pocket accounts.');
-  if (!(await viewAccount(account))) throw new HttpError(400, 'That account does not exist on testnet yet.');
+  if (!(await viewAccount(account))) throw new HttpError(400, 'That account does not exist yet.');
   await limit('faucetip:' + ip, Number(process.env.FAUCET_PER_IP_HOUR || 5), 3600);
   await limit('faucet:' + account, Number(process.env.FAUCET_PER_ACCOUNT_DAY || 3), DAY);
   const key = keyFromString(need('FAUCET'));
@@ -462,15 +462,15 @@ export async function chainInfo() {
  * and takes no fee, so the receiver needs no NEAR and the payout does not come from the sender's account.
  * The contract checks everything; this is only a shape check and a rate limit. */
 export async function poolWithdraw(b: { proof?: { pi_a?: unknown; pi_b?: unknown; pi_c?: unknown }; root?: unknown; nullifier_hash?: unknown; recipient?: unknown }, ip: string) {
-  if (!POOL) throw new HttpError(503, 'The private pool is not set up on this deployment.');
+  if (!POOL) throw new HttpError(503, 'Private send is not available here yet.');
   await limit('poolw:' + ip, 20, 3600);
   const num = (v: unknown) => typeof v === 'string' && /^[0-9]{1,78}$/.test(v);
   const p = b.proof;
   const pts = (v: unknown, n: number, inner?: number): boolean => Array.isArray(v) && v.length === n && v.every((x) => (inner ? pts(x, inner) : num(x)));
-  if (!p || !pts(p.pi_a, 2) || !pts(p.pi_b, 2, 2) || !pts(p.pi_c, 2) || !num(b.root) || !num(b.nullifier_hash)) throw new HttpError(400, 'Bad proof.');
-  if (!validAccountId(b.recipient)) throw new HttpError(400, 'Bad receiver.');
+  if (!p || !pts(p.pi_a, 2) || !pts(p.pi_b, 2, 2) || !pts(p.pi_c, 2) || !num(b.root) || !num(b.nullifier_hash)) throw new HttpError(400, 'This private send could not be checked. Nothing was sent.');
+  if (!validAccountId(b.recipient)) throw new HttpError(400, 'That receiver name is not valid.');
   const args = { proof: { pi_a: p.pi_a, pi_b: p.pi_b, pi_c: p.pi_c }, root: b.root, nullifier_hash: b.nullifier_hash, recipient: b.recipient, relayer: null, fee: '0' };
   const r = await signAndSend(RELAYER, need('RELAYER'), POOL, [fnCall('withdraw', args, 300n)]);
-  if (!r.ok) throw new HttpError(400, 'The pool refused this: ' + r.failures.join('; ').slice(0, 200));
+  if (!r.ok) throw new HttpError(400, 'This private send was refused and nothing moved. Details: ' + r.failures.join('; ').slice(0, 200));
   return { hash: r.hash, pool: POOL };
 }

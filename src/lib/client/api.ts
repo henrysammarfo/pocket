@@ -139,7 +139,7 @@ export async function getQuote(side: 'buy' | 'sell', symbol: string, amount: { u
 export async function trade(q: QuoteRes) {
   const s = must();
   if (s.onchain) {
-    if (!q.market) throw new Error('This server cannot settle trades for on chain wallets yet.');
+    if (!q.market) throw new Error('Trading is not ready for your account yet.');
     const r0 = await metaTx(s, s.account, [{ type: 'functionCall', method: 'trade', args: { pay_token: q.quote.payAsset, pay_amount: q.quote.payUnits, msg: q.market.msg }, gas: TRADE_GAS.toString(), deposit: '0' }]);
     const tok = tokenBySymbol(q.quote.token)!;
     const qty = Number(BigInt(q.quote.side === 'buy' ? q.quote.getUnits : q.quote.payUnits)) / 10 ** tok.decimals;
