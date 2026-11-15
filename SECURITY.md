@@ -28,7 +28,7 @@ No key is ever committed, logged or sent to the client. `.env*` and `.secrets/` 
 `npm run verify:chain` compares the on chain `code_hash` of the verifier and every token with `vendor/defuse.wasm` and `vendor/pocket_token.wasm`. No keys needed.
 
 ## Known limits, said plainly
-* Server rules bind the AI, the relayer and the API, not someone who already holds the device key. Why the browser key is a full access key, and the design that moves the limits on chain, are in [docs/POLICY.md](docs/POLICY.md#what-is-not-enforced-on-chain-and-why).
+* The spending caps are enforced on chain by the wallet contract on each account (branch `onchain-limits`). The browser holds only a function call key for that contract's spending methods; someone who steals it can still spend only within the caps. Server rules remain a second layer. What is not enforced on chain is in [docs/POLICY.md](docs/POLICY.md#what-is-not-enforced-on-chain-and-why).
 * The passkey is a **local approval gate** (WebAuthn user verification in this browser). It is not yet an on chain key; that is on the roadmap.
 * The device key in localStorage is as safe as the browser profile. Users can back it up from Profile.
 * Without Neon (`DATABASE_URL`) the limit and activity store is in memory per server instance.
@@ -37,7 +37,7 @@ No key is ever committed, logged or sent to the client. `.env*` and `.secrets/` 
 Report issues privately to the repo owner.
 
 ## AI, voice and memory
-* AI, voice, memory and credits need a NEP-413 signed session made by the device key (action `pocket.session`, recipient `pocket`, at most 25 hours). The server checks the signature and that the key is a full access key of that Pocket account on chain.
+* AI, voice, memory and credits need a NEP-413 signed session made by the device key (action `pocket.session`, recipient `pocket`, at most 25 hours). The server checks the signature and that the key is a key of that Pocket account on chain (full access, or a function call key for the account's own wallet contract).
 * Without a session, Chat only runs the free built in helper, so nobody can spend another person's AI credits or read their memory.
 * Memory refuses anything that looks like a key, password or seed phrase, holds at most 50 items, and each one can be forgotten in Settings.
 * Audio is passed to the speech provider and never stored. Whisper segments marked as no speech are dropped so noise cannot become a command, and voice requests are always confirmed back before a plan.

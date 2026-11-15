@@ -75,15 +75,29 @@ Tests: `policy.test.ts` "relayer policy" fuzzes 4,000 random JSON bodies (every 
 | F2 | Signups: 5 an hour per IP, 300 a day in total. Relays: 60 an hour per account, 120 per IP. Trades: 60 an hour per account. Limit changes: 30 an hour per account |
 | F3 | The client IP comes from `x-vercel-forwarded-for` or `x-real-ip`, which the client cannot forge on Vercel |
 
+## Wallet contract rules (chain, `contracts/wallet`, branch `onchain-limits`)
+
+Each new account runs the Pocket wallet global contract (code hash in `deployment/testnet.json`, checked by `npm run verify:chain`). A call that breaks any rule panics and the protocol rolls back every state change.
+
+| Id | Rule | Test |
+| --- | --- | --- |
+| W1 | Dollar sends (pUSD, USDC): amount `<= usd_per_send` and the rolling 24 hour total `<= usd_per_day` | `tests.rs` caps, `limits.mts` section 3 |
+| W2 | NEAR sends: per send and per day caps in NEAR, and the balance keeps storage plus 0.01 NEAR | `tests.rs`, `limits.mts` |
+| W3 | Stock tokens: per send and per day caps per token, in units | `tests.rs` |
+| W4 | Action switches (NEAR, USDC, tokens, trades), allow only list, block list | `tests.rs` |
+| W5 | Amounts are reserved before the outgoing call and returned by the callback only if it failed; the callback accepts exactly one promise result and only from the account itself | `tests.rs`, `limits.mts` faked callback |
+| W6 | Trades: at most `max_trade_usd`, only to the configured market, through `mt_transfer_call`; the market pays only for a Pocket signed, unexpired, unused quote for this account, else refunds in full | `contracts/maker/src/tests.rs`, `limits.mts` section 8 |
+| W7 | Lowering rules is instant (phone key allowed). Raising needs a full access key and waits `raise_delay_sec` (default 86400), or is set at once by a direct call from the full key; the phone key can cancel a pending raise | `tests.rs` raise tests, `limits.mts` section 6 |
+| W8 | The phone key is a function call key for the account itself, methods `send_near`, `send_usdc`, `send_token`, `trade`, `lower_limits`, `cancel_pending`, allowance 0.25 NEAR; it cannot attach deposits, add keys or call other contracts | `limits.mts` section 4 |
+| W9 | The verifier holds no key for wallet accounts, so NEP-413 intents signed by the phone key are refused by the verifier | `limits.mts` |
+
 ## What is not enforced on chain, and why
 
-The daily limit and the relayer rules bind the AI, the relayer and the Pocket API. They do not bind someone who already holds the user's device key, because that key can sign intents and submit them to the verifier directly. This is the same trust model as any self custodial wallet: the user is the only party with the key.
+On the `onchain-limits` branch the caps above are enforced by the contract. What remains off chain or outside the contract:
 
-Why the browser key is a full access key today: NEAR function call access keys cannot attach a deposit, and three Pocket actions need one (`add_public_key` and `ft_transfer` need 1 yocto, NEAR sends move NEAR). A function call key scoped to the verifier also does not limit what the verifier lets that key do with in verifier balances, so it would look safer without being safer.
-
-The roadmap design that makes limits hold on chain:
-1. **Spending key and recovery key.** At signup the browser makes two keys. The recovery key is the only full access key and is wrapped by the passkey (WebAuthn PRF) or exported once. The spending key is a function call key on the user's own Pocket policy contract with a small gas allowance.
-2. **Policy contract.** A per user contract holds the in verifier balance and enforces `limit(u)` per day, an allow list of receivers and the keep floor in Rust, then calls the verifier. The spending key can only call it.
-3. **Server verified passkey** for raising limits (WebAuthn assertion checked on the server, not only in the browser).
-
-This keeps today's user experience and moves L1, R3 and the keep floor from server rules to chain rules.
+* The recovery key is a full access key. Whoever holds it controls the account and could remove the contract.
+* On relayed calls NEAR reports the relayer as the signer, so the contract relies on the phone key's method list (which has no raise method) rather than a signer check. Direct calls also check the owner key list.
+* There is no price oracle on chain, so NEAR and stock caps are in units; only pUSD and USDC count as dollars. Trades have their own per trade cap and do not use the daily send cap. Trade prices come from Pocket's signed quote.
+* The rolling day uses hourly slots (23 to 24 hours).
+* Accounts made on `main` keep the older server enforced flow (L1, R3 to R6 above), where the browser key is a full access key.
+* Rate limits, the faucet and the keep floor remain server and client rules.

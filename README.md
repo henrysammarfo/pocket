@@ -14,11 +14,74 @@
 3. Press and hold to approve. You see a receipt with a link to the public record.
 4. Ask for today's news or the Tesla price, or add a receipt photo and ask Pocket to split the bill.
 
-**Safe by design.** The AI never holds your keys and can only suggest. Your rules (a daily limit and an amount to always keep) are checked in code, and your device signs every payment.
+**Safe by design.** The AI never holds your keys and can only suggest. Your rules are checked in code, and your device signs every payment. On the `onchain-limits` branch the caps live in a smart contract on your account and the browser holds only a limited key, see [On chain spending limits](#on-chain-spending-limits-this-branch).
 
 **Private by design.** Chats, photos and voice notes are read by AI running in sealed, checkable hardware on NEAR AI Cloud. Pocket's server keeps no chat text; your history stays in your browser. What this does and does not protect is written down plainly in [What the TEE does and does not protect](#what-the-tee-does-and-does-not-protect).
 
 **Testnet only. No real money.** Test dollars (pUSD), Circle testnet USDC and paper stocks (TSLAon, NVDAon, AAPLon, SPYon, QQQon) with live prices. Test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Hackathon diff: [near-baseline...main](https://github.com/henrysammarfo/pocket/compare/near-baseline...main). Technical detail for reviewers and AI judges starts below.
+
+## On chain spending limits (this branch)
+
+This branch, `onchain-limits`, moves the spending rules from Pocket's server into a NEAR smart contract on every user account. The live site above still runs `main` as submitted. This branch runs on its own fresh testnet deployment, root `pocket-7e2413.testnet`.
+
+**How it works.** At signup Pocket creates your account, points it at the Pocket wallet contract (a NEAR global contract fixed by its code hash, so nobody can swap the code under you), and adds two keys in one transaction:
+
+1. A **phone key** kept in the browser. It is a function call access key that can only call your own account, only these methods: `send_near`, `send_usdc`, `send_token`, `trade`, `lower_limits`, `cancel_pending`. It has a gas allowance of 0.25 NEAR and it cannot attach a deposit, add keys, deploy code or call any other contract.
+2. A **recovery key**, the only full access key. Pocket shows it once, you copy or download it, and it is never stored in the browser.
+
+Pocket still pays gas for normal use through the relayer (NEP-366 meta transactions), so the phone key's allowance is only spent if you send a transaction yourself.
+
+**What the contract enforces on chain.** Every rule below is checked in Rust by `contracts/wallet`. A call that breaks a rule panics, and a panic in NEAR rolls back all state, so nothing moves.
+
+| Rule | Default |
+| --- | --- |
+| Dollar cap per send (pUSD and USDC) | $100 |
+| Dollar cap per rolling 24 hours, counted in hourly slots | $200 |
+| NEAR cap per send and per 24 hours | 1 NEAR and 2 NEAR |
+| Cap per stock token per send and per 24 hours | 5 and 20 shares |
+| Largest single trade | $1,000 |
+| Which actions are allowed: NEAR, USDC, tokens, trades | all on |
+| Allow only list of recipients, and a block list | empty |
+| NEAR sends always leave storage cost plus 0.01 NEAR | always |
+| Trades go only to the Pocket market contract and only at a quote signed by Pocket's quote key, used once, before its deadline | always |
+
+Sends reserve the amount before the token call and the callback gives it back if the call fails, so many sends racing in the same block can never pass the daily cap. In the testnet run, ten $40 sends fired at once from ten keys against a $200 day let exactly five through and the chain refused the other five.
+
+**Changing the rules.** Lowering a cap, adding a block, or narrowing the allow list takes effect at once and the phone key may do it. Raising anything needs the full access recovery key: it either waits out a delay (24 hours by default) and is then applied by the next send, or the phone key may cancel it during the wait. The recovery key can also set rules instantly by calling the contract directly, which is the "full key" path. Whether a change is a raise is decided by the contract, field by field.
+
+**Trades.** The phone key calls `trade` on its own account. The contract checks the trade size and the market account, then moves the tokens through NEAR Intents `mt_transfer_call` to `market.pocket-7e2413.testnet`. The market contract checks Pocket's ed25519 signed quote (account, amounts, deadline, one time id) and either pays out or returns the full amount. A tampered, expired, replayed, or foreign quote gets a full refund.
+
+**Server checks stay as a second layer.** The relayer still checks every meta transaction (allowed methods, no deposit, gas cap, amounts, recipients) and keeps rate limits. The chat and the plan card still check rules before you approve. If the server were compromised, the contract still holds.
+
+**What is not enforced on chain, said plainly.**
+
+* Anyone holding the recovery key controls the account, as with any full access key. It could remove the contract. Keep it offline.
+* When Pocket relays a call, NEAR reports the relayer as the signer, so the contract cannot tell which key signed a relayed call. Relayed calls are limited by the phone key's method list, which leaves out every rule raising method. Direct calls also check the signer is a registered owner key.
+* NEAR and stock caps are counted in units, not dollars, because there is no price oracle on chain. Only pUSD and USDC count as dollars.
+* Trades have their own per trade cap and do not count against the daily send cap. Their price is set by Pocket's signed quote, not by an on chain market.
+* The rolling day uses hourly slots, so a send drops out of the window between 23 and 24 hours later.
+* Accounts made before this branch are not moved over. They keep the old server enforced flow, and the old NEAR Intents routes remain only for them.
+* The browser end to end suites were not rerun against this branch; the testnet attack suite and unit tests below were.
+
+**Check it yourself.**
+
+```bash
+npm run verify:chain     # market code and the wallet global code hash match vendor/pocket_maker.wasm and vendor/pocket_wallet.wasm
+npm run test:contracts   # Rust unit tests for the wallet (40) and market (13) contracts
+npm run test:onchain     # testnet attack suite (needs .env.local from npm run setup): 57 checks
+```
+
+
+**Explorer links from the latest testnet attack run** (57 passed, 0 failed):
+
+| Step | Transaction |
+| --- | --- |
+| A olamwhe70xf.pocket-7e2413.testnet | [tx](https://testnet.nearblocks.io/txns/CX5rSzhSxCv4VkKkrvM9GCtaQmoxw4YLqmfcQb5G6TFM) |
+| send $50 pUSD gasless through the relayer | [tx](https://testnet.nearblocks.io/txns/BtkBo6ah6gBysKBdBBetKKcpYTjvvJ4U99iBhWt3SCbo) |
+| $100 send within caps goes through | [tx](https://testnet.nearblocks.io/txns/92791YoveBkXUwmrVTGxXegdPbrNC1orjhWyhPgipY24) |
+| buy $20 of TSLAon through the wallet and the market | [tx](https://testnet.nearblocks.io/txns/HeB2AfkhNngN3fD6q2SXKZv3YiqtmsudKckeqSMVehs3) |
+
+Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
 
 ## How it works
 
@@ -142,7 +205,7 @@ flowchart LR
 **How Pocket limits the damage if a prompt does leak.**
 * Pocket's server relays chat text to the model and stores none of it. Chat history lives only in your browser. Copies saved by older versions were deleted on 14 Nov 2026, so the `pocket_chat` table now has 0 rows.
 * The AI never holds keys, so a leaked or tampered prompt cannot move money. The model can only propose a plan card.
-* Every send is signed by the key on your own device after you hold to approve, and is checked against your server enforced daily limit and keep amount and the relayer allow list (allowed contracts and methods only, with a cap per send). Today that device key is a full access key on your own testnet account, not a function call key; see the known limit in [Security notes](#security-notes).
+* Every send is signed by the key on your own device after you hold to approve, and is checked against your server enforced daily limit and keep amount and the relayer allow list (allowed contracts and methods only, with a cap per send). On this branch the device key is a function call key that can only call the Pocket wallet contract on your own account, and the contract enforces the caps on chain; see [On chain spending limits](#on-chain-spending-limits-this-branch).
 * Web search queries go to Brave Search through NEAR AI, so a query does leave the enclave for the search provider. When NEAR AI returns no results with real links, that one search falls back to Groq, which is not private.
 
 ## What is stored, where
@@ -161,7 +224,7 @@ flowchart LR
 ## Security notes
 * Testnet only. Every account ends in `.testnet`; the faucet only serves Pocket accounts and is rate limited per account and per IP.
 * Server keys (sponsor, relayer, maker, faucet) live in env vars only; see [.env.example](.env.example). Nothing secret is in the repo.
-* Known limit: the browser key is a full access key on the user's own testnet account, because function call keys cannot attach the 1 yocto deposit that `ft_transfer` and `add_public_key` need. Server rules bind the AI and the relayer, not someone who already holds the key. The design that moves limits on chain (passkey wrapped recovery key, function call spending key on a per user policy contract) is in [docs/POLICY.md](docs/POLICY.md#what-is-not-enforced-on-chain-and-why).
+* The browser key is a function call key scoped to the user's own wallet contract and its spending methods. The wallet contract attaches the 1 yocto deposits itself, so the browser key never needs one. The only full access key is the recovery key, shown once and never stored in the browser. What stays off chain is listed in [On chain spending limits](#on-chain-spending-limits-this-branch) and [docs/POLICY.md](docs/POLICY.md#what-is-not-enforced-on-chain-and-why).
 
 ## One command setup (your own testnet copy)
 Needs Node 20+. [near CLI](https://github.com/near/near-cli-rs) is used if installed, otherwise setup runs it through npx. No Rust needed: the token wasm is prebuilt in `vendor/` with its sha256 (`BUILD_TOKEN=1` rebuilds it with [cargo-near](https://github.com/near/cargo-near)).
