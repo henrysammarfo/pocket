@@ -1,10 +1,12 @@
 'use client';
 // Settings > Private AI: runs a fresh TEE attestation check of every NEAR AI Cloud model Pocket uses
-// (GET /api/attest, new random nonce per model) and shows each check as PASS or FAIL.
+// (new random nonce per model) and shows each check as PASS or FAIL. The check runs in this browser,
+// straight against NEAR AI Cloud, so it does not depend on Pocket's server; /api/attest is the fallback.
 import { useCallback, useEffect, useState } from 'react';
 import { Check, ChevronRight, Cpu, ExternalLink, FileText, Info, Mic, MessageSquareText, Receipt, RefreshCw, ShieldAlert, ShieldCheck, Smartphone, X } from 'lucide-react';
 import { AppShell, BackNav } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
+import { attestAll } from '@/lib/shared/attest';
 import './verified.css';
 
 type Chk = { id: string; label: string; ok: boolean; detail?: string };
@@ -29,13 +31,23 @@ function Inner() {
   const [r, setR] = useState<Report | null>(null);
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
+  const [where, setWhere] = useState<'browser' | 'server' | ''>('');
   const run = useCallback(async () => {
     setBusy(true); setErr('');
     try {
+      // Model names come from Pocket's health page; the evidence comes straight from NEAR AI Cloud.
+      const h = await fetch('/api/health', { cache: 'no-store' }).then((x) => x.json()).catch(() => ({}));
+      const list = [
+        { role: 'chat' as const, title: 'Chat and plans', model: h.aiModel || 'Qwen/Qwen3.6-35B-A3B-FP8' },
+        { role: 'vision' as const, title: 'Receipts and bills', model: h.visionModel || 'Qwen/Qwen3-VL-30B-A3B-Instruct' },
+        { role: 'voice' as const, title: 'Voice notes', model: h.sttModel || 'openai/whisper-large-v3' },
+      ];
+      const mine = await attestAll(list);
+      if (mine.models.some((m) => m.instances > 0)) { setR(mine); setWhere('browser'); return; }
       const res = await fetch('/api/attest', { cache: 'no-store' });
       const j = await res.json();
       if (!res.ok) throw new Error(j?.error || 'The check could not run.');
-      setR(j);
+      setR(j); setWhere('server');
     } catch (e) { setErr(e instanceof Error ? e.message : 'The check could not run.'); }
     finally { setBusy(false); }
   }, []);
@@ -54,7 +66,7 @@ function Inner() {
           <span className={'vbadge ' + state}>{state === 'bad' ? <ShieldAlert size={34} strokeWidth={1.8} aria-hidden /> : <ShieldCheck size={34} strokeWidth={1.8} aria-hidden />}</span>
           <div className="vtitle">{busy ? 'Checking the hardware' : r?.ok ? 'Verified' : err ? 'Check did not run' : 'Not verified'}</div>
           <div className="vsub">{busy ? 'Asking NEAR AI Cloud for fresh evidence with a new random number.' : r?.ok ? 'Your chats, photos and voice notes are processed inside secure hardware that even the host cannot read.' : err || 'One or more checks failed. Pocket switches to its backup AI when NEAR AI is not available.'}</div>
-          {!busy && r && <div className="vmeta"><span className={'vpill ' + (r.ok ? 'ok' : 'bad')}>{passed} of {total} checks passed</span><span className="vpill">Checked {when}</span></div>}
+          {!busy && r && <div className="vmeta"><span className={'vpill ' + (r.ok ? 'ok' : 'bad')}>{passed} of {total} checks passed</span><span className="vpill">Checked {when}</span><span className="vpill" data-testid="attest-where">{where === 'browser' ? 'Checked by your browser' : 'Checked by Pocket\'s server'}</span></div>}
         </section>
 
         {(r?.models || PLACEHOLDER).map((m) => {
