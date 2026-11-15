@@ -103,7 +103,7 @@ BASE=https://pocket-git-onchain-limits-teamtitanlink.vercel.app TO=<a pocket acc
 | paying with the request memo marks it paid | [tx](https://testnet.nearblocks.io/txns/HoBCJQN9HVqjTVAST2MEcW8ZcV5SH9HGQwyx527mXcKa) |
 | sending it back with the refund memo marks it refunded | [tx](https://testnet.nearblocks.io/txns/5ie5LquXhczhfeCKvP3TBwARNPyeYZG9cMcPNr6N7TMe) |
 
-**Test counts on this branch:** 314 TypeScript unit tests (`npm test`), 88 Rust contract tests (75 wallet v2, 13 market), 74 live testnet checks (67 in the full run, plus 7 in the hijacked chat demo, section 11), and a five persona browser run (`npm run e2e:personas`). All passing; the persona results are in [docs/PERSONAS.md](docs/PERSONAS.md).
+**Test counts on this branch:** 336 TypeScript unit tests (`npm test`), 88 Rust contract tests (75 wallet v2, 13 market), 74 live testnet checks (67 in the full run, plus 7 in the hijacked chat demo, section 11), and a five persona browser run (`npm run e2e:personas`). All passing; the persona results are in [docs/PERSONAS.md](docs/PERSONAS.md).
 
 Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
 
