@@ -1,0 +1,68 @@
+{
+ "wallet": "pdemomwhlo3dx.pocket-7e2413.testnet",
+ "pool": "pool.pocket-7e2413.testnet",
+ "limits": {
+  "near_per_send": "0.1 NEAR",
+  "near_per_day": "0.2 NEAR"
+ },
+ "spent": {
+  "usd": "624000",
+  "near": "200000000000000000000000",
+  "tokens": []
+ },
+ "recipient": "8a9e8ab97f0bcaaa8198ac45aa796e2f6f8ca66794cd03c0e17a409ce7ef04c2",
+ "txs": [
+  {
+   "label": "create pdemomwhlo3dx.pocket-7e2413.testnet with the wallet code, a phone key and tight NEAR caps (no full access key)",
+   "hash": "5QPFhKCQntXcUb9HU2gcEumzVecncrz4H9BcgG9bwDPA",
+   "ok": true
+  },
+  {
+   "label": "private send 1 of 0.1 NEAR through the wallet (send_private)",
+   "hash": "2uxmAxN8SaZsWsM8dT88in6N7atBdAjcHFp4x3U3F9Ni",
+   "ok": true
+  },
+  {
+   "label": "private send 2 of 0.1 NEAR through the wallet (send_private)",
+   "hash": "3FbxmCsZSapRKJzZ53kobmupqvsn5njpHhGzxBCnJdy7",
+   "ok": true
+  },
+  {
+   "label": "attack: a third private send in the same 24 hours (over the 0.2 NEAR daily cap)",
+   "hash": "J2XZMLz3DBoyCQTGwXzwuYFT2kAcCihDnKgVhZLnxBiK",
+   "ok": false,
+   "error": "Smart contract panicked: Over your 24 hour limit for NEAR."
+  },
+  {
+   "label": "attack: a third private send in the same 24 hours (over the 0.2 NEAR daily cap)",
+   "hash": "B5My1WCQ7ys5qLeY1fFvhVHyJ2JzJ1xdCFGBHG34srXB",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Over your 24 hour limit for NEAR.\"}}}}"
+  },
+  {
+   "label": "attack: a public send_near after the cap is used up",
+   "hash": "3Ab5uQ93DX7R3m6CpnXdWjaKkDZBT667Q8dbcKsPPptu",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Over your 24 hour limit for NEAR.\"}}}}"
+  },
+  {
+   "label": "attack: one private send of 0.2 NEAR (over the 0.1 NEAR per send cap)",
+   "hash": "44gXFiu3T2pqztwQaXbWbu9sZCqNdvA3jDXyVHNaLW2N",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Over your per send limit for NEAR.\"}}}}"
+  },
+  {
+   "label": "attack: private send without a Pocket signed price (refused by the daily cap, which is checked first; the missing price refusal itself is the unit test private_send_needs_a_signed_price)",
+   "hash": "6dmpU5ACuGXQygoYk4n7x65p7PQZN44mP4zugtyWu7Qz",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Over your 24 hour limit for NEAR.\"}}}}"
+  },
+  {
+   "label": "relayer pays one of those notes to a new account 8a9e8ab9\u2026",
+   "hash": "AK8yFge6kgcFiuTgzBfSdFGx78BgqZUPgJuLhuiEwsjv",
+   "ok": true
+  }
+ ],
+ "at": "2026-11-15T08:57:43.263Z",
+ "note": "Note index 4 in the pool (tx 2uxmAxN8...) cannot be spent: an earlier rerun of this script overwrote its secret. It stays in the pool as an unspendable leaf. The script now appends notes and never overwrites them."
+}
