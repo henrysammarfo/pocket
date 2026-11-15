@@ -24,9 +24,9 @@
 
 The version submitted at the deadline is commit [`dbe5d86`](https://github.com/henrysammarfo/pocket/commit/dbe5d86e42f35e15688252555fb76f34b590f387) (message: *Merge pull request #20 from henrysammarfo/readme-settlemark-name*, 14 Nov 2026 23:08 UTC). That submitted tree still works and can be tested on its own: run `git checkout dbe5d86` and follow the README in that commit, or browse it at [github.com/henrysammarfo/pocket/tree/dbe5d86](https://github.com/henrysammarfo/pocket/tree/dbe5d86e42f35e15688252555fb76f34b590f387). The Try it link at the top is the production site, which served this submitted commit at the deadline; once this branch is merged into main that site may be updated, so the reliable way to test the submitted version is to check out that commit. Nothing listed below was part of the submitted version.
 
-Every commit below was made after the deadline, on 15 Nov 2026 UTC, on the `onchain-limits` and `private-pool` branches. This section is here so a judge can tell later work apart from the submitted version.
+Every commit below was made after the deadline, on 15 Nov 2026 UTC, first on the `onchain-limits` and `private-pool` branches, then on `main`. This section is here so a judge can tell later work apart from the submitted version.
 
-**Commits after `dbe5d86` (oldest first, the same set as `git log dbe5d86..private-pool --oneline --reverse`):**
+**Commits after `dbe5d86` (oldest first, the same set as `git log dbe5d86..main --oneline --reverse`):**
 
 - [`90d4da4`](https://github.com/henrysammarfo/pocket/commit/90d4da41aa9f711baff4c1e65ddb725976f9b532) Add Pocket wallet and market contracts that enforce spending limits on chain
 - [`3a29f8e`](https://github.com/henrysammarfo/pocket/commit/3a29f8ec9509079fd63289e38299a4877cc5c8fa) Deploy the wallet global contract and market to a fresh testnet root and verify their code hashes
@@ -87,7 +87,14 @@ Every commit below was made after the deadline, on 15 Nov 2026 UTC, on the `onch
 - [`3b8f175`](https://github.com/henrysammarfo/pocket/commit/3b8f17555aeee80b16f95f1d2e501c4cbb2a21fe) Fix: a 64 character NEAR address is looked up as itself, not as a Pocket username; fix a typo from the word sweep
 - [`b0c8e7c`](https://github.com/henrysammarfo/pocket/commit/b0c8e7c401954627e0f325c4b416c3c423d7efe6) README: plain words in the app, browser private send tx, current test counts, onchain suite marked as not rerun
 - [`feb6031`](https://github.com/henrysammarfo/pocket/commit/feb60315b7ba0e9a9f97e7e37283e12ffb370047) Relayer calls use 100 TGas so faucet and private send do not reserve 0.3 NEAR
-- This commit, which adds this After the deadline section.
+- [`e63b26b`](https://github.com/henrysammarfo/pocket/commit/e63b26bb5198926aa982894af97c0926dbda9803) README: After the deadline section, with a link to the submitted commit and every later commit
+- [`bcaf44d`](https://github.com/henrysammarfo/pocket/commit/bcaf44d328a83b806ea86895df56ef8f3783e16f) Plain signup and server error messages. Sign up shows @username, not the raw account id.
+- [`87c3a6f`](https://github.com/henrysammarfo/pocket/commit/87c3a6f662f6058bd65c8c84cad1e0a7885dd48e) Plain words in chat, review, pay, swap and recipient errors. Chat avatar is 44px.
+- [`3a37459`](https://github.com/henrysammarfo/pocket/commit/3a374591bd2f99712df8e68c2ceb95a4b27c6789) Show @username on wallet, settings and coin pages. NEAR about text says sending is free. The coin chart has a plain fallback if prices fail.
+- [`fef935a`](https://github.com/henrysammarfo/pocket/commit/fef935a7dafe2966e2f559ddbb50165f4eb9b23f) Larger tap targets, Verify no longer clips, and the landing badge sits higher so it does not cover the chat bubble.
+- [`43b8f3a`](https://github.com/henrysammarfo/pocket/commit/43b8f3a552c74c343ad8df0ecf5a0f9fd4900fba) Invest and charts show a plain fallback if prices cannot be loaded, instead of staying on Connecting.
+- [`d89d707`](https://github.com/henrysammarfo/pocket/commit/d89d7072747cb75bfcfb5dc0bc45c5ab5eca8c4a) Landing mockups use Test money, Sending is free, and @username, with the model name removed.
+- This commit, which adds the later main commits to this list.
 
 ## On chain spending limits (this branch)
 
