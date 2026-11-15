@@ -88,6 +88,7 @@ describe('receiver check: shared list and account age', () => {
   });
   it('a 2 hour old account warns', () => expect(checkReceiver(f('fresh.testnet', { createdMs: 1_000_000_000_000 - 7_200_000, nowMs: 1_000_000_000_000 })).reasons.map((r) => r.code)).toContain('new_account'));
   it('a 3 day old account does not', () => expect(checkReceiver(f('old.testnet', { createdMs: 1_000_000_000_000 - 3 * 86_400_000, nowMs: 1_000_000_000_000 })).reasons.map((r) => r.code)).not.toContain('new_account'));
+  it('a new account you already paid is allowed', () => expect(checkReceiver(f('fresh.testnet', { createdMs: 1_000_000_000_000 - 7_200_000, nowMs: 1_000_000_000_000, paidBefore: ['fresh.testnet'] })).verdict).toBe('allow'));
   it('unknown age never warns or blocks', () => expect(checkReceiver(f('x1.testnet', { createdMs: null })).reasons.map((r) => r.code)).not.toContain('new_account'));
 });
 

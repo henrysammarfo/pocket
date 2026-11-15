@@ -70,7 +70,8 @@ export function checkReceiver(f: ReceiverFacts): Check {
   const paid = (f.paidBefore || []).includes(to);
   if (f.exists === null) add('warn', 'unknown', 'Pocket could not reach NEAR to check this account. Check the name carefully.');
   if (implicit && f.exists === false) add('warn', 'new_implicit', 'This address has never been used. Make sure it is copied exactly.');
-  if (f.createdMs && (f.nowMs ?? Date.now()) - f.createdMs < 86_400_000) add('warn', 'new_account', 'This account was created in the last 24 hours. Scammers often use brand new accounts.');
+  // Someone you already paid or saved is not a stranger, however new their account is.
+  if (!contact && !paid && f.createdMs && (f.nowMs ?? Date.now()) - f.createdMs < 86_400_000) add('warn', 'new_account', 'This account was created in the last 24 hours. Scammers often use brand new accounts.');
   if (f.isContract) add('warn', 'contract', 'This is a smart contract, not a Pocket wallet. It may not be able to send money back.');
   if (!to.endsWith('.' + f.root) && !contact && !paid) add('warn', 'outside', 'This account is outside Pocket. Sends cannot be reversed.');
   if (!contact && !paid) {
