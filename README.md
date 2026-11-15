@@ -20,9 +20,78 @@
 
 **Testnet only. No real money.** Test dollars (pUSD), Circle testnet USDC and paper stocks (TSLAon, NVDAon, AAPLon, SPYon, QQQon) with live prices. Test results: [docs/TEST_REPORT.md](docs/TEST_REPORT.md). Hackathon diff: [near-baseline...main](https://github.com/henrysammarfo/pocket/compare/near-baseline...main). Technical detail for reviewers and AI judges starts below.
 
+## After the deadline (14 Nov 2026 23:59 UTC)
+
+The version submitted at the deadline is commit [`dbe5d86`](https://github.com/henrysammarfo/pocket/commit/dbe5d86e42f35e15688252555fb76f34b590f387) (message: *Merge pull request #20 from henrysammarfo/readme-settlemark-name*, 14 Nov 2026 23:08 UTC). That submitted tree still works and can be tested on its own: run `git checkout dbe5d86` and follow the README in that commit, or browse it at [github.com/henrysammarfo/pocket/tree/dbe5d86](https://github.com/henrysammarfo/pocket/tree/dbe5d86e42f35e15688252555fb76f34b590f387). The Try it link at the top is the production site, which served this submitted commit at the deadline; once this branch is merged into main that site may be updated, so the reliable way to test the submitted version is to check out that commit. Nothing listed below was part of the submitted version.
+
+Every commit below was made after the deadline, on 15 Nov 2026 UTC, on the `onchain-limits` and `private-pool` branches. This section is here so a judge can tell later work apart from the submitted version.
+
+**Commits after `dbe5d86` (oldest first, the same set as `git log dbe5d86..private-pool --oneline --reverse`):**
+
+- [`90d4da4`](https://github.com/henrysammarfo/pocket/commit/90d4da41aa9f711baff4c1e65ddb725976f9b532) Add Pocket wallet and market contracts that enforce spending limits on chain
+- [`3a29f8e`](https://github.com/henrysammarfo/pocket/commit/3a29f8ec9509079fd63289e38299a4877cc5c8fa) Deploy the wallet global contract and market to a fresh testnet root and verify their code hashes
+- [`3f526fe`](https://github.com/henrysammarfo/pocket/commit/3f526fe253c53f95f529782d7c82aa53fa518d8b) Sign up with a limited phone key and a recovery key, and route sends and trades through the wallet contract
+- [`e96ba10`](https://github.com/henrysammarfo/pocket/commit/e96ba1099bc8e6c494d03e884d84506984509c2d) Chat answers live stock prices and knows the current date and time
+- [`7112a14`](https://github.com/henrysammarfo/pocket/commit/7112a1422bc33e4dd231df2b2365f68a85f0c671) Add testnet attack suite and unit tests for on chain limits
+- [`1298356`](https://github.com/henrysammarfo/pocket/commit/129835617a8b9242faa2309ad4409cba158c2f6c) Document what is enforced on chain and what is not
+- [`0aa1095`](https://github.com/henrysammarfo/pocket/commit/0aa10957a204e12f3f6ea56c9a1cfb3c46af209a) Check every receiver before a send: allow, warn or block with reasons, enforced again by the relayer
+- [`70fc6fd`](https://github.com/henrysammarfo/pocket/commit/70fc6fddcf1f590003f43ec755eed30e8aa02694) Export receipts as CSV with formula safe cells
+- [`21a0a48`](https://github.com/henrysammarfo/pocket/commit/21a0a48d5fd7fdd00de940bd8318b97179a31bfd) Request money links that show pending, paid or refunded from chain accepted sends
+- [`3cfb4d2`](https://github.com/henrysammarfo/pocket/commit/3cfb4d2767256a2e47c1f196a83fa22f0fd6e6cf) Deeper tests: model based wallet checks, testnet section for receivers, requests and CSV; docs
+- [`862becb`](https://github.com/henrysammarfo/pocket/commit/862becb7769cb8d126598e9b46c0cb59798055af) Testnet report with explorer links for every check that reached the chain
+- [`d96c441`](https://github.com/henrysammarfo/pocket/commit/d96c441e2f82f0525377d9e27baae70f0bace65d) Browser run for the on chain branch; no Checked chip on a blocked receiver
+- [`9ef7442`](https://github.com/henrysammarfo/pocket/commit/9ef744215078378ebc30295e8f25576f34a23fec) Wallet v2: recovery key signs owner messages (no full access key), Pocket signed prices for dollar caps on NEAR and stocks, shared block list with evidence, new account warning, private AI only by default
+- [`07f96c6`](https://github.com/henrysammarfo/pocket/commit/07f96c65b31fc3fe7fbda9ba9ec05cfdb7fa8bdb) Receiver check on chat plan cards and the review screen: a plan to a blocked account cannot be approved
+- [`8ea0e9a`](https://github.com/henrysammarfo/pocket/commit/8ea0e9a56a36f9fc30135e289966dfe8ecdfb2e4) Persona run fixes: per send cap in the plan check, shared block list at the address step, privacy facts in chat, bigger privacy switch, persona harness
+- [`049f43a`](https://github.com/henrysammarfo/pocket/commit/049f43a0b717d1ef77650e343e07cc15fa5f74a5) Attack run section 11: a hijacked chat tries to pay a known drainer; receiver check, relayer and wallet contract all refuse (7 of 7 on testnet)
+- [`8d33103`](https://github.com/henrysammarfo/pocket/commit/8d331030e09226de37b4d65c6263153f3bfdeccc) Private AI check runs in the browser against NEAR AI Cloud with its own nonce, so it does not trust Pocket's server
+- [`bcc5624`](https://github.com/henrysammarfo/pocket/commit/bcc5624e21150c952d64903206e6e4f5b4082855) Wallet v2 live on testnet: 17 checks on a demo account with no full access key; fix viewAccessKey treating a missing key as present
+- [`6d062a7`](https://github.com/henrysammarfo/pocket/commit/6d062a721c1babc64f7c93b1164326c64d6d1869) README: wallet v2, signed prices, shared block list, private AI only, what stays public
+- [`05aed97`](https://github.com/henrysammarfo/pocket/commit/05aed974310c996b67dcf03e2755f7bbce70ecf2) POLICY: W10 to W13 for wallet v2 and the shared block list
+- [`019ccf1`](https://github.com/henrysammarfo/pocket/commit/019ccf13f7fa75632819f29de4b9d4c2194c3a0f) Request links can carry a due date; pay page and your list show Due by or Overdue
+- [`8398a7d`](https://github.com/henrysammarfo/pocket/commit/8398a7de8bb2693b09e0f3b016ed7dff40829ceb) Chat answers a request money ask with a prefilled request form; persona harness checks it end to end
+- [`425b743`](https://github.com/henrysammarfo/pocket/commit/425b7438e665a5e270ff5860d0d795e0757cfb0f) Persona harness: taps Yes on confirm questions and Go back on the blocked sheet, adds an over cap send for Kofi
+- [`3d35ee4`](https://github.com/henrysammarfo/pocket/commit/3d35ee446ba9383fb65da2b60316b165abc49372) README: 336 unit tests on this branch
+- [`c048144`](https://github.com/henrysammarfo/pocket/commit/c048144faff24252d6beedf3583ef21314125517) Chat explains the recovery key correctly (one key shown once, restore with I have a backup key); persona check fails a seed phrase answer
+- [`b5ed982`](https://github.com/henrysammarfo/pocket/commit/b5ed9828a01ca941ea5aee9e356dfa5df6eff472) Receiver check: no brand new account warning for someone you already paid or saved
+- [`9faef88`](https://github.com/henrysammarfo/pocket/commit/9faef880061a2c948817e6ae8dd7530f9ac33743) Attack run: EXTRA_NEAR sets the gas money per test account
+- [`3a35d05`](https://github.com/henrysammarfo/pocket/commit/3a35d0579981cfeaaf19429a26b0e013a3ce9ed5) Private pool: circuit and contract (adapted from hideyour.cash, credited)
+- [`906132f`](https://github.com/henrysammarfo/pocket/commit/906132ffc03ea9caefa711fe0c0c93fa29fd6c5e) Private pool: shared note and tree code, proving files, 19 contract tests with a real proof
+- [`ff0e0d0`](https://github.com/henrysammarfo/pocket/commit/ff0e0d00ce9ca1a99d434b92d748942816d868c2) Wallet: send_private puts NEAR into the private pool only after the NEAR and dollar caps pass; 8 new tests
+- [`6a009b6`](https://github.com/henrysammarfo/pocket/commit/6a009b64b33e7f0ef7244d583352e2de6391f01f) Pool deployed on testnet (pool.pocket-7e2413.testnet); relayer policy for send_private; testnet proof script
+- [`1c939f6`](https://github.com/henrysammarfo/pocket/commit/1c939f68542d7f731f09b3e9ce25496757dca474) Testnet proof: two deposits, one private withdrawal to a new account, five attacks refused on chain
+- [`ac8529c`](https://github.com/henrysammarfo/pocket/commit/ac8529c7128d55d7369982f88e00b8d06f934f63) Testnet proof: private sends through a wallet obey its on chain per send and 24 hour NEAR caps
+- [`ab509cf`](https://github.com/henrysammarfo/pocket/commit/ab509cf013b00db1531aa07c2b3110faafea9daa) App: Private balance page, private send with a proof made in the browser, relayer route, chat knows what is hidden
+- [`077f23b`](https://github.com/henrysammarfo/pocket/commit/077f23b4fd5de98f514b461a3763a5e45b47684d) Unit tests for the pool tree, notes and relayer policy
+- [`4bf346e`](https://github.com/henrysammarfo/pocket/commit/4bf346e3d55f8138b7157218ee19901afe8447f0) Private page: turn Add off with a plain reason when the wallet is older than v3
+- [`24457c6`](https://github.com/henrysammarfo/pocket/commit/24457c6e1f744519b2a223a132f4185256cfb2e7) Persona harness: private balance page, chat answer, pool route attacks, README pool claims on chain
+- [`0838a87`](https://github.com/henrysammarfo/pocket/commit/0838a879a5869a547fc792b7959291d1077bb572) Docs: SOURCES.md and the pool test report with NearBlocks links
+- [`60915b5`](https://github.com/henrysammarfo/pocket/commit/60915b5d88c0220ae94d25d3e4afefdd2719d7c2) README and POLICY: private pool section, what is hidden and not, trust assumptions, NearBlocks links
+- [`94560a9`](https://github.com/henrysammarfo/pocket/commit/94560a9d97e970053eec07914b3e83c4d611c003) Private page: card no longer covers the Add button; field styling; browser test for a private send
+- [`bb9383c`](https://github.com/henrysammarfo/pocket/commit/bb9383cc0cd78e8eed66386658c6bf5f5cb2e2f4) Chat: assume the default 100 dollar per send cap until the wallet rules load, so a 150 dollar plan is never shown as within the rules
+- [`5f5ec52`](https://github.com/henrysammarfo/pocket/commit/5f5ec52446af4f376f586c3b703e8bc5cbba5848) Private page message has a test id; browser test waits for it
+- [`043ea02`](https://github.com/henrysammarfo/pocket/commit/043ea02fcc1cce19cdf90da19419ae0db5b0dc8d) Relayer: send_private has no receiver_id (the pool is fixed in the wallet), so skip the receiver check for it
+- [`858a18a`](https://github.com/henrysammarfo/pocket/commit/858a18a8f53704042da7009e34938c0778f7a1ec) Send privately toggle on the normal Send screen, with friendly progress text
+- [`5e01ddc`](https://github.com/henrysammarfo/pocket/commit/5e01ddcf43d660b266a9db11a5ef276f8b7f9931) Plain words across the app: Hidden balance page, no network jargon in screens
+- [`78b3fe9`](https://github.com/henrysammarfo/pocket/commit/78b3fe963b14ca3fd1eaea7b5bc6943306938f39) Plain words on the landing page
+- [`f17d950`](https://github.com/henrysammarfo/pocket/commit/f17d950e2bf28beccbd69755051a4bad5b5eb568) Friendly error messages for private send and signup
+- [`dc300c8`](https://github.com/henrysammarfo/pocket/commit/dc300c85a903bad6c490379b8b84dfdd7da21952) Plain words in chat instructions, receiver checks and error messages
+- [`a9283a7`](https://github.com/henrysammarfo/pocket/commit/a9283a7de19da9cbeeb3876b3dd94fa843db5c24) Persona jargon check now fails the run and scans every screen and the chat answer; browser test uses the Send privately toggle
+- [`b79c1a2`](https://github.com/henrysammarfo/pocket/commit/b79c1a23402a570e4616701fabad5fb8fff711e8) Browser test seeds storage once per tab
+- [`824ca18`](https://github.com/henrysammarfo/pocket/commit/824ca18b82b4377736e9dad0589286776112877f) Refusals show the account's plain reason, not the raw network error
+- [`be8a5d2`](https://github.com/henrysammarfo/pocket/commit/be8a5d24a7a27ba9033ccb36d5bc25a69626c4b2) Browser test: Send privately over the daily limit must be refused in plain words
+- [`48736b1`](https://github.com/henrysammarfo/pocket/commit/48736b1d143351bb307bb8a9c50bfd584ff7f86d) Plain receiver labels on the Send screen; browser test taps Continue
+- [`efb50f3`](https://github.com/henrysammarfo/pocket/commit/efb50f38beb91dbab5fb82ac977f3ccd3b365e6c) Plain network picker labels
+- [`e6bf77c`](https://github.com/henrysammarfo/pocket/commit/e6bf77c39e7beaaf80a5de618f2c6ec4ac356764) Settings network row in plain words; jargon scan skips links
+- [`adc472c`](https://github.com/henrysammarfo/pocket/commit/adc472cb334ea9cac6279701d69e06b22cc1ea93) Judge check: landing must say test money with no real value
+- [`3b8f175`](https://github.com/henrysammarfo/pocket/commit/3b8f17555aeee80b16f95f1d2e501c4cbb2a21fe) Fix: a 64 character NEAR address is looked up as itself, not as a Pocket username; fix a typo from the word sweep
+- [`b0c8e7c`](https://github.com/henrysammarfo/pocket/commit/b0c8e7c401954627e0f325c4b416c3c423d7efe6) README: plain words in the app, browser private send tx, current test counts, onchain suite marked as not rerun
+- [`feb6031`](https://github.com/henrysammarfo/pocket/commit/feb60315b7ba0e9a9f97e7e37283e12ffb370047) Relayer calls use 100 TGas so faucet and private send do not reserve 0.3 NEAR
+- This commit, which adds this After the deadline section.
+
 ## On chain spending limits (this branch)
 
-This branch, `onchain-limits`, moves the spending rules from Pocket's server into a NEAR smart contract on every user account. The live site above still runs `main` as submitted. This branch runs on its own fresh testnet deployment, root `pocket-7e2413.testnet`. Preview of this branch: https://pocket-git-onchain-limits-teamtitanlink.vercel.app
+The `onchain-limits` work, later continued on `private-pool`, moves the spending rules from Pocket's server into a NEAR smart contract on every user account. The submitted version at the deadline is `dbe5d86`; see [After the deadline](#after-the-deadline-14-nov-2026-2359-utc) to test that version on its own. This work runs on its own fresh testnet deployment, root `pocket-7e2413.testnet`. Preview of this branch: https://pocket-git-private-pool-teamtitanlink.vercel.app. Earlier `onchain-limits` preview: https://pocket-git-onchain-limits-teamtitanlink.vercel.app
 
 **How it works.** At signup Pocket creates your account, points it at the Pocket wallet contract (a NEAR global contract fixed by its code hash, so nobody can swap the code under you), and adds two keys in one transaction:
 
