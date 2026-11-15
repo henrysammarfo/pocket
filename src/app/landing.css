@@ -7,7 +7,7 @@
 .lp-nav nav{display:none;gap:1.75rem;font-size:.9375rem;color:var(--ink-2)}.lp-nav nav a:hover{color:var(--ink)}
 .lp-navcta{min-height:2.75rem;font-size:.9375rem;padding:.3rem 1.1rem;white-space:nowrap}
 .lp-hero{max-width:calc(var(--w) + 2*var(--pad));margin:0 auto;padding:1.5rem var(--pad) 3.5rem;display:grid;gap:2.5rem;align-items:center}
-.lp-pill{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sep);font-size:.8125rem;font-weight:600;color:var(--ink-2)}
+.lp-pill{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:.4rem .85rem;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--sep);font-size:.8125rem;font-weight:600;color:var(--ink-2)}
 .lp-pill .dot{width:.5rem;height:.5rem;border-radius:999px;background:var(--up);box-shadow:0 0 0 4px color-mix(in srgb,var(--up) 22%,transparent);animation:lp-pulse 2s ease-in-out infinite}
 @keyframes lp-pulse{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--up) 0%,transparent)}}
 .lp-hero h1{font-size:clamp(2.75rem,11vw,5.25rem);line-height:1;font-weight:700;margin:1.1rem 0 1rem;text-wrap:balance}

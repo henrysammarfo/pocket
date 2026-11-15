@@ -23,7 +23,7 @@ function SendInner() {
   const [w, c] = (v || '0').split('.');
   return (
     <AppShell screen="send" tab="send">
-      <header className="nav"><Link className="nb" href="/contacts" aria-label="Contacts" style={{ fontSize: '.9375rem', fontWeight: 600, width: 'auto' }}>Contacts</Link><Brand /><Link href="/profile" aria-label="Profile"><Avatar size={44} cls="me-av" /></Link></header>
+      <header className="nav"><Link className="link" href="/contacts">Contacts</Link><Brand /><Link href="/profile" aria-label="Profile"><Avatar size={44} cls="me-av" /></Link></header>
       <main className="body send">
         <div className="amtwrap">
           <div className={'amt' + (err ? ' over' : '')} aria-live="polite"><span className="cur">$</span>{Number(w).toLocaleString('en-US')}{v.includes('.') ? '.' + (c || '') : ''}</div>
