@@ -17,6 +17,7 @@ const POOL: string = dep.pool;
 const DEPOSITOR = process.env.DEPOSITOR || 'admin.' + dep.root;
 const RELAYER = process.env.RELAYER_ACCOUNT || dep.relayer;
 const SECRETS = path.resolve(process.env.POCKET_SECRETS_DIR || '.secrets');
+if (!fs.existsSync(SECRETS)) throw new Error('POCKET_SECRETS_DIR does not exist: ' + SECRETS);
 const keyStore = new keyStores.UnencryptedFileSystemKeyStore(path.join(os.homedir(), '.near-credentials'));
 const near = await connect({ networkId: 'testnet', nodeUrl: process.env.NEAR_RPC_URL || 'https://test.rpc.fastnear.com', keyStore });
 const TGAS = 10n ** 12n;
@@ -31,7 +32,7 @@ async function view(m: string, a: object = {}) {
 async function call(signer: string, method: string, args: object, deposit = 0n, label = method, expectFail = false) {
   const acct = await near.account(signer);
   try {
-    const r = await acct.functionCall({ contractId: POOL, methodName: method, args, attachedDeposit: deposit, gas: 300n * TGAS });
+    const r = await acct.functionCall({ contractId: POOL, methodName: method, args, attachedDeposit: deposit, gas: (method === 'deposit' ? 100n : 300n) * TGAS });
     const failed = JSON.stringify(r.receipts_outcome).includes('Failure');
     out.push({ label, hash: r.transaction.hash, ok: !failed });
     console.log(failed ? '  FAILED' : '  ok', label, r.transaction.hash);
@@ -48,12 +49,13 @@ async function call(signer: string, method: string, args: object, deposit = 0n, 
 
 const denom = BigInt((await view('get_info')).denomination);
 const notes: Note[] = [];
+const notesFile = path.join(SECRETS, `pool-notes-${Date.now()}.json`);
 for (let i = 0; i < 2; i++) {
   const n = await makeNote(POOL, denom.toString());
   const r = await call(DEPOSITOR, 'deposit', { commitment: n.commitment }, denom, `deposit note ${i + 1} from ${DEPOSITOR}`);
   if (r) notes.push(n);
+  fs.writeFileSync(notesFile, JSON.stringify(notes), { mode: 0o600 });
 }
-fs.writeFileSync(path.join(SECRETS, `pool-notes-${Date.now()}.json`), JSON.stringify(notes), { mode: 0o600 });
 
 const leaves = (await view('get_leaves', { from: 0, limit: 500 })).map((x: string) => BigInt(x));
 const fresh = crypto.randomBytes(32).toString('hex'); // a brand new implicit account, created by the payout

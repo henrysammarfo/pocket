@@ -1,0 +1,58 @@
+{
+ "pool": "pool.pocket-7e2413.testnet",
+ "info": {
+  "denomination": "100000000000000000000000",
+  "levels": 20,
+  "leaves": 4,
+  "root": "10577256160200224802855481039896239660441899870260713392509460504128396339481"
+ },
+ "recipient": "738485a5046aede8ab80fe7f78390b565d2d7a0196c9f16c87269705a838bfb1",
+ "txs": [
+  {
+   "label": "deposit note 1 from market.pocket-7e2413.testnet",
+   "hash": "GoWrSmLwCNSAZ9FaeT814v4pd7T4qd9wZ2PFEVdwt5pg",
+   "ok": true
+  },
+  {
+   "label": "deposit note 2 from market.pocket-7e2413.testnet",
+   "hash": "EV39AmU7j3nNNd6nXgjgBXtJvM2yAStKRXUS2hPtGpTF",
+   "ok": true
+  },
+  {
+   "label": "relayer withdraws one note to a new account 738485a5…",
+   "hash": "EtZX2gJGhRweNXQ2zZ9QFQYpiRXCXB5pXCHsAW2sFy63",
+   "ok": true
+  },
+  {
+   "label": "attack: same note again (double spend)",
+   "hash": "4pRuESDgFN2zpUehAzAXBtgqnCXKMG1yfLroecwy1fYi",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: That note was already spent.\"}}}}"
+  },
+  {
+   "label": "attack: valid proof, recipient swapped to the relayer",
+   "hash": "Cm2M13QHXotyGM7fcjqPJTc2oWNSvgpaiQkdZbCgNTte",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Invalid proof.\"}}}}"
+  },
+  {
+   "label": "attack: forged proof",
+   "hash": "EE6JEmUhtDNWGN5sg5FgWHwNbzX1gEekRsWqpEu1zCqH",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Invalid proof.\"}}}}"
+  },
+  {
+   "label": "attack: unknown root",
+   "hash": "6H4BFxRBNcBpwYknWsrcRzfrnrS5sDe74MFXsRFAYmKF",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Unknown or too old root.\"}}}}"
+  },
+  {
+   "label": "attack: relayer adds itself a fee the proof did not sign",
+   "hash": "3ZiRa1UVr8DJQmuq4eKA544Pfs5peGbEuhYniYzGatAV",
+   "ok": false,
+   "error": "{\"index\":0,\"kind\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Invalid proof.\"}}}}"
+  }
+ ],
+ "at": "2026-11-15T08:54:20.155Z"
+}
