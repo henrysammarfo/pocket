@@ -78,7 +78,8 @@ async function relayTry(d: DelegateJson, ip: string) { try { return { ok: true, 
 
 let ipN = 0;
 const ip = () => `10.0.${Math.floor(ipN / 200)}.${(ipN++ % 200) + 1}`;
-async function user(tag: string, extraNear = 1) {
+// EXTRA_NEAR: gas money for the attacks that skip the relayer (0.15 is plenty; 1 is the old default).
+async function user(tag: string, extraNear = Number(process.env.EXTRA_NEAR || 1)) {
   const device = newKey(), owner = newKey();
   const name = `${tag}${Date.now().toString(36)}`;
   const c = await createAccount(name, device.publicKey, ip(), owner.publicKey);
