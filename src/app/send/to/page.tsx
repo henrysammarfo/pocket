@@ -8,7 +8,7 @@ import { Gate } from '@/ui/Gate';
 import { ScanButton } from '@/ui/qr';
 import { AvatarFor } from '@/ui/Avatar';
 import { Keypad, press } from '@/ui/Keypad';
-import { api, passkeyApprove, send } from '@/lib/client/api';
+import { api, checkReceiverApi, passkeyApprove, send, type ReceiverCheck } from '@/lib/client/api';
 import { summary, useBalances, useQuotes } from '@/lib/client/data';
 import { getRules, saveContact, useContacts, useRules, useSession, type Contact } from '@/lib/client/session';
 import { detect } from '@/lib/shared/address';
@@ -36,7 +36,8 @@ function XSend() {
   const [derr, setDerr] = useState('');
   const [net, setNet] = useState<Net | null>(null);
   const [amt, setAmt] = useState(sp.get('amt') || '');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(sp.get('memo') || '');
+  const [chk, setChk] = useState<ReceiverCheck | null>(null);
   const [sheet, setSheet] = useState<'' | 'asset' | 'network' | 'save'>('');
   const [busy, setBusy] = useState(false);
   const [hash, setHash] = useState('');
@@ -81,6 +82,15 @@ function XSend() {
   };
   useEffect(() => { const t = sp.get('to'); if (t) runDetect(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Receiver check: allow, warn or block with reasons, before the amount and again on the server before relaying.
+  useEffect(() => {
+    setChk(null);
+    if (!tgt || tgt.net !== 'near') return;
+    let on = true;
+    checkReceiverApi(tgt.account).then((c) => { if (on) setChk(c); }).catch(() => { if (on) setChk({ to: tgt.account, verdict: 'warn', reasons: [{ code: 'unknown', level: 'warn', text: 'Pocket could not check this account right now. Check the name carefully.' }] }); });
+    return () => { on = false; };
+  }, [tgt?.account, tgt?.net]); // eslint-disable-line react-hooks/exhaustive-deps
+  const blocked = chk?.verdict === 'block';
   const live = tgt?.net === 'near';
   const assetOk = !(tgt && !tgt.pocket && asset === 'pUSD' && false);
   const go = async () => {
@@ -167,10 +177,15 @@ function XSend() {
           <div className="cell"><span className="k">Route</span><span className="v">{asset === 'pUSD' ? 'NEAR Intents transfer' : 'NEAR transfer'}</span></div>
           <div className="cell after"><span className="k">Your balance after</span><span className="v">{fmt(bal - n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
         </section>
+        {chk && chk.verdict !== 'allow' && <section className={'group rcheck ' + chk.verdict} role={blocked ? 'alert' : 'status'} aria-label="Receiver check" style={{ padding: '.75rem .9rem', display: 'grid', gap: '.35rem', borderLeft: `3px solid ${blocked ? 'var(--bad, #d33)' : 'var(--warn, #d90)'}` }}>
+          <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center', fontWeight: 700 }}>{blocked ? <CircleX size={16} aria-hidden /> : <TriangleAlert size={16} aria-hidden />}{blocked ? 'Pocket blocked this receiver' : 'Check before you send'}</div>
+          {chk.reasons.filter((r) => r.level !== 'allow').map((r) => <div key={r.code} className="fine" data-code={r.code}>{r.text}</div>)}
+        </section>}
+        {chk?.verdict === 'allow' && <div className="fine" data-verdict="allow"><ShieldCheck size={12} aria-hidden /> {chk.reasons[0]?.text || 'Receiver checked.'}</div>}
         <label className="field"><input className="inp" aria-label="Add a note" placeholder="Add a note (optional)" value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} /></label>
         {amtErr && <div className="errline" role="alert">{amtErr}</div>}
         <div className="holdwrap">
-          <HoldButton label={`Hold to send ${fmt(n, asset === 'NEAR' ? 4 : 2)} ${asset}`} doneLabel={busy ? 'Sending' : 'Sent'} onDone={go} disabled={!!amtErr || busy || !(n > 0)} />
+          <HoldButton label={`Hold to send ${fmt(n, asset === 'NEAR' ? 4 : 2)} ${asset}`} doneLabel={busy ? 'Sending' : 'Sent'} onDone={go} disabled={!!amtErr || busy || !(n > 0) || blocked} />
           <div className="fine">Test money on NEAR testnet. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
         </div>
       </main>}

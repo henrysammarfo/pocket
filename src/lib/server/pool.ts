@@ -23,6 +23,7 @@ import { DEVICE_ALLOWANCE, DEVICE_METHODS, DOLLAR_TOKENS, defaultLimits, dollars
 import { secretKey } from './env';
 import { tokenPrices } from './prices';
 import { store, limit, HttpError } from './store';
+import { checkReceiver, type Check } from '../shared/receiver';
 import { delegatePolicy, walletPolicy, reserveSpend, burnNonce, isPocketUser, validAccountId, type DelegateJson } from '../shared/policy';
 export { isPocketUser, validAccountId, type DelegateJson };
 
@@ -135,6 +136,7 @@ export async function submitTransfer(signed: SignedNep413, ip: string) {
   await limit('relay:' + m.signer_id, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
   await assertKeyOf(m.signer_id, signed.public_key);
+  await assertReceiver(m.signer_id, t.receiver_id);
   const usd = tok.symbol === 'pUSD' ? Number(fromUnits(BigInt(amt), tok.decimals)) : 0;
   const refund = usd ? await spend(m.signer_id, usd) : null;
   const r = await settleOrRefund(refund, () => executeIntents([signed]));
@@ -262,6 +264,31 @@ export async function createAccount(username: string, publicKey: string, ip: str
   return { account: id, hash: r.hash, usdcStorageTx: s?.hash || null };
 }
 
+// ---------- receiver check ----------
+// Facts from the chain and Pocket's own records; the app adds the user's contacts.
+const SERVICE_ACCOUNTS = () => [ROOT, VERIFIER, MAKER, FAUCET, RELAYER, MARKET, USDC, `admin.${ROOT}`, ...TOKENS.map((t) => t.contract)].filter(Boolean) as string[];
+export async function receiverCheck(from: string, to: string, contacts: { name: string; account: string }[] = []): Promise<Check> {
+  const t = String(to || '').trim().toLowerCase();
+  if (!validAccountId(t)) return checkReceiver({ from, to: t, root: ROOT, services: SERVICE_ACCOUNTS(), exists: null });
+  const [acct, wallet, acts] = await Promise.all([
+    viewAccount(t).then((a) => a, () => undefined),
+    walletOf(from),
+    store.activity(from, 500).catch(() => []),
+  ]);
+  const a = acct as { code_hash?: string; global_contract_hash?: string } | null | undefined;
+  const isContract = !!a && ((!!a.code_hash && a.code_hash !== '11111111111111111111111111111111') || (!!a.global_contract_hash && a.global_contract_hash !== WALLET_CODE_HASH));
+  return checkReceiver({
+    from, to: t, root: ROOT, services: SERVICE_ACCOUNTS(), exists: acct === undefined ? null : !!acct, isContract,
+    blocked: wallet?.limits.blocked ?? undefined, allowOnly: wallet?.limits.allow_only ?? undefined,
+    paidBefore: [...new Set(acts.filter((x) => x.kind === 'send').map((x) => String(x.data.to)))], contacts,
+  });
+}
+// Second layer before Pocket pays gas: a block is refused here even if a modified app skipped the check.
+async function assertReceiver(from: string, to: string) {
+  const c = await receiverCheck(from, to);
+  if (c.verdict === 'block') throw new HttpError(403, 'Pocket will not send there: ' + c.reasons.filter((r) => r.level === 'block').map((r) => r.text).join(' '));
+}
+
 // ---------- NEP-366 meta transactions ----------
 // Relayer policy: delegatePolicy in src/lib/shared/policy.ts (rules R1 to R7, docs/POLICY.md).
 
@@ -288,6 +315,7 @@ export async function relay(d: DelegateJson, ip: string) {
   await limit('relay:' + d.senderId, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
   if (wp?.method === 'trade') checkTradeMsg(d);
+  if (wp && wp.method.startsWith('send_')) await assertReceiver(d.senderId, String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
   if (wp?.method === 'send_usdc') await ensureUsdcStorage(String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
   const refund = usd ? await spend(d.senderId, usd) : null;
   const signedDelegate = new SignedDelegate({ delegateAction: da, signature: new Signature({ keyType: 0, data: sig }) });
