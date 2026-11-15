@@ -6,7 +6,7 @@ import { AppShell } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { useSession } from '@/lib/client/session';
 import { POOL, POOL_NOTE_NEAR, accountUrl, txUrl } from '@/lib/shared/deployment';
-import { addToPrivate, exportNotes, privateBalance, privateReady, privateSend } from '@/lib/client/private';
+import { addToPrivate, exportNotes, privateBalance, privateReady, privateSend, walletHasPool } from '@/lib/client/private';
 import { validAccountId } from '@/lib/shared/policy';
 
 function PrivateInner() {
@@ -15,6 +15,8 @@ function PrivateInner() {
   const [to, setTo] = useState('');
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ text: string; hash?: string; err?: boolean } | null>(null);
+  const [v3, setV3] = useState<boolean | null>(null);
+  useEffect(() => { walletHasPool(s.account).then(setV3); }, [s.account]);
   const load = useCallback(() => { if (privateReady()) privateBalance(s.account).then((b) => setBal({ near: b.near, count: b.notes.length })).catch(() => setBal({ near: '0.0', count: 0 })); }, [s.account]);
   useEffect(load, [load]);
   const run = async (what: string, f: () => Promise<{ hash: string }>, ok: string) => {
@@ -32,7 +34,8 @@ function PrivateInner() {
           <div style={{ fontSize: '2rem', fontWeight: 700 }} data-testid="private-balance">{bal ? bal.near : '…'} NEAR</div>
           <div style={{ opacity: .8 }}>{bal ? `${bal.count} note${bal.count === 1 ? '' : 's'} of ${POOL_NOTE_NEAR} NEAR, kept only on this device` : 'Checking the pool…'}</div>
         </section>
-        <button className="btn big" disabled={!!busy} onClick={() => run('add', addToPrivate, `${POOL_NOTE_NEAR} NEAR moved into your private balance. Your limits counted it.`)}>{busy === 'add' ? 'Moving…' : `Add ${POOL_NOTE_NEAR} NEAR to private balance`}</button>
+        {v3 === false && <div role="note" className="errline" data-testid="needs-v3">Adding to a private balance needs the newer Pocket wallet (version 3). Your account runs an older version, so this button is off. You can still receive private sends.</div>}
+        <button className="btn big" disabled={!!busy || !v3} onClick={() => run('add', addToPrivate, `${POOL_NOTE_NEAR} NEAR moved into your private balance. Your limits counted it.`)}>{busy === 'add' ? 'Moving…' : `Add ${POOL_NOTE_NEAR} NEAR to private balance`}</button>
         <section style={{ display: 'grid', gap: '.5rem' }}>
           <label htmlFor="pto"><b>Private send</b> {POOL_NOTE_NEAR} NEAR to</label>
           <input id="pto" className="inp" placeholder="name.testnet" value={to} onChange={(e) => setTo(e.target.value)} autoCapitalize="none" autoCorrect="off" />

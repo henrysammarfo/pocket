@@ -13,6 +13,12 @@ const NOTE_YOCTO = (10n ** 23n).toString(); // 0.1 NEAR
 const key = (account: string) => `pocket.notes.${account}`;
 export const privateReady = () => !!POOL;
 
+/** True when this account runs wallet code with send_private and this pool set (wallet v3). */
+export async function walletHasPool(account: string): Promise<boolean> {
+  const c = await view<{ pool?: string | null }>(account, 'get_config').catch(() => null);
+  return !!c && c.pool === POOL;
+}
+
 export function getNotes(account: string): Note[] {
   try { return JSON.parse(localStorage.getItem(key(account)) || '[]'); } catch { return []; }
 }
@@ -35,7 +41,7 @@ export async function privateBalance(account: string) {
 export async function addToPrivate() {
   const s = getSession();
   if (!s) throw new Error('Create your Pocket account first.');
-  if (!s.onchain) throw new Error('Private sends need a Pocket wallet with on chain limits.');
+  if (!s.onchain || !(await walletHasPool(s.account))) throw new Error('Adding to a private balance needs the newer Pocket wallet (version 3). This account runs an older version, so it cannot do it yet.');
   const note = await makeNote(POOL, NOTE_YOCTO);
   // Save first: if the page closes after the chain takes the money, the note is not lost.
   setNotes(s.account, [...getNotes(s.account), note]);
