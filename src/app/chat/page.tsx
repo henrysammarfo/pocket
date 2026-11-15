@@ -7,7 +7,7 @@ import { AppShell, Brand, Coil, fmt, Sheet, toast, toastErr } from '@/ui/kit';
 import { speak, useVoice } from '@/ui/useVoice';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
-import { api } from '@/lib/client/api';
+import { api, checkReceiverApi } from '@/lib/client/api';
 import { resolveRecipient, summary, useBalances, useQuotes } from '@/lib/client/data';
 import { dropThread, getChat, getRules, getThreadId, getThreads, newThreadId, renameThreadLocal, setChat, setThreadId, setThreads, touchThread, useChat, useContacts, useProfile, useRules, useSession, useThreadId, useThreads, type ChatMsg, type WebProduct, type WebSource } from '@/lib/client/session';
 import type { Balances } from '@/lib/client/data';
@@ -20,19 +20,23 @@ const stepVal = (s: Step) => (s.type === 'send' ? `$${fmt(s.amount)}` : `$${fmt(
 function PlanCard({ plan, check, keep, onReview, onChange }: { plan: Plan; check?: Check; keep: number; onReview: () => void; onChange: () => void }) {
   // Check every recipient before the review screen, so "send mum 10" says who is missing right on the card.
   const [who, setWho] = useState<string[]>([]);
+  const [blk, setBlk] = useState<string[]>([]);
   useEffect(() => {
     let dead = false;
     Promise.all(plan.steps.map((st) => (st.type === 'send' ? resolveRecipient(st.to).then((r) => ('error' in r ? r.error : '')).catch(() => '') : Promise.resolve('')))).then((e) => { if (!dead) setWho(e.filter(Boolean)); });
+    // Receiver check on the card too, so a hijacked or mistaken plan to a blocked account says so at once.
+    Promise.all(plan.steps.map((st) => (st.type === 'send' ? resolveRecipient(st.to).then((r) => ('error' in r ? null : checkReceiverApi(r.account))).catch(() => null) : Promise.resolve(null))))
+      .then((cs) => { if (!dead) setBlk(cs.flatMap((c) => (c?.verdict === 'block' ? [`Pocket blocked ${c.to}: ${c.reasons.filter((r) => r.level === 'block').map((r) => r.text).join(' ')}`] : []))); });
     return () => { dead = true; };
   }, [plan.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const ok = check?.ok && !who.length;
+  const ok = check?.ok && !who.length && !blk.length;
   return (
     <section className="group plan" aria-label="Your plan">
-      <div className="plan-h"><div className="ttl">Your plan</div>{ok ? <span className="chip ok"><ShieldCheck size={13} aria-hidden />Within your rules</span> : who.length && check?.ok ? <span className="chip" style={{ color: 'var(--warn-ink)' }}><Lock size={13} aria-hidden />Needs a recipient</span> : <span className="chip" style={{ color: 'var(--danger)' }}><Lock size={13} aria-hidden />Blocked by your rules</span>}</div>
+      <div className="plan-h"><div className="ttl">Your plan</div>{ok ? <span className="chip ok"><ShieldCheck size={13} aria-hidden />Within your rules</span> : blk.length ? <span className="chip" style={{ color: 'var(--danger)' }}><Lock size={13} aria-hidden />Blocked receiver</span> : who.length && check?.ok ? <span className="chip" style={{ color: 'var(--warn-ink)' }}><Lock size={13} aria-hidden />Needs a recipient</span> : <span className="chip" style={{ color: 'var(--danger)' }}><Lock size={13} aria-hidden />Blocked by your rules</span>}</div>
       <div className="cap plan-cap">Checked in code before anything moves</div>
       {plan.steps.map((s, i) => <div className="cell" key={i}><div className="cl"><div className="ct">{stepTitle(s)}</div><div className="cs">{stepSub(s)}</div></div><div className="cv">{stepVal(s)}</div></div>)}
       {keep > 0 && <div className="cell"><div className="cl"><div className="ct">Keep</div><div className="cs">Pinned rule</div></div><div className="cv">${fmt(keep)}</div></div>}
-      {who.map((w) => <div className="plan-warn" key={w} role="alert">{w}</div>)}
+      {[...who, ...blk].map((w) => <div className="plan-warn" key={w} role="alert">{w}</div>)}
       <div className="acts2"><button className="btn ghost" onClick={onChange}>Change</button>{who.length && check?.ok ? <Link className="btn" href="/contacts">Add contact</Link> : <button className="btn" onClick={onReview}>{check?.ok ? 'Review and approve' : 'See why'}</button>}</div>
     </section>
   );

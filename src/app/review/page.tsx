@@ -6,7 +6,7 @@ import { Check as CheckIcon, ExternalLink, History, Loader2, ShieldCheck, Sticky
 import { AppShell, BackNav, fmt, HoldButton, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { AvatarFor } from '@/ui/Avatar';
-import { getQuote, passkeyApprove, send, trade } from '@/lib/client/api';
+import { checkReceiverApi, getQuote, passkeyApprove, send, trade, type ReceiverCheck } from '@/lib/client/api';
 import { resolveRecipient, summary, useBalances, useQuotes, when } from '@/lib/client/data';
 import { getContacts, getRules, useChat, useRules } from '@/lib/client/session';
 import { checkPlan, type Plan, type Step } from '@/lib/shared/plan';
@@ -25,9 +25,16 @@ function ReviewInner() {
   const [running, setRunning] = useState(false);
   const [snap, setSnap] = useState<number | null>(null);
   const [resolved, setResolved] = useState<Record<number, string>>({});
+  const [rcheck, setRcheck] = useState<Record<number, ReceiverCheck>>({});
   useEffect(() => {
     if (!plan) return;
-    plan.steps.forEach(async (s, i) => { if (s.type === 'send') { const r = await resolveRecipient(s.to); setResolved((x) => ({ ...x, [i]: 'error' in r ? '!' + r.error : r.account })); } });
+    plan.steps.forEach(async (s, i) => {
+      if (s.type !== 'send') return;
+      const r = await resolveRecipient(s.to);
+      setResolved((x) => ({ ...x, [i]: 'error' in r ? '!' + r.error : r.account }));
+      // The same receiver check as the send screen: a chat plan to a blocked account cannot be approved.
+      if (!('error' in r)) checkReceiverApi(r.account).then((c) => setRcheck((x) => ({ ...x, [i]: c }))).catch(() => {});
+    });
   }, [plan]);
   if (!plan) return <AppShell screen="review" tab="chat" noTabs><BackNav href="/chat" title="Review" /><main className="body review"><div className="empty">This plan is no longer here. Ask Pocket again in Chat.</div><Link className="btn" href="/chat">Back to Chat</Link></main></AppShell>;
 
@@ -37,7 +44,9 @@ function ReviewInner() {
   const single = plan.steps.length === 1 && sends.length === 1 ? sends[0] : null;
   const contact = single ? getContacts().find((c) => c.name.toLowerCase() === single.toLabel.toLowerCase() || c.address === resolved[0]) : undefined;
   const total = plan.steps.reduce((a, s) => a + (s.type === 'send' ? s.amount : s.type === 'buy' ? s.usd || 0 : 0), 0);
-  const badRecipient = Object.values(resolved).find((v) => v.startsWith('!'));
+  const rblocked = Object.values(rcheck).find((c) => c.verdict === 'block');
+  const badRecipient = Object.values(resolved).find((v) => v.startsWith('!')) || (rblocked ? '!Pocket blocked this receiver: ' + rblocked.reasons.filter((r) => r.level === 'block').map((r) => r.text).join(' ') : undefined);
+  const rwarn = Object.values(rcheck).filter((c) => c.verdict === 'warn').flatMap((c) => c.reasons.filter((r) => r.level === 'warn').map((r) => r.text));
   const pick = (amt: number, left: { pusd: number; usdc: number }) => (left.pusd >= amt ? 'pUSD' : left.usdc >= amt ? 'USDC' : null);
 
   const run = async () => {
@@ -100,7 +109,8 @@ function ReviewInner() {
         {contact?.sends ? <div className="trust"><History size={16} aria-hidden />You&apos;ve sent {contact.name} {contact.sends} {contact.sends === 1 ? 'time' : 'times'}.{contact.lastAt ? ` Last time ${when(contact.lastAt)}.` : ''}</div> : null}
         {single?.note && <div className="note"><StickyNote size={16} aria-hidden /><span>Note: <b>{single.note}</b></span></div>}
         {chk && !chk.ok && <div className="errline" role="alert">{chk.reasons.join(' ')}</div>}
-        {badRecipient && <div className="errline" role="alert">{badRecipient.slice(1)}</div>}
+        {badRecipient && <div className="errline" role="alert" aria-label="Receiver check">{badRecipient.slice(1)}</div>}
+        {!badRecipient && rwarn.length > 0 && <div className="note" role="status" aria-label="Receiver check"><ShieldCheck size={16} aria-hidden /><span>Check before you send: {[...new Set(rwarn)].join(' ')}</span></div>}
         <div className="holdwrap">
           {done ? (
             <div className="acts2"><Link className="btn ghost" href="/wallet">See wallet</Link><button className="btn" onClick={() => router.push('/chat')}>Back to Chat</button></div>
