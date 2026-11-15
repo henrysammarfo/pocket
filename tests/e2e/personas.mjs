@@ -41,6 +41,14 @@ async function persona(who, ctxOpts) {
     await p.fill('textarea[aria-label="Message Pocket"]', text); await p.click('button[aria-label="Send"]');
     await p.waitForFunction((n) => document.querySelectorAll('main .ai').length > n && !document.querySelector('[aria-label="Pocket is thinking"]'), n0, { timeout: wait });
     await p.waitForTimeout(1500);
+    // Pocket asks "Is that right?" with a Yes chip before some plans; a real user taps Yes.
+    const yes = p.locator('button.chipbtn', { hasText: /^Yes/ }).last();
+    if (/is that right|did you mean|confirm/i.test(await p.locator('main .ai').last().innerText()) && await yes.isVisible().catch(() => false)) {
+      const n1 = await p.locator('main .ai').count();
+      await yes.click();
+      await p.waitForFunction((n) => document.querySelectorAll('main .ai').length > n && !document.querySelector('[aria-label="Pocket is thinking"]'), n1, { timeout: wait });
+      await p.waitForTimeout(2500);
+    }
     const reply = await p.locator('main .ai').last().innerText();
     const plan = await p.locator('[aria-label="Your plan"]').last().isVisible().catch(() => false) && (await p.locator('[aria-label="Your plan"]').count()) > 0 ? await p.locator('[aria-label="Your plan"]').last().innerText() : '';
     return { reply, plan };
@@ -92,6 +100,14 @@ if (run('kofi')) {
     await P.p.goto(BASE + href); await P.p.waitForTimeout(3000); await P.shot('receipt');
     const t = await P.p.locator('body').innerText();
     P.ok(/20/.test(t) && /nearblocks|explorer|NEAR/i.test(t), 'receipt page shows the amount and an explorer link');
+  });
+  await P.step('a bigger send over the per send cap', async () => {
+    if (!efuaAcct) return;
+    const r = await P.ask(`Send $150 to ${efuaAcct} for the hospital bill`);
+    P.ok(/Blocked by your rules|\$100 a send|limit|cap/i.test(r.plan + r.reply), 'a $150 send is refused by the $100 per send rule before any hold: ' + (r.plan || r.reply).slice(0, 180).replace(/\s+/g, ' '));
+    await P.shot('over-cap');
+    const back = P.p.locator('button:has-text("Go back")');
+    if (await back.isVisible().catch(() => false)) { P.ok(/Nothing moved/i.test(await P.p.locator('body').innerText()), 'blocked sheet says nothing moved'); await back.click(); await P.p.waitForTimeout(800); }
   });
   await P.step('requests money by chat, with a due date', async () => {
     const r = await P.ask('Make a request link for $15 from my brother for rent');
