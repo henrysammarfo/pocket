@@ -70,7 +70,7 @@ fn setup() -> (Wallet, Ctx) {
     c.pred = root();
     c.apply();
     let w = Wallet::new(vec![owner_pk(), pk_of(&owner_sk())], "verifier.pocket.testnet".parse().unwrap(), "usdc.testnet".parse().unwrap(),
-        "maker.pocket.testnet".parse().unwrap(), vec![PUSD.into()], limits(), pk_of(&price_sk()));
+        "maker.pocket.testnet".parse().unwrap(), vec![PUSD.into()], limits(), pk_of(&price_sk()), Some(pool()));
     c.pred = me();
     c.apply();
     (w, c)
@@ -83,7 +83,7 @@ fn init_by_stranger_is_refused() {
     let mut c = Ctx::new();
     c.pred = eve();
     c.apply();
-    Wallet::new(vec![owner_pk()], bob(), bob(), bob(), vec![], limits(), pk_of(&price_sk()));
+    Wallet::new(vec![owner_pk()], bob(), bob(), bob(), vec![], limits(), pk_of(&price_sk()), None);
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn init_needs_an_owner_key() {
     let mut c = Ctx::new();
     c.pred = root();
     c.apply();
-    Wallet::new(vec![], bob(), bob(), bob(), vec![], limits(), pk_of(&price_sk()));
+    Wallet::new(vec![], bob(), bob(), bob(), vec![], limits(), pk_of(&price_sk()), None);
 }
 
 // ---------- caps ----------
@@ -823,4 +823,85 @@ fn signatures_match_the_typescript_signer() {
     assert_eq!(sign_with(&owner_sk(), b"pocket.wallet.owner.v1\n", p), "071271910161098ae42ab24f6108c16e3541d970bb2463b8335269de1c7c41c2b97206e99046e8ad2103edd52d49ca7f98a01dc890eb1957517aaf95712dde06");
     let q = r#"{"v":1,"token":"near","micro_usd":"3000000","decimals":24,"expires_ms":99}"#;
     assert_eq!(sign_with(&price_sk(), b"pocket.price.v1\n", q), "b92bda70d301fa8104cfbbe7328ea1809cf178d459436b80eb293bf81f1ade370a6b2356ab62d61dc4c60e20e7c7ef8579c4d5c1261131c86291d87792c6800d");
+}
+
+// ---------- private sends (send_private into the pool) ----------
+fn pool() -> AccountId { "pool.pocket.testnet".parse().unwrap() }
+const NOTE: &str = "123456789";
+
+#[test]
+fn private_send_counts_against_near_and_dollar_caps() {
+    let (mut w, _c) = setup();
+    w.send_private(NOTE.into(), U128(NearToken::from_near(1).as_yoctonear()), near_px());
+    let s = w.get_spent();
+    assert_eq!(s.near.0, NearToken::from_near(1).as_yoctonear());
+    assert_eq!(s.usd.0, 3 * USD, "1 NEAR at $3");
+}
+
+#[test]
+#[should_panic(expected = "Over your per send limit for NEAR")]
+fn private_send_per_send_cap() {
+    let (mut w, _c) = setup();
+    w.send_private(NOTE.into(), U128(NearToken::from_near(1).as_yoctonear() + 1), near_px());
+}
+
+#[test]
+#[should_panic(expected = "Over your 24 hour limit for NEAR")]
+fn private_send_daily_cap_shared_with_public_sends() {
+    let (mut w, mut c) = setup();
+    c.balance = NearToken::from_near(50);
+    c.apply();
+    w.send_near(bob(), U128(NearToken::from_near(1).as_yoctonear()), near_px());
+    w.send_private(NOTE.into(), U128(NearToken::from_near(1).as_yoctonear()), near_px());
+    w.send_private(NOTE.into(), U128(1), near_px());
+}
+
+#[test]
+#[should_panic(expected = "This send needs a current price")]
+fn private_send_needs_a_signed_price() {
+    let (mut w, _c) = setup();
+    w.send_private(NOTE.into(), U128(1), None);
+}
+
+#[test]
+#[should_panic(expected = "Only this account's own keys")]
+fn private_send_by_a_stranger_is_refused() {
+    let (mut w, mut c) = setup();
+    c.pred = bob();
+    c.apply();
+    w.send_private(NOTE.into(), U128(1), near_px());
+}
+
+#[test]
+#[should_panic(expected = "Private sends are not set up")]
+fn private_send_without_a_pool_is_refused() {
+    let mut c = Ctx::new();
+    c.pred = root();
+    c.apply();
+    let mut w = Wallet::new(vec![owner_pk()], bob(), bob(), bob(), vec![], limits(), pk_of(&price_sk()), None);
+    c.pred = me();
+    c.apply();
+    w.send_private(NOTE.into(), U128(1), near_px());
+}
+
+#[test]
+#[should_panic(expected = "Your rules only allow sends to your saved list")]
+fn private_send_respects_the_allow_list() {
+    let (mut w, _c) = setup();
+    let mut l = limits();
+    l.allow_only = Some(vec![bob()]);
+    w.lower_limits(l);
+    w.send_private(NOTE.into(), U128(1), near_px());
+}
+
+#[test]
+fn failed_pool_deposit_gives_the_cap_back() {
+    let (mut w, mut c) = setup();
+    w.send_private(NOTE.into(), U128(NearToken::from_near(1).as_yoctonear()), near_px());
+    c.pred = me();
+    c.results = Some(false);
+    c.apply();
+    w.on_sent("near".into(), T0 / HOUR, U128(NearToken::from_near(1).as_yoctonear()), Some(U128(3 * USD)));
+    assert_eq!(w.get_spent().near.0, 0);
+    assert_eq!(w.get_spent().usd.0, 0);
 }

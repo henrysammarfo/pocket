@@ -55,7 +55,7 @@ const MAX_PRICE_AGE_MS: u64 = 10 * 60 * 1000;
 const OWNER_TAG: &[u8] = b"pocket.wallet.owner.v1\n";
 const PRICE_TAG: &[u8] = b"pocket.price.v1\n";
 /// Phone keys the owner adds: this account only, these methods, a 0.25 NEAR gas allowance.
-pub const DEVICE_METHODS: [&str; 7] = ["send_near", "send_usdc", "send_token", "trade", "lower_limits", "cancel_pending", "owner_action"];
+pub const DEVICE_METHODS: [&str; 8] = ["send_near", "send_usdc", "send_token", "trade", "lower_limits", "cancel_pending", "owner_action", "send_private"];
 const DEVICE_ALLOWANCE: NearToken = NearToken::from_millinear(250);
 /// NEAR kept back on a NEAR send, on top of what storage needs, so the account can always pay
 /// the 1 yocto deposits and stay usable.
@@ -66,6 +66,8 @@ const GAS_CALLBACK: Gas = Gas::from_tgas(12);
 const GAS_TRADE: Gas = Gas::from_tgas(150);
 const MIN_GAS_SEND: Gas = Gas::from_tgas(40);
 const MIN_GAS_TRADE: Gas = Gas::from_tgas(200);
+const GAS_POOL: Gas = Gas::from_tgas(120);
+const MIN_GAS_POOL: Gas = Gas::from_tgas(160);
 
 #[ext_contract(ext_ft)]
 #[allow(dead_code)]
@@ -93,6 +95,12 @@ trait MultiToken {
         memo: Option<String>,
         msg: String,
     ) -> Vec<U128>;
+}
+
+#[ext_contract(ext_pool)]
+#[allow(dead_code)]
+trait PrivatePool {
+    fn deposit(&mut self, commitment: String) -> u32;
 }
 
 #[near(serializers = [borsh, json])]
@@ -228,6 +236,8 @@ pub struct Wallet {
     windows: LookupMap<String, Window>,
     owner_nonce: u64,
     price_key: PublicKey,
+    /// The Pocket private pool (contracts/pool), fixed at init. None means private sends are off.
+    pool: Option<AccountId>,
 }
 
 #[near(serializers = [json])]
@@ -239,6 +249,7 @@ pub struct Config {
     pub dollar_tokens: Vec<String>,
     pub owner_nonce: u64,
     pub price_key: PublicKey,
+    pub pool: Option<AccountId>,
 }
 
 #[near(serializers = [json])]
@@ -340,6 +351,7 @@ impl Wallet {
         dollar_tokens: Vec<String>,
         limits: Limits,
         price_key: PublicKey,
+        pool: Option<AccountId>,
     ) -> Self {
         let me = env::current_account_id();
         let caller = env::predecessor_account_id();
@@ -362,6 +374,7 @@ impl Wallet {
             windows: LookupMap::new(StorageKey::Windows),
             owner_nonce: 0,
             price_key,
+            pool,
         }
     }
 
@@ -500,6 +513,35 @@ impl Wallet {
         self.reserve_usd(usd);
         Promise::new(receiver_id)
             .transfer(NearToken::from_yoctonear(amount.0))
+            .then(self.after("near".into(), hour, amount.0, usd))
+    }
+
+    /// Move NEAR into the private pool as one note. The same rules as `send_near` apply first (NEAR on, the
+    /// pool not blocked and on the allow list if one is set, per send and 24 hour NEAR caps, and the dollar
+    /// caps at a signed price), so a private send can never pass the limits. The pool takes exactly one
+    /// note's amount and the commitment the phone made. Device.
+    pub fn send_private(&mut self, commitment: String, amount: U128, price: Option<SignedPrice>) -> Promise {
+        self.assert_self();
+        Self::need_gas(MIN_GAS_POOL);
+        self.settle_pending();
+        let pool = self.pool.clone().unwrap_or_else(|| env::panic_str("Private sends are not set up for this wallet."));
+        require!(self.limits.allow_near, "NEAR sends are off in your rules.");
+        require!(commitment.len() <= 80, "Bad commitment.");
+        self.check_receiver(&pool);
+        let storage = env::storage_byte_cost().saturating_mul(env::storage_usage() as u128);
+        let keep = storage.saturating_add(NEAR_RESERVE).as_yoctonear();
+        require!(
+            env::account_balance().as_yoctonear() >= amount.0.saturating_add(keep),
+            "Not enough NEAR left after what this account must keep."
+        );
+        let (ps, pd) = (self.limits.near_per_send.0, self.limits.near_per_day.0);
+        let hour = self.reserve("near", amount.0, ps, pd, "NEAR");
+        let usd = self.dollars_of("near", amount.0, &price);
+        self.reserve_usd(usd);
+        ext_pool::ext(pool)
+            .with_attached_deposit(NearToken::from_yoctonear(amount.0))
+            .with_static_gas(GAS_POOL)
+            .deposit(commitment)
             .then(self.after("near".into(), hour, amount.0, usd))
     }
 
@@ -744,6 +786,7 @@ impl Wallet {
             dollar_tokens: self.dollar_tokens.clone(),
             owner_nonce: self.owner_nonce,
             price_key: self.price_key.clone(),
+            pool: self.pool.clone(),
         }
     }
 

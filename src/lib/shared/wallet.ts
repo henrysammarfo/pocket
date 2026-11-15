@@ -9,7 +9,7 @@ import blocklist from '../../../data/blocklist.json';
 export const BLOCKLIST: { account: string; reason: string; evidence: string }[] = blocklist.entries;
 
 /** Methods the phone's function call access key may call on its own account. Nothing else. */
-export const DEVICE_METHODS = ['send_near', 'send_usdc', 'send_token', 'trade', 'lower_limits', 'cancel_pending', 'owner_action'] as const;
+export const DEVICE_METHODS = ['send_near', 'send_usdc', 'send_token', 'trade', 'lower_limits', 'cancel_pending', 'owner_action', 'send_private'] as const;
 /** Methods only a direct call from an owner access key may use (accounts made before wallet v2). */
 export const OWNER_METHODS = ['propose_limits', 'set_owner_keys'] as const;
 
