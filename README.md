@@ -22,7 +22,7 @@
 
 ## On chain spending limits (this branch)
 
-This branch, `onchain-limits`, moves the spending rules from Pocket's server into a NEAR smart contract on every user account. The live site above still runs `main` as submitted. This branch runs on its own fresh testnet deployment, root `pocket-7e2413.testnet`.
+This branch, `onchain-limits`, moves the spending rules from Pocket's server into a NEAR smart contract on every user account. The live site above still runs `main` as submitted. This branch runs on its own fresh testnet deployment, root `pocket-7e2413.testnet`. Preview of this branch: https://pocket-git-onchain-limits-teamtitanlink.vercel.app
 
 **How it works.** At signup Pocket creates your account, points it at the Pocket wallet contract (a NEAR global contract fixed by its code hash, so nobody can swap the code under you), and adds two keys in one transaction:
 
@@ -61,7 +61,7 @@ Sends reserve the amount before the token call and the callback gives it back if
 * Trades have their own per trade cap and do not count against the daily send cap. Their price is set by Pocket's signed quote, not by an on chain market.
 * The rolling day uses hourly slots, so a send drops out of the window between 23 and 24 hours later.
 * Accounts made before this branch are not moved over. They keep the old server enforced flow, and the old NEAR Intents routes remain only for them.
-* The browser end to end suites were not rerun against this branch; the testnet attack suite and unit tests below were.
+* The older browser suites (`tests/e2e/hosted.mjs` and friends) were written for `main` and were not rerun here. The new browser run for this branch, `tests/e2e/onchain.mjs`, passed 14 of 14 against the preview.
 
 **Check it yourself.**
 
@@ -69,6 +69,7 @@ Sends reserve the amount before the token call and the callback gives it back if
 npm run verify:chain     # market code and the wallet global code hash match vendor/pocket_maker.wasm and vendor/pocket_wallet.wasm
 npm run test:contracts   # Rust unit tests for the wallet (51, including model based checks) and market (13) contracts
 npm run test:onchain     # testnet attack suite (needs .env.local from npm run setup): 67 checks
+BASE=https://pocket-git-onchain-limits-teamtitanlink.vercel.app TO=<a pocket account> npm run e2e:onchain   # real browser: recovery key screen, limited phone key, blocked receiver, send, CSV, request link (14 checks)
 ```
 
 

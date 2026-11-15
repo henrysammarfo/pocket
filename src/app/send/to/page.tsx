@@ -167,7 +167,7 @@ function XSend() {
       {step === 'review' && tgt && <main className="body stepv review on">
         <div className="who">{tgt.pocket || tgt.contact ? <AvatarFor value="" name={(tgt.contact?.name || tgt.label).replace('@', '')} size={56} cls="av" /> : <span className={'logo ' + tgt.net} style={{ width: '3.5rem', height: '3.5rem' }}><Logo name={NETS[tgt.net].logo} /></span>}
           <div className="big2">{fmt(n, asset === 'NEAR' ? 4 : 2)} <span style={{ fontSize: '.45em', opacity: 0.6 }}>{asset}</span></div>
-          <div className="to">to <b>{tgt.contact?.name || tgt.label}</b>{tgt.contact || tgt.pocket ? <>, <span className="mono">{short(tgt.account)}</span></> : null} on <NB k="near" /> {!tgt.contact && <span className="chip">New</span>} {!amtErr && <span className="chip ok"><ShieldCheck size={12} aria-hidden />Checked</span>}</div></div>
+          <div className="to">to <b>{tgt.contact?.name || tgt.label}</b>{tgt.contact || tgt.pocket ? <>, <span className="mono">{short(tgt.account)}</span></> : null} on <NB k="near" /> {!tgt.contact && <span className="chip">New</span>} {!amtErr && chk && !blocked && <span className="chip ok"><ShieldCheck size={12} aria-hidden />Checked</span>}{blocked && <span className="chip">Blocked</span>}</div></div>
         <section className="group bd">
           <div className="cell"><span className="k">You send</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
           <div className="cell"><span className="k">Network</span><span className="v">NEAR testnet</span></div>

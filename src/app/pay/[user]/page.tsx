@@ -35,7 +35,7 @@ function Pay({ user }: { user: string }) {
         <div className="cs mono">{u}.{ROOT}</div>
         {req && <section className="group" aria-label="Money request" style={{ width: '100%', padding: '1rem', display: 'grid', gap: '.4rem' }}>
           <div className="fine">@{u} asks for</div>
-          <div className="big2">{fmt(Number(req.amount))} <span style={{ fontSize: '.45em', opacity: 0.6 }}>{req.token}</span></div>
+          <div style={{ fontSize: '2.4rem', fontWeight: 700, lineHeight: 1.1 }}>{fmt(Number(req.amount))} <span style={{ fontSize: '.45em', opacity: 0.6 }}>{req.token}</span></div>
           {req.note && <div>&ldquo;{req.note}&rdquo;</div>}
           <div><StatusChip status={req.status} /></div>
           {req.status !== 'pending' && req.paidTx && <div className="fine">Paid by {req.payer}. <Link href={`/r/${req.paidTx}`}>Receipt</Link></div>}
