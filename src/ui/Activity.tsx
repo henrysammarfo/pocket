@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowDownToLine, ChartLine, ChevronRight, Send, UserPlus } from 'lucide-react';
+import { ArrowDownLeft, ArrowDownToLine, ChartLine, ChevronRight, EyeOff, Send, UserPlus } from 'lucide-react';
 import { api } from '@/lib/client/api';
 import { useLive, useLocalActivity, useSession, getContacts } from '@/lib/client/session';
 import { fmt } from './kit';
@@ -27,6 +27,8 @@ export function ActivityRow({ a }: { a: Item }) {
     : a.kind === 'buy' ? [ChartLine, `Bought ${d.token}`, `${fmt(Number(d.qty), 4)} ${d.token}`, false]
     : a.kind === 'sell' ? [ChartLine, `Sold ${d.token}`, `+$${fmt(Number(d.usd))}`, true]
     : a.kind === 'faucet' ? [ArrowDownToLine, 'Faucet claim', `+${fmt(Number(d.amount))} ${d.token || 'pUSD'}`, true]
+    : a.kind === 'private_in' ? [EyeOff, 'Moved to hidden balance', `${fmt(Number(d.amount), 1)} ${d.token}`, false]
+    : a.kind === 'private_out' ? [EyeOff, `Sent privately to ${nameOf(String(d.to))}`, `−${fmt(Number(d.amount), 1)} ${d.token}`, false]
     : [UserPlus, 'Account created', '', false];
   return (
     <Link className="row w-chev" href={`/r/${a.tx}`}>

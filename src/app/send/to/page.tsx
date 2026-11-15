@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleX, ClipboardPaste, Link as LinkIcon, Search, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleX, ClipboardPaste, EyeOff, Link as LinkIcon, Search, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { AppShell, HoldButton, Logo, Sheet, fmt, toast, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { ScanButton } from '@/ui/qr';
@@ -14,6 +14,7 @@ import { getRules, saveContact, useContacts, useRules, useSession, type Contact 
 import { detect } from '@/lib/shared/address';
 import { ROOT } from '@/lib/shared/deployment';
 import { BLOCKLIST } from '@/lib/shared/wallet';
+import { privateReady, sendPrivately, walletHasPool } from '@/lib/client/private';
 
 type Asset = 'pUSD' | 'USDC' | 'NEAR';
 type Net = 'near' | 'sol' | 'eth' | 'pol';
@@ -41,6 +42,11 @@ function XSend() {
   const [chk, setChk] = useState<ReceiverCheck | null>(null);
   const [sheet, setSheet] = useState<'' | 'asset' | 'network' | 'save'>('');
   const [busy, setBusy] = useState(false);
+  // Send privately: a fixed 0.1 NEAR amount, so every private send looks the same.
+  const [priv, setPriv] = useState(false);
+  const [privOk, setPrivOk] = useState(false);
+  const [progress, setProgress] = useState('');
+  useEffect(() => { if (privateReady() && s.onchain) walletHasPool(s.account).then(setPrivOk); }, [s.account, s.onchain]);
   const [hash, setHash] = useState('');
   const [saveName, setSaveName] = useState('');
   const inp = useRef<HTMLInputElement>(null);
@@ -101,12 +107,12 @@ function XSend() {
     if (!tgt) return; setBusy(true);
     try {
       if (getRules().passkey) await passkeyApprove(getRules().passkeyId);
-      const r = await send({ to: tgt.account, amount: String(n), asset, memo: note || undefined, toName: tgt.contact?.name || tgt.label });
+      const r = priv ? await sendPrivately(tgt.account, setProgress) : await send({ to: tgt.account, amount: String(n), asset, memo: note || undefined, toName: tgt.contact?.name || tgt.label });
       setHash(r.hash); setStep('sent');
       if (!tgt.contact) { setSaveName(tgt.pocket ? tgt.label.replace('@', '') : ''); setTimeout(() => setSheet('save'), 600); }
-    } catch (e) { toastErr(e); } finally { setBusy(false); }
+    } catch (e) { toastErr(e); } finally { setBusy(false); setProgress(''); }
   };
-  const back = () => { if (step === 'to') router.back(); else if (step === 'detect' || step === 'amount') { setStep('to'); setTgt(null); setDerr(''); } else if (step === 'review') setStep('amount'); else router.push('/wallet'); };
+  const back = () => { if (step === 'to') router.back(); else if (step === 'detect' || step === 'amount') { setStep('to'); setTgt(null); setDerr(''); } else if (step === 'review') { setPriv(false); setStep('amount'); } else router.push('/wallet'); };
   const A = ASSETS.find((x) => x.sym === asset)!;
   return (
     <AppShell screen="xsend" tab="send" noTabs overlay={<>
@@ -174,13 +180,16 @@ function XSend() {
           <div className="to">to <b>{tgt.contact?.name || tgt.label}</b>{tgt.contact || tgt.pocket ? <>, <span className="mono">{short(tgt.account)}</span></> : null} on <NB k="near" /> {!tgt.contact && <span className="chip">New</span>} {!amtErr && chk && !blocked && <span className="chip ok"><ShieldCheck size={12} aria-hidden />Checked</span>}{blocked && <span className="chip">Blocked</span>}</div></div>
         <section className="group bd">
           <div className="cell"><span className="k">You send</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
-          <div className="cell"><span className="k">Network</span><span className="v">NEAR testnet</span></div>
-          <div className="cell"><span className="k">NEAR gas</span><span className="v">0.00<small>Pocket pays it (NEP-366 relayer)</small></span></div>
+          <div className="cell"><span className="k">Fee</span><span className="v">0.00<small>Pocket pays it</small></span></div>
           <div className="cell key"><span className="k">They get</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
           <div className="cell"><span className="k">Arrives</span><span className="v">about 2 s</span></div>
-          <div className="cell"><span className="k">Route</span><span className="v">{asset === 'pUSD' ? 'NEAR Intents transfer' : 'NEAR transfer'}</span></div>
+          {priv && <div className="cell"><span className="k">Private</span><span className="v">Yes</span></div>}
           <div className="cell after"><span className="k">Your balance after</span><span className="v">{fmt(bal - n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
         </section>
+        {asset === 'NEAR' && tgt.net === 'near' && privateReady() && <section className="group">
+          <button className="cell" data-testid="send-privately" disabled={!privOk || busy} onClick={() => { const on = !priv; setPriv(on); if (on) setAmt('0.1'); }}>
+            <div className="lft"><span className="ic"><EyeOff size={17} aria-hidden /></span><div><div className="ct">Send privately</div><div className="cs">{privOk ? (priv ? 'Only you know you paid them. People can see that you used Private send and that they got 0.1 NEAR, but not who paid. Your daily limit still applies.' : 'Hides who paid whom. Private sends are 0.1 NEAR each.') : 'Not ready on your account yet.'}</div></div></div>
+            <span className="toggle" role="switch" aria-checked={priv} aria-label="Send privately" /></button></section>}
         {chk && chk.verdict !== 'allow' && <section className={'group rcheck ' + chk.verdict} role={blocked ? 'alert' : 'status'} aria-label="Receiver check" style={{ padding: '.75rem .9rem', display: 'grid', gap: '.35rem', borderLeft: `3px solid ${blocked ? 'var(--bad, #d33)' : 'var(--warn, #d90)'}` }}>
           <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center', fontWeight: 700 }}>{blocked ? <CircleX size={16} aria-hidden /> : <TriangleAlert size={16} aria-hidden />}{blocked ? 'Pocket blocked this receiver' : 'Check before you send'}</div>
           {chk.reasons.filter((r) => r.level !== 'allow').map((r) => <div key={r.code} className="fine" data-code={r.code}>{r.text}</div>)}
@@ -189,16 +198,17 @@ function XSend() {
         <label className="field"><input className="inp" aria-label="Add a note" placeholder="Add a note (optional)" value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} /></label>
         {amtErr && <div className="errline" role="alert">{amtErr}</div>}
         <div className="holdwrap">
-          <HoldButton label={`Hold to send ${fmt(n, asset === 'NEAR' ? 4 : 2)} ${asset}`} doneLabel={busy ? 'Sending' : 'Sent'} onDone={go} disabled={!!amtErr || busy || !(n > 0) || blocked} />
-          <div className="fine">Test money on NEAR testnet. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
+          <HoldButton label={`Hold to send ${fmt(n, asset === 'NEAR' ? 4 : 2)} ${asset}${priv ? ' privately' : ''}`} doneLabel={busy ? (progress || 'Sending…') : 'Sent'} onDone={go} disabled={!!amtErr || busy || !(n > 0) || blocked} />
+          {busy && progress && <div className="fine" role="status" data-testid="send-progress">{progress}</div>}
+          <div className="fine">Test money. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
         </div>
       </main>}
 
       {step === 'sent' && tgt && <main className="body stepv on">
-        <div className="donehero"><span className="ok"><Check size={36} strokeWidth={3} aria-hidden /></span><div className="dv">{fmt(n, asset === 'NEAR' ? 4 : 2)} <span className="unit">{asset}</span></div><div className="dd">Sent to <b>{tgt.contact?.name || tgt.label}</b> on NEAR testnet</div></div>
+        <div className="donehero"><span className="ok"><Check size={36} strokeWidth={3} aria-hidden /></span><div className="dv">{fmt(n, asset === 'NEAR' ? 4 : 2)} <span className="unit">{asset}</span></div><div className="dd">{priv ? 'Sent privately to' : 'Sent to'} <b>{tgt.contact?.name || tgt.label}</b></div></div>
         <section className="group stepper">
           <div className="st"><span className="d"><Check size={14} strokeWidth={3} aria-hidden /></span><div><div className="tt">{rules.passkey ? 'Approved with your passkey' : 'Signed on your device'}</div><div className="ts">Just now</div></div></div>
-          <div className="st"><span className="d"><Check size={14} strokeWidth={3} aria-hidden /></span><div><div className="tt">Sent on NEAR, gas paid by Pocket</div><div className="ts">Just now</div></div></div>
+          <div className="st"><span className="d"><Check size={14} strokeWidth={3} aria-hidden /></span><div><div className="tt">{priv ? 'Sent privately, fee paid by Pocket' : 'Sent, fee paid by Pocket'}</div><div className="ts">Just now</div></div></div>
           <div className="st"><span className="d"><Check size={14} strokeWidth={3} aria-hidden /></span><div><div className="tt">Arrived</div><div className="ts">About 2 s</div></div></div>
         </section>
         <div className="acts2" style={{ marginTop: 'auto' }}><Link className="btn ghost" href={`/r/${hash}`}>View receipt</Link><Link className="btn" href="/wallet">Done</Link></div>

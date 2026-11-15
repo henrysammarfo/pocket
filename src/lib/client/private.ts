@@ -41,7 +41,7 @@ export async function privateBalance(account: string) {
 export async function addToPrivate() {
   const s = getSession();
   if (!s) throw new Error('Create your Pocket account first.');
-  if (!s.onchain || !(await walletHasPool(s.account))) throw new Error('Adding to a private balance needs the newer Pocket wallet (version 3). This account runs an older version, so it cannot do it yet.');
+  if (!s.onchain || !(await walletHasPool(s.account))) throw new Error('Private sends are not ready on your account yet. Your normal sends still work.');
   const note = await makeNote(POOL, NOTE_YOCTO);
   // Save first: if the page closes after the chain takes the money, the note is not lost.
   setNotes(s.account, [...getNotes(s.account), note]);
@@ -72,7 +72,7 @@ export async function privateSend(to: string) {
   const s = getSession();
   if (!s) throw new Error('Create your Pocket account first.');
   const { notes } = await privateBalance(s.account);
-  if (!notes.length) throw new Error('Your private balance is empty. Add 0.1 NEAR first.');
+  if (!notes.length) throw new Error('Your hidden balance is empty. Hide 0.1 NEAR first.');
   // Oldest note first: more deposits came after it, so it hides in a bigger crowd.
   const note = notes.sort((a, b) => a.created - b.created)[0];
   const w = await proveWithdraw(note, await allLeaves(), to, null, 0n, '/zk/withdraw.wasm', '/zk/withdraw.zkey');
@@ -85,3 +85,13 @@ export async function privateSend(to: string) {
 
 /** The notes as text, so the user can keep a copy. Anyone with this text can spend them. */
 export const exportNotes = (account: string) => JSON.stringify(getNotes(account).filter((n) => !n.spent));
+
+/** One step private send for the normal Send screen: hide 0.1 NEAR if the hidden balance is empty, then send it privately. */
+export async function sendPrivately(to: string, onStep: (text: string) => void = () => {}) {
+  const s = getSession();
+  if (!s) throw new Error('Create your Pocket account first.');
+  const { notes } = await privateBalance(s.account);
+  if (!notes.length) { onStep('Getting your money ready…'); await addToPrivate(); }
+  onStep('Sending privately…');
+  return privateSend(to);
+}
