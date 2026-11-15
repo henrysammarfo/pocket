@@ -334,7 +334,7 @@ export async function relay(d: DelegateJson, ip: string) {
   await limit('relay:' + d.senderId, 60, 3600);
   await limit('relayip:' + ip, 120, 3600);
   if (wp?.method === 'trade') checkTradeMsg(d);
-  if (wp && wp.method.startsWith('send_')) await assertReceiver(d.senderId, String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
+  if (wp && wp.method.startsWith('send_') && wp.method !== 'send_private') await assertReceiver(d.senderId, String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
   if (wp?.method === 'send_usdc') await ensureUsdcStorage(String((d.actions[0] as unknown as { args: { receiver_id: string } }).args.receiver_id));
   const refund = usd ? await spend(d.senderId, usd) : null;
   const signedDelegate = new SignedDelegate({ delegateAction: da, signature: new Signature({ keyType: 0, data: sig }) });
