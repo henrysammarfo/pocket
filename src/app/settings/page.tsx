@@ -106,7 +106,7 @@ function SettingsInner() {
     </>}>
       <header className="nav large"><div className="lt">Settings</div></header>
       <main className="body settings">
-        <section className="group"><Link className="cell" href="/profile"><div className="lft"><Avatar size={48} cls="me-av" /><div><div className="ct" style={{ fontWeight: 600 }}>{p.name || '@' + s.username}</div><div className="cs">@{s.username}</div></div></div><span className="chev"><ChevronRight size={18} aria-hidden /></span></Link></section>
+        <section className="group"><Link className="cell" href="/profile"><div className="lft"><Avatar size={48} cls="me-av" /><div><div className="ct" style={{ fontWeight: 600 }}>{p.name || '@' + s.username}</div>{p.name ? <div className="cs">@{s.username}</div> : null}</div></div><span className="chev"><ChevronRight size={18} aria-hidden /></span></Link></section>
         <div className="ghead"><b>Safety</b></div>
         <section className="group">
           {cell(Gauge, 'Daily send limit', <span>${serverLimit.toLocaleString('en-US')}</span>, () => setSheet('limit'))}
@@ -122,7 +122,7 @@ function SettingsInner() {
         </div><div className="cell"><div className="lft"><span className="ic"><SunMoon size={17} aria-hidden /></span><div className="ct">System follows your device</div></div><span className="cs">{pref === 'system' ? `Now ${eff === 'black' ? 'black' : 'light'}` : 'Off'}</span></div></section>
         <div className="ghead"><b>Privacy</b></div>
         <section className="group">
-          <label className="cell" data-testid="private-only"><div className="lft"><span className="ic"><ShieldCheck size={17} aria-hidden /></span><div><div className="ct">Private AI only</div><div className="cs">{priv ? 'Chat, photos and voice run only on NEAR AI inside a verified secure enclave. If it is busy, Pocket answers with its built in helper and sends your words nowhere else.' : 'If NEAR AI is busy, Pocket may use Groq, which is not private.'}</div></div></div><input type="checkbox" role="switch" aria-label="Private AI only" style={{ width: 28, height: 28, flex: '0 0 auto', accentColor: 'var(--brand, #2f6f5e)' }} checked={priv} onChange={(e) => { setPrivateOnly(e.target.checked); setPriv(e.target.checked); }} /></label>
+          <label className="cell" data-testid="private-only"><div className="lft"><span className="ic"><ShieldCheck size={17} aria-hidden /></span><div><div className="ct">Private AI only</div><div className="cs">{priv ? 'Chat, photos and voice run only on NEAR AI inside a verified secure enclave. If it is busy, Pocket answers with its built in helper and sends your words nowhere else.' : 'If NEAR AI is busy, Pocket may use Groq, which is not private.'}</div></div></div><input type="checkbox" role="switch" aria-label="Private AI only" style={{ width: 44, height: 44, flex: '0 0 auto', accentColor: 'var(--brand, #2f6f5e)' }} checked={priv} onChange={(e) => { setPrivateOnly(e.target.checked); setPriv(e.target.checked); }} /></label>
         </section>
         <div className="ghead"><b>About</b></div>
         <section className="group">
