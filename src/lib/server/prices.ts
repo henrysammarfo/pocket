@@ -1,6 +1,7 @@
 import 'server-only';
 // Live prices. Sources, all public and keyless by default:
-//   CoinGecko simple/price and market_chart: Ondo tokenized stock tokens, NEAR, USDC (COINGECKO_API_KEY optional).
+//   CoinGecko simple/price and market_chart: paper stock tokens, NEAR, USDC (COINGECKO_API_KEY optional).
+//   Coinbase Exchange public candles: fallback for NEAR and USDC charts when CoinGecko is slow or rate limited.
 //   Nasdaq.com public quote JSON: share price, market status, key stats, history (unofficial, no key).
 //   Yahoo Finance chart JSON: fallback for shares and 1W bars (unofficial, no key).
 // No fixed fallback prices anywhere. If a source fails, callers see the error or the age.
@@ -120,19 +121,42 @@ export async function stockDetail(ticker: string) {
   };
 }
 
+const CB_PRODUCT: Record<string, string> = { near: 'NEAR-USD', 'usd-coin': 'USDC-USD' };
+const CB_GRAN: Record<number, number> = { 1: 300, 7: 3600, 30: 21600, 365: 86400 };
+
+async function coinbaseRange(id: string, days: number) {
+  const product = CB_PRODUCT[id];
+  if (!product) return [] as number[];
+  const gran = CB_GRAN[days] || 86400;
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - days * 86400;
+  const { v } = await cached(`cb:${product}:${days}`, 1800000, () =>
+    j(`https://api.exchange.coinbase.com/products/${product}/candles?granularity=${gran}&start=${new Date(start * 1000).toISOString()}&end=${new Date(end * 1000).toISOString()}`));
+  const rows = (v as [number, number, number, number, number, number][]).slice().sort((a, b) => a[0] - b[0]);
+  const pts = rows.map((c) => +Number(c[4]).toPrecision(6));
+  const st = Math.max(1, Math.floor(pts.length / 160));
+  return pts.filter((_, i) => i % st === 0 || i === pts.length - 1);
+}
+
+function thinPts(p: number[]) {
+  const st = Math.max(1, Math.floor(p.length / 160));
+  return p.filter((_, i) => i % st === 0 || i === p.length - 1);
+}
+
 export async function coinDetail(id: 'near' | 'usd-coin') {
-  const r: Record<string, number[]> = {};
-  for (const [k, d] of [['1D', 1], ['1W', 7], ['1M', 30], ['1Y', 365]] as const) {
+  // Fetch ranges in parallel. CoinGecko first; if a range fails or is empty, use Coinbase Exchange public candles.
+  const days = [['1D', 1], ['1W', 7], ['1M', 30], ['1Y', 365]] as const;
+  const rows = await Promise.all(days.map(async ([k, d]) => {
     try {
       const { v } = await cached(`cgc:${id}:${d}`, 1800000, () => j(`${CG_BASE}/coins/${id}/market_chart?vs_currency=usd&days=${d}`, cgHeaders));
       const p = (v.prices as [number, number][]).map((x) => +x[1].toPrecision(6));
-      const st = Math.max(1, Math.floor(p.length / 160));
-      r[k] = p.filter((_, i) => i % st === 0 || i === p.length - 1);
-    } catch { r[k] = []; }
-  }
+      if (p.length > 1) return [k, thinPts(p)] as const;
+    } catch { /* use fallback */ }
+    try { return [k, await coinbaseRange(id, d)] as const; } catch { return [k, [] as number[]] as const; }
+  }));
+  const r = Object.fromEntries(rows) as Record<string, number[]>;
   r.All = r['1Y'];
-  const note = 'Free CoinGecko data goes back 365 days';
-  return { id, ranges: r, note, source: 'CoinGecko market_chart', fetchedAt: Date.now() };
+  return { id, ranges: r, note: 'Public market data, last 365 days', source: 'CoinGecko market_chart, Coinbase Exchange candles fallback', fetchedAt: Date.now() };
 }
 
 // FX for local currency estimates. ExchangeRate-API open access, attribution required.

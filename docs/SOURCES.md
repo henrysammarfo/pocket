@@ -46,3 +46,17 @@ hideyour.cash was built by hack-a-chain for NEAR. Their Groth16 verifier was ann
 ## Prior NEAR privacy pools we looked at (not used)
 
 [gourab337/near-privacy-rings](https://github.com/gourab337/near-privacy-rings), [ArhamKhan117/Hushd](https://github.com/ArhamKhan117/Hushd), [justtboreddev/clearpool](https://github.com/justtboreddev/clearpool). All are hackathon projects with their own single party setups. We built on hideyour.cash instead because its verifier and MiMC crates are published on crates.io, MIT licensed, and were the first ones used on NEAR.
+
+## Market data
+
+Live prices and charts in the app are fetched on the server, then cached. The screens name this as public market data; the feeds themselves are:
+
+| Feed | Official docs | Used for |
+| --- | --- | --- |
+| [CoinGecko API `simple/price` and `coins/{id}/market_chart`](https://docs.coingecko.com/reference/simple-price) | CoinGecko API docs (demo key optional; Pro host if `COINGECKO_PRO=1`) | Current prices and 24h change for NEAR, USDC and the paper stock tokens; primary source for coin charts (`GET /api/coin`, 30 minute cache) |
+| [Coinbase Exchange public candles](https://docs.cdp.coinbase.com/exchange/reference/exchangerestapi_getproductcandles) | Coinbase Exchange REST API, no key | Fallback for NEAR-USD and USDC-USD chart ranges if CoinGecko is slow or rate limited |
+| [Nasdaq.com public quote JSON](https://www.nasdaq.com/) | Unofficial public endpoints (`api.nasdaq.com/api/quote/...`) | Share prices, market status, key stats and history for the paper stocks |
+| [Yahoo Finance chart JSON](https://query1.finance.yahoo.com/) | Unofficial public endpoints | Fallback for share prices and 1W bars |
+| [ExchangeRate-API open access](https://www.exchangerate-api.com/docs/free) | `https://open.er-api.com/v6/latest/USD` | FX estimates, attribution required by that API |
+
+If a feed fails and no cached value is available, the app shows a plain fallback such as "The chart could not be loaded right now." There are no fixed fallback prices.

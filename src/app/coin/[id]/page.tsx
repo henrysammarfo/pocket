@@ -22,20 +22,21 @@ function CoinInner({ id }: { id: string }) {
   useEffect(() => {
     if (U) return;
     let on = true;
-    const wait = setTimeout(() => { if (on) setChartErr(true); }, 8000);
+    const wait = setTimeout(() => { if (on) setChartErr(true); }, 20000);
     fetch('/api/coin?id=near').then((r) => { if (!r.ok) throw new Error('bad'); return r.json(); }).then((j) => {
       if (!on) return;
       clearTimeout(wait);
       setD(j);
       const has = Object.values(j.ranges || {}).some((a) => Array.isArray(a) && a.length > 1);
-      if (!has) setChartErr(true);
+      setChartErr(!has);
     }).catch(() => { if (on) { clearTimeout(wait); setChartErr(true); } });
     return () => { on = false; clearTimeout(wait); };
   }, [U]);
   const t = q.data?.tokens[U ? 'USDC' : 'NEAR'];
   const bal = U ? sm.usdc : sm.near;
   const usd = U ? sm.usdc * (t?.price || 1) : sm.nearUsd;
-  const pts = d && t ? [...(d.ranges[range] || []), t.price] : null;
+  const series = d?.ranges?.[range] || [];
+  const pts = d ? (t?.price ? [...series, t.price] : series) : null;
   const base = pts?.[0] || 0;
   const price = scrub ?? t?.price ?? 0;
   const items = act.items.filter((a) => (a.data as { token?: string }).token === (U ? 'USDC' : 'NEAR') || (!U && a.kind === 'signup'));
@@ -68,7 +69,7 @@ function CoinInner({ id }: { id: string }) {
         <section className="group"><div className="about">{U ? 'USDC is a digital dollar issued by Circle. On NEAR you can send it like any other balance. Get free test USDC from the Circle site if you need some.' : 'NEAR is the coin of the NEAR network. Pocket keeps a little in your account so it stays open. Sending is free.'}</div></section>
         <div className="ghead"><b>Activity</b></div>
         <section className="group list">{items.length ? items.slice(0, 6).map((a) => <ActivityRow key={a.kind + a.tx} a={a} />) : <div className="empty">No {U ? 'USDC' : 'NEAR'} activity yet.</div>}</section>
-        <div className="srcline"><Info size={14} aria-hidden /><span>{t ? `Price: CoinGecko, ${ago(t.updatedAt)}.` : 'Loading price'}{!U ? ' Charts: CoinGecko market chart.' : ''}</span></div>
+        <div className="srcline"><Info size={14} aria-hidden /><span>{t ? `Prices from public market data, ${ago(t.updatedAt)}.` : 'Loading prices'}</span></div>
       </main>
     </AppShell>
   );
