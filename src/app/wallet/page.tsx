@@ -27,6 +27,7 @@ function WalletInner() {
           <div className="pc-bot"><div className="pc-lab">Total balance</div><div className="pc-v">{ready ? <Money v={sm.total} /> : <span className="skel" style={{ display: 'inline-block', width: '8rem', height: '2.4rem' }} />}</div>
             <div className="pc-id" onClick={(e) => { e.preventDefault(); copy(s.account, 'Account copied'); }}>{s.account} <Copy size={14} aria-hidden /></div></div>
         </section>
+        <Link href="/private" className="row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.75rem 1rem' }} aria-label="Private balance"><span><b>Private balance</b> · send without showing who paid</span><ChevronRight size={18} aria-hidden /></Link>
         <div className="acts4">
           <Link href="/send"><span className="ci"><ArrowUpRight size={22} strokeWidth={2.2} aria-hidden /></span>Send</Link>
           <button onClick={() => setSheet('recv')}><span className="ci"><ArrowDownLeft size={22} strokeWidth={2.2} aria-hidden /></span>Receive</button>

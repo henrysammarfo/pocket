@@ -12,7 +12,7 @@ import { PublicKey } from '@near-js/crypto';
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import bs58 from 'bs58';
-import { FAUCET, MAKER, MARKET, ONCHAIN_LIMITS, PUSD, QUOTE_KEY, RELAYER, ROOT, STOCKS, TOKENS, USDC, USDC_DECIMALS, VERIFIER, WALLET_CODE_HASH, tokenBySymbol, tokenByAsset } from '../shared/deployment';
+import { FAUCET, MAKER, MARKET, ONCHAIN_LIMITS, POOL, PUSD, QUOTE_KEY, RELAYER, ROOT, STOCKS, TOKENS, USDC, USDC_DECIMALS, VERIFIER, WALLET_CODE_HASH, tokenBySymbol, tokenByAsset } from '../shared/deployment';
 import { rpc, view, viewAccessKey, viewAccount } from '../shared/rpc';
 import { buildPayload, parseMessage, type Intent } from '../shared/intents';
 import { signNep413, verifyNep413, keyFromString, type SignedNep413 } from '../shared/nep413';
@@ -246,7 +246,7 @@ export async function createAccount(username: string, publicKey: string, ip: str
       // contract checks itself; the phone gets a function call key for this account's wallet methods.
       ...(WALLET_V1 ? [G.fullKey(ownerKey)] : []),
       G.fnKey(publicKey, id, DEVICE_METHODS, BigInt(DEVICE_ALLOWANCE)),
-      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits(), price_key: QUOTE_KEY }, gas),
+      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits(), price_key: QUOTE_KEY, ...(WALLET_HAS_POOL && POOL ? { pool: POOL } : {}) }, gas),
     ]);
     if (!r.ok) throw new HttpError(400, 'Could not create the account: ' + r.failures.join('; ').slice(0, 200));
     const s = await signAndSend(ROOT, sponsor, USDC, [fnCall('storage_deposit', { account_id: id, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
@@ -399,6 +399,8 @@ const quoteSeed = () => keyFromString(need('QUOTE')).seed;
 // ---------- wallet v2: signed prices and owner messages ----------
 // Until the v2 code is deployed as a global contract, signups keep the v1 layout (recovery = full key).
 const WALLET_V1 = WALLET_CODE_HASH === 'C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz';
+/** Wallet v3 adds send_private (the private pool). Signups pass the pool only to this code. */
+const WALLET_HAS_POOL = WALLET_CODE_HASH === 'DQXeGy6AJ1t2q4EhoDJ1MPwPpmSRyzRMrKi3uygwDAkY';
 /** Pocket's price attestation for the wallet contract: micro dollars per whole unit, valid 5 minutes.
  * NEAR from CoinGecko, paper stocks from the same CoinGecko feed the quotes use. */
 export async function priceAttest(token: string): Promise<SignedPrice & { usd: number; source: string }> {
@@ -452,4 +454,23 @@ function checkTradeMsg(d: DelegateJson) {
 export async function chainInfo() {
   const [st, block] = await Promise.all([viewAccount(VERIFIER), rpc<{ header: { height: number } }>('block', { finality: 'final' })]);
   return { verifier: VERIFIER, verifierCodeHash: st?.code_hash ?? null, block: block.header.height };
+}
+
+// ---------- private pool: the relayer submits a withdrawal the phone proved ----------
+/** The phone builds the Groth16 proof in the browser and sends only public values here: the proof, the root,
+ * the nullifier hash and the recipient. The note's secret never reaches the server. The relayer pays the gas
+ * and takes no fee, so the receiver needs no NEAR and the payout does not come from the sender's account.
+ * The contract checks everything; this is only a shape check and a rate limit. */
+export async function poolWithdraw(b: { proof?: { pi_a?: unknown; pi_b?: unknown; pi_c?: unknown }; root?: unknown; nullifier_hash?: unknown; recipient?: unknown }, ip: string) {
+  if (!POOL) throw new HttpError(503, 'The private pool is not set up on this deployment.');
+  await limit('poolw:' + ip, 20, 3600);
+  const num = (v: unknown) => typeof v === 'string' && /^[0-9]{1,78}$/.test(v);
+  const p = b.proof;
+  const pts = (v: unknown, n: number, inner?: number): boolean => Array.isArray(v) && v.length === n && v.every((x) => (inner ? pts(x, inner) : num(x)));
+  if (!p || !pts(p.pi_a, 2) || !pts(p.pi_b, 2, 2) || !pts(p.pi_c, 2) || !num(b.root) || !num(b.nullifier_hash)) throw new HttpError(400, 'Bad proof.');
+  if (!validAccountId(b.recipient)) throw new HttpError(400, 'Bad receiver.');
+  const args = { proof: { pi_a: p.pi_a, pi_b: p.pi_b, pi_c: p.pi_c }, root: b.root, nullifier_hash: b.nullifier_hash, recipient: b.recipient, relayer: null, fee: '0' };
+  const r = await signAndSend(RELAYER, need('RELAYER'), POOL, [fnCall('withdraw', args, 300n)]);
+  if (!r.ok) throw new HttpError(400, 'The pool refused this: ' + r.failures.join('; ').slice(0, 200));
+  return { hash: r.hash, pool: POOL };
 }
