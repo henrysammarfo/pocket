@@ -46,14 +46,14 @@ function CoinInner({ id }: { id: string }) {
         </>}
         <div className="ghead"><b>Networks you hold it on</b></div>
         <section className="group list">
-          <div className="row"><span className="logo near"><Logo name="near" /></span><span className="rn"><span className="nm">NEAR testnet</span><span className="sb">{s.account}</span></span><span className="px"><span className="p">{fmt(bal, U ? 2 : 4)}</span><span className="lv">Live</span></span></div>
+          <div className="row"><span className="logo near"><Logo name="near" /></span><span className="rn"><span className="nm">NEAR (test money)</span><span className="sb">{s.account}</span></span><span className="px"><span className="p">{fmt(bal, U ? 2 : 4)}</span><span className="lv">Live</span></span></div>
           {U && <>
             <div className="row"><span className="logo sol"><Logo name="solana" /></span><span className="rn"><span className="nm">Solana devnet</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
             <div className="row"><span className="logo eth"><Logo name="ethereum" /></span><span className="rn"><span className="nm">Ethereum Sepolia</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
           </>}
         </section>
         <div className="ghead"><b>About</b></div>
-        <section className="group"><div className="about">{U ? <>USDC is a digital dollar issued by Circle. On NEAR it is native, not bridged. Testnet contract <span className="mono">{USDC.slice(0, 4)}…{USDC.slice(-4)}</span>. Get some free at faucet.circle.com.</> : 'NEAR is the coin of the NEAR network. Pocket keeps a little in your account for storage. Pocket pays the gas for your sends.'}</div></section>
+        <section className="group"><div className="about">{U ? <>USDC is a digital dollar issued by Circle. On NEAR it is native, not bridged. Token id <span className="mono">{USDC.slice(0, 4)}…{USDC.slice(-4)}</span>. Get some free at faucet.circle.com.</> : 'NEAR is the coin of the NEAR network. Pocket keeps a little in your account for storage. Pocket pays the gas for your sends.'}</div></section>
         <div className="ghead"><b>Activity</b></div>
         <section className="group list">{items.length ? items.slice(0, 6).map((a) => <ActivityRow key={a.kind + a.tx} a={a} />) : <div className="empty">No {U ? 'USDC' : 'NEAR'} activity yet.</div>}</section>
         <div className="srcline"><Info size={14} aria-hidden /><span>{t ? `Price: CoinGecko, ${ago(t.updatedAt)}.` : 'Loading price'}{!U ? ' Charts: CoinGecko market chart.' : ''}</span></div>

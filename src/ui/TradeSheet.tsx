@@ -51,7 +51,7 @@ export function TradeSheet({ open, onClose, side, stock, sm, limit, usedToday }:
         <div style={{ textAlign: 'center', display: 'grid', gap: '.75rem' }}>
           <div className="bicon" style={{ background: 'var(--accent-soft)', color: 'var(--accent-text)' }}><Check size={30} strokeWidth={2.4} aria-hidden /></div>
           <div className="btitle">{side === 'buy' ? 'Bought' : 'Sold'} {fmt(Number(done.qty), 4)} {stock.token}</div>
-          <div className="bwhy">at ${fmt(done.price)} each, ${fmt(done.usd)} in total. Settled in one call to the NEAR Intents verifier.</div>
+          <div className="bwhy">at ${fmt(done.price)} each, ${fmt(done.usd)} in total. Settled in one step.</div>
           <Link className="btn big" href={`/r/${done.hash}`}>See receipt</Link><button className="btn text" onClick={onClose}>Done</button>
         </div>
       ) : (
@@ -71,7 +71,7 @@ export function TradeSheet({ open, onClose, side, stock, sm, limit, usedToday }:
           {qe && <div className="errline" role="alert" style={{ marginTop: '.5rem' }}>{qe}</div>}
           <div className="holdwrap" style={{ marginTop: '.75rem' }}>
             <HoldButton label={`Hold to ${side} $${fmt(n || 0)}`} doneLabel={busy ? 'Working' : 'Done'} hint={`Keep holding to ${side}`} onDone={go} disabled={!q || busy || left === 0} resetKey={q?.quote.id} />
-            <div className="fine">Paper money on NEAR testnet, not advice. <a href="https://docs.near-intents.org" target="_blank" rel="noreferrer">How settlement works <ExternalLink size={11} aria-hidden /></a></div>
+            <div className="fine">Paper money, not advice. <a href="https://docs.near-intents.org" target="_blank" rel="noreferrer">How settlement works <ExternalLink size={11} aria-hidden /></a></div>
           </div>
         </>
       )}

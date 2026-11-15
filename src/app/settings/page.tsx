@@ -65,7 +65,7 @@ function SettingsInner() {
       if (onchain && raising) { try { secret = JSON.parse(rk).secretKey; } catch { secret = rk.trim(); } if (!secret) throw new Error('Paste your recovery key to raise a limit.'); }
       const r = await saveLimit(lim, secret);
       setRk(''); refreshAll();
-      toast(r.pending ? `Your wallet contract will allow $${lim.toLocaleString('en-US')} a day after the waiting time` : `Daily limit is now $${lim.toLocaleString('en-US')}`);
+      toast(r.pending ? `Your account will allow $${lim.toLocaleString('en-US')} a day after the waiting time` : `Daily limit is now $${lim.toLocaleString('en-US')}`);
       setSheet('');
     }
     catch (e) { toastErr(e); } finally { setBusy(false); }
@@ -86,21 +86,21 @@ function SettingsInner() {
   const cell = (Ic: typeof Gauge, t: string, v: React.ReactNode, on: () => void) => <button className="cell" onClick={on}><div className="lft"><span className="ic"><Ic size={17} aria-hidden /></span><div className="ct">{t}</div></div><span className="cv">{v} <ChevronRight size={16} aria-hidden /></span></button>;
   return (
     <AppShell screen="settings" tab="wallet" side="settings" overlay={<>
-      <Sheet open={sheet === 'limit'} onClose={() => setSheet('')} label="Daily send limit"><div className="sh-t">Daily send limit</div><div className="sh-s">{onchain ? 'The most your account can send in any 24 hours. Your wallet contract on NEAR enforces it, and the server checks it again.' : 'The most Pocket can send for you in one day. The server checks it on every send.'}</div>
+      <Sheet open={sheet === 'limit'} onClose={() => setSheet('')} label="Daily send limit"><div className="sh-t">Daily send limit</div><div className="sh-s">{onchain ? 'The most your account can send in any 24 hours. Your account itself enforces it, and Pocket checks it again.' : 'The most Pocket can send for you in one day. The server checks it on every send.'}</div>
         <Stepper v={lim} set={setLim} step={50} min={0} max={5000} />
         <div className="quick">{[100, 200, 300, 500, 1000].map((a) => <button key={a} className={a === lim ? 'on' : ''} onClick={() => setLim(a)}>${a.toLocaleString('en-US')}</button>)}</div>
-        <div style={{ margin: '1rem .1rem .2rem' }}><div className="usebar"><i style={{ width: Math.min(100, lim ? (used / lim) * 100 : 100) + '%' }} /></div><div className="uselab"><span>Used today ${fmt(used)}</span><span>{onchain ? 'Rolling 24 hours, on chain' : 'Resets at midnight UTC'}</span></div></div>
+        <div style={{ margin: '1rem .1rem .2rem' }}><div className="usebar"><i style={{ width: Math.min(100, lim ? (used / lim) * 100 : 100) + '%' }} /></div><div className="uselab"><span>Used today ${fmt(used)}</span><span>{onchain ? 'Any 24 hours' : 'Resets at midnight UTC'}</span></div></div>
         <div className="note2" style={{ margin: '.6rem 0 .9rem' }}><KeyRound size={16} aria-hidden /><span>{raising ? (rules.passkey ? 'Raising it asks for your passkey, then your device key signs the change.' : 'Your device key signs the change. Turn on passkey approval for an extra check.') : 'Lowering it is signed by your device key. No passkey needed.'}</span></div>
         {onchain && raising && <label className="field focus"><textarea className="inp mono" rows={2} aria-label="Your recovery key" placeholder="Raising needs your recovery key. It is used once on this screen and never stored." value={rk} onChange={(e) => setRk(e.target.value)} /></label>}
-        {onchain && <div className="note2" style={{ margin: '.4rem 0 .9rem' }}><span>{raising ? 'A higher limit waits 24 hours on chain before it applies. Your phone can cancel it in that time.' : 'A lower limit applies at once and cancels any raise that is still waiting.'}</span></div>}
+        {onchain && <div className="note2" style={{ margin: '.4rem 0 .9rem' }}><span>{raising ? 'A higher limit waits 24 hours before it applies. Your phone can cancel it in that time.' : 'A lower limit applies at once and cancels any raise that is still waiting.'}</span></div>}
         {onchain && pending && <div className="note2" style={{ margin: '.4rem 0 .9rem' }}><span>Waiting: ${(Number(pending.limits.usd_per_day) / 1e6).toLocaleString('en-US')} a day from {new Date(Number(pending.effective_at_ns) / 1e6).toLocaleString()}. <button className="lnk" onClick={async () => { try { await cancelRaise(); refreshAll(); toast('The waiting raise is cancelled'); } catch (e) { toastErr(e); } }}>Cancel it</button></span></div>}
         <button className="btn big" disabled={busy || lim === serverLimit || (onchain && raising && !rk.trim())} onClick={saveLim}>{busy ? 'Saving…' : 'Save'}</button></Sheet>
       <Sheet open={sheet === 'keep'} onClose={() => setSheet('')} label="Always keep"><div className="sh-t">Always keep</div><div className="sh-s">Pocket never lets a plan take you below this. The blocked screen in Chat uses it.</div>
         <Stepper v={keep} set={setKeep} step={10} min={0} max={10000} />
         <div className="quick">{[0, 50, 100, 200, 500].map((a) => <button key={a} className={a === keep ? 'on' : ''} onClick={() => setKeep(a)}>${a}</button>)}</div>
         <button className="btn big" style={{ marginTop: '.9rem' }} onClick={() => { setRules({ keep }); toast(keep ? `Pocket keeps $${keep} for you` : 'Keep rule is off'); setSheet(''); }}>Done</button></Sheet>
-      <Sheet open={sheet === 'network'} onClose={() => setSheet('')} label="Network"><div className="sh-t">Network</div><div className="sh-s">Pocket is a testnet app. Nothing real moves.</div>
-        <section className="group"><div className="opt sel on"><span className="logo near"><Logo name="near" /></span><span className="lft2"><span className="ot">NEAR testnet <span className="lv">Live</span></span><span className="os">Test dollars and paper stocks</span></span><span className="rd"><Check size={14} strokeWidth={3} aria-hidden /></span></div>
+      <Sheet open={sheet === 'network'} onClose={() => setSheet('')} label="Network"><div className="sh-t">Network</div><div className="sh-s">Pocket uses test money. Nothing real moves.</div>
+        <section className="group"><div className="opt sel on"><span className="logo near"><Logo name="near" /></span><span className="lft2"><span className="ot">NEAR, test money <span className="lv">Live</span></span><span className="os">Test dollars and paper stocks</span></span><span className="rd"><Check size={14} strokeWidth={3} aria-hidden /></span></div>
           <div className="opt dis"><span className="logo near"><Logo name="near" /></span><span className="lft2"><span className="ot">NEAR mainnet <span className="rm">Later</span></span><span className="os">Real money. Not offered in this version</span></span><span className="rd" /></div></section>
         <button className="btn big" style={{ marginTop: '.9rem' }} onClick={() => setSheet('')}>Done</button></Sheet>
     </>}>
@@ -126,10 +126,10 @@ function SettingsInner() {
         </section>
         <div className="ghead"><b>About</b></div>
         <section className="group">
-          <a className="cell" href="/api/health" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><HeartPulse size={17} aria-hidden /></span><div className="ct">Contracts and health</div></div><span className="cv">Open <ChevronRight size={16} aria-hidden /></span></a>
+          <a className="cell" href="/api/health" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><HeartPulse size={17} aria-hidden /></span><div className="ct">Service status</div></div><span className="cv">Open <ChevronRight size={16} aria-hidden /></span></a>
           <a className="cell" href="https://github.com/henrysammarfo/pocket/tree/main" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><Info size={17} aria-hidden /></span><div className="ct">Source code</div></div><span className="cv">GitHub <ChevronRight size={16} aria-hidden /></span></a>
         </section>
-        <div className="srcline"><Info size={14} aria-hidden /><span>Testnet only. Your key lives in this browser. Back it up from Profile.</span></div>
+        <div className="srcline"><Info size={14} aria-hidden /><span>Test money only. Your key lives in this browser. Back it up from Profile.</span></div>
       </main>
     </AppShell>
   );

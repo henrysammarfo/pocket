@@ -30,7 +30,7 @@ function ContactsInner() {
       let address = addr.trim(), network: Net = 'near', kind: Contact['kind'] = 'wallet';
       if (d.kind === 'username' || d.kind === 'near-named' || d.kind === 'near-implicit') {
         const r = await api<{ account: string; exists: boolean; pocket: boolean }>(`/api/account/lookup?q=${encodeURIComponent(d.kind === 'username' ? d.username : d.account)}`);
-        if (!r.exists && d.kind !== 'near-implicit') throw new Error(`${r.account} does not exist on NEAR testnet.`);
+        if (!r.exists && d.kind !== 'near-implicit') throw new Error(`${r.account} does not exist.`);
         address = r.account; kind = r.pocket ? 'pocket' : 'wallet';
       } else if (d.kind === 'solana') network = 'sol';
       else if (d.kind === 'evm-or-near') { if (!net) throw new Error('Pick the network for this 0x address.'); network = net; address = address.toLowerCase(); }
@@ -47,7 +47,7 @@ function ContactsInner() {
       <Sheet open={open} onClose={() => setOpen(false)} label="Add contact"><div className="sh-t">Add a contact</div><div className="sh-s">Then just type their name in Chat or Send.</div>
         <div style={{ display: 'grid', gap: '.6rem' }}>
           <label className="field focus"><input className="inp" aria-label="Name" placeholder="Name, like Mum" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} /></label>
-          <label className="field"><input className="inp mono" aria-label="Address" placeholder="@username, .testnet or address" value={addr} onChange={(e) => setAddr(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+          <label className="field"><input className="inp mono" aria-label="Address" placeholder="@username or account" value={addr} onChange={(e) => setAddr(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
           {d.kind === 'evm-or-near' && <section className="group">{(['near', 'eth', 'pol'] as Net[]).map((k) => <button key={k} className={'opt' + (net === k ? ' on' : '')} onClick={() => setNet(k)}><span className={'logo ' + k}><Logo name={NL[k][0]} /></span><span className="lft2"><span className="ot">{k === 'near' ? 'NEAR 0x account' : NL[k][1]} <span className={k === 'near' ? 'lv' : 'rm'}>{k === 'near' ? 'Live' : 'Roadmap'}</span></span></span></button>)}</section>}
           {(d.kind === 'mainnet' || d.kind === 'unsupported') && <div className="errline">{d.reason}</div>}
           {d.kind === 'solana' && <div className="note2"><span>Solana address. Saved for later; cross chain sends are on the roadmap.</span></div>}

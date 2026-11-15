@@ -55,15 +55,15 @@ function SwapInner() {
           <div className="cell"><span className="k">Rate</span><span className="v">{rate ? `1 ${from} = ${fmt(rate, rate < 1 ? 6 : 2)} ${to}` : '…'}</span></div>
           <div className="cell"><span className="k">Spread</span><span className="v">{q ? fmt(q.quote.spreadBps / 100) + '%' : '0.20%'}<small>{q ? `In the signed quote. ${q.quote.priceSource}, ${ago(q.quote.priceAt)}` : 'Network fee 0.00, Pocket pays it'}</small></span></div>
           <div className="cell"><span className="k">Price can move</span><span className="v">No. The quote is fixed for 60 s</span></div>
-          <div className="cell"><span className="k">Route</span><span className="v">{live ? <>NEAR Intents verifier <span className="lv">Live</span></> : <>NEAR Intents 1Click <span className="rm">Roadmap</span></>}</span></div>
+          <div className="cell"><span className="k">Route</span><span className="v">{live ? <>NEAR Intents <span className="lv">Live</span></> : <>NEAR Intents 1Click <span className="rm">Roadmap</span></>}</span></div>
         </section>
-        {!live && <div className="note2 warn"><Route size={18} aria-hidden /><span><b>Not live on testnet yet.</b> Swaps between USDC and NEAR need NEAR Intents 1Click, which has no testnet. Swaps between pUSD and paper stocks work now.</span></div>}
+        {!live && <div className="note2 warn"><Route size={18} aria-hidden /><span><b>Not live yet.</b> Swaps between USDC and NEAR need NEAR Intents 1Click, which does not support test money yet. Swaps between pUSD and paper stocks work now.</span></div>}
         {over && <div className="errline" role="alert">{from === 'pUSD' && rules.keep ? `That goes under the $${fmt(rules.keep)} you keep.` : `You have ${fmt(balOf(from), 4)} ${from}.`}</div>}
         {qe && <div className="errline" role="alert">{qe}</div>}
         <div className="holdwrap">
           {done ? <div className="acts2"><Link className="btn ghost" href={`/r/${done}`}>See receipt</Link><button className="btn" onClick={() => { setDone(null); setAmt(''); }}>Swap again</button></div>
             : <HoldButton label="Hold to swap" doneLabel={busy ? 'Working' : 'Swapped'} hint="Keep holding to swap" onDone={go} disabled={!q || busy} resetKey={q?.quote.id} />}
-          <div className="fine">{live ? 'Settles in one atomic call to the NEAR Intents verifier on testnet. Paper money, not advice.' : 'Live prices shown. This route is on the roadmap.'}</div>
+          <div className="fine">{live ? 'Settles in one step. Paper money, not advice.' : 'Live prices shown. This route is on the roadmap.'}</div>
         </div>
       </main>
     </AppShell>

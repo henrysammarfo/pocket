@@ -19,7 +19,7 @@ import { privateReady, sendPrivately, walletHasPool } from '@/lib/client/private
 type Asset = 'pUSD' | 'USDC' | 'NEAR';
 type Net = 'near' | 'sol' | 'eth' | 'pol';
 const NETS: Record<Net, { n: string; logo: string; t: string }> = { near: { n: 'NEAR', logo: 'near', t: 'testnet' }, sol: { n: 'Solana', logo: 'solana', t: 'devnet' }, eth: { n: 'Ethereum', logo: 'ethereum', t: 'Sepolia' }, pol: { n: 'Polygon', logo: 'polygon', t: 'Amoy' } };
-const ASSETS: { sym: Asset; logo: string; sub: string }[] = [{ sym: 'pUSD', logo: 'pusd', sub: 'Pocket test dollar, NEAR accounts' }, { sym: 'USDC', logo: 'usdc', sub: 'Circle testnet USDC, NEAR accounts' }, { sym: 'NEAR', logo: 'near', sub: 'NEAR accounts only' }];
+const ASSETS: { sym: Asset; logo: string; sub: string }[] = [{ sym: 'pUSD', logo: 'pusd', sub: 'Pocket test dollar, NEAR accounts' }, { sym: 'USDC', logo: 'usdc', sub: 'Circle test USDC, NEAR accounts' }, { sym: 'NEAR', logo: 'near', sub: 'NEAR accounts only' }];
 const NB = ({ k }: { k: Net }) => <span className="nbadge"><span className={'nl ' + k}><Logo name={NETS[k].logo} /></span>{NETS[k].n}</span>;
 const short = (a: string) => (a.length > 22 ? a.slice(0, 6) + '…' + a.slice(-6) : a);
 type Target = { account: string; label: string; net: Net; kind: string; why: string; pocket: boolean; exists: boolean; contact?: Contact };
@@ -79,12 +79,12 @@ function XSend() {
     if (d.kind === 'solana') { setNet('sol'); setTgt({ account: d.address, label: short(d.address), net: 'sol', kind: 'Solana address', why: 'Base58, 32 to 44 characters', pocket: false, exists: true }); return; }
     if (d.kind === 'evm-or-near') {
       const nn = forceNet || net; if (!nn) { setSheet('network'); setTgt({ account: d.address, label: short(d.address), net: 'eth', kind: '0x address', why: 'Could be Ethereum, Polygon or a NEAR 0x account. Pick the network.', pocket: false, exists: true }); return; }
-      setTgt({ account: d.address, label: short(d.address), net: nn, kind: nn === 'near' ? 'NEAR 0x account' : NETS[nn].n + ' address', why: nn === 'near' ? 'NEAR eth implicit account on testnet' : 'You picked ' + NETS[nn].n, pocket: false, exists: true }); return;
+      setTgt({ account: d.address, label: short(d.address), net: nn, kind: nn === 'near' ? 'NEAR 0x account' : NETS[nn].n + ' address', why: nn === 'near' ? 'NEAR account made from this address' : 'You picked ' + NETS[nn].n, pocket: false, exists: true }); return;
     }
     const qy = d.kind === 'username' ? d.username : d.account;
     try {
       const r = await api<{ account: string; exists: boolean; pocket: boolean }>(`/api/account/lookup?q=${encodeURIComponent(qy)}`);
-      if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not exist on NEAR testnet.`); return; }
+      if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not existnet.`); return; }
       if (r.account === s.account) { setDerr('That is you.'); return; }
       setNet('near');
       setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR implicit account' : 'NEAR testnet account', why: r.exists ? r.account : 'This address has never been used on NEAR testnet', pocket: r.pocket, exists: r.exists });
@@ -118,7 +118,7 @@ function XSend() {
     <AppShell screen="xsend" tab="send" noTabs overlay={<>
       <Sheet open={sheet === 'asset'} onClose={() => setSheet('')} label="Pick what to send"><div className="sh-t">What do you want to send?</div>
         <section className="group">{ASSETS.map((a) => <button key={a.sym} className={'opt' + (a.sym === asset ? ' on' : '')} onClick={() => { setAsset(a.sym); setSheet(''); }}><span className={'logo ' + a.logo}><Logo name={a.logo} /></span><span className="lft2"><span className="ot">{a.sym}</span><span className="os">{fmt(a.sym === 'pUSD' ? sm.pusd : a.sym === 'USDC' ? sm.usdc : sm.near, a.sym === 'NEAR' ? 4 : 2)} · {a.sub}</span></span><span className="rd">{a.sym === asset && <Check size={14} strokeWidth={3} aria-hidden />}</span></button>)}</section>
-        {asset === 'USDC' && sm.usdc === 0 && <a className="note2" href="https://faucet.circle.com/" target="_blank" rel="noreferrer"><span>No USDC yet. Get free testnet USDC from Circle and pick NEAR testnet.</span></a>}
+        {asset === 'USDC' && sm.usdc === 0 && <a className="note2" href="https://faucet.circle.com/" target="_blank" rel="noreferrer"><span>No USDC yet. Get free test USDC from Circle and pick NEAR there.</span></a>}
       </Sheet>
       <Sheet open={sheet === 'network'} onClose={() => setSheet('')} label="Pick the network"><div className="sh-t">Which network is this on?</div>
         <div className="sh-s">0x addresses look the same on Ethereum, Polygon and NEAR. Ask where their wallet lives. Pocket never guesses for you.</div>
@@ -137,12 +137,12 @@ function XSend() {
       {step === 'to' && <main className="body stepv on">
         <button className="assetpill" onClick={() => setSheet('asset')} aria-label="Change asset"><span className={'logo ' + A.logo}><Logo name={A.logo} /></span><b className="asym">{asset}</b><span>{fmt(bal, asset === 'NEAR' ? 4 : 2)}</span><ChevronDown size={16} aria-hidden /></button>
         <form className="field focus" onSubmit={(e) => { e.preventDefault(); if (qs.trim()) runDetect(qs); }}>
-          <input ref={inp} className="inp in" autoFocus aria-label="Recipient" placeholder="Name, @username, .testnet or address" value={qs} onChange={(e) => setQs(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+          <input ref={inp} className="inp in" autoFocus aria-label="Recipient" placeholder="Name, @username or account" value={qs} onChange={(e) => setQs(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
           <button type="button" className="fb" onClick={async () => { try { const t = await navigator.clipboard.readText(); setQs(t.trim()); runDetect(t.trim()); } catch { inp.current?.focus(); toast('Paste with your keyboard'); } }}><ClipboardPaste size={15} aria-hidden />Paste</button>
           <ScanButton onResult={(r, raw) => { if (!r) { toast(raw ? 'That QR code is not a Pocket pay link or NEAR account.' : 'No QR code found in that photo. Try again closer.'); return; } setQs(r.to); if (r.amt && /^\d+(\.\d+)?$/.test(r.amt)) setAmt(r.amt); runDetect(r.to); }} />
         </form>
         {q && <button className="btn big" onClick={() => runDetect(qs)}>Continue with {qs.trim().length > 24 ? short(qs.trim()) : qs.trim()}</button>}
-        {!contacts.length && !q && <div className="note2"><Search size={16} aria-hidden /><span>Type a username like <b>@{s.username}</b>, a .testnet account, or a 0x address. Save people as contacts and send by name.</span></div>}
+        {!contacts.length && !q && <div className="note2"><Search size={16} aria-hidden /><span>Type a username like <b>@{s.username}</b>, or another account name. Save people as contacts and send by name.</span></div>}
         {pocketC.length > 0 && <><div className="sec-h"><span>On Pocket and NEAR</span><span className="tagline">Free and instant</span></div>
           <section className="group">{pocketC.concat(walletC.filter((c) => c.network === 'near')).map((c) => <button key={c.id} className="opt rcp" onClick={() => pickContact(c)}><AvatarFor value="" name={c.name} size={40} cls="logo ph" /><span className="lft2"><span className="ot"><span className="nm">{c.name}</span>{c.kind === 'pocket' ? <span className="lv">Pocket</span> : <NB k="near" />}</span><span className="os">{short(c.address)}{c.sends ? `, sent ${c.sends} ${c.sends === 1 ? 'time' : 'times'}` : ''}</span></span><span className="chev"><ChevronRight size={16} aria-hidden /></span></button>)}</section></>}
         {walletC.filter((c) => c.network !== 'near').length > 0 && <><div className="sec-h"><span>Saved addresses</span><Link className="tagline" href="/contacts">See all</Link></div>
@@ -157,10 +157,10 @@ function XSend() {
         <section className="group"><div className="detect">
           {derr ? <><span className="logo ph">?</span><div role="alert" data-testid="cant-send"><div className="dt">Can&apos;t send here</div><div className="ds">{derr}</div></div></>
             : tgt ? <><span className={'logo ' + tgt.net}><Logo name={NETS[tgt.net].logo} /></span><div><div className="dt">{tgt.kind} <span className="lv">Detected</span></div><div className="ds" style={{ overflowWrap: 'anywhere' }}>{tgt.why}</div></div></>
-            : <><span className="logo ph">…</span><div><div className="dt">Checking</div><div className="ds">Looking it up on NEAR testnet</div></div></>}
+            : <><span className="logo ph">…</span><div><div className="dt">Checking</div><div className="ds">Looking them up</div></div></>}
         </div></section>
-        {tgt && !live && <div className="note2 warn"><TriangleAlert size={18} aria-hidden /><span><b>{NETS[tgt.net].n} is on the roadmap.</b> Cross chain sends need NEAR Intents bridges, which have no testnet. Pocket will not send there yet.</span></div>}
-        {tgt && live && !tgt.pocket && asset === 'pUSD' && <div className="note2"><ShieldCheck size={18} aria-hidden /><span>pUSD lives inside the NEAR Intents verifier. They can see it with any Intents wallet, or you can switch to USDC.</span></div>}
+        {tgt && !live && <div className="note2 warn"><TriangleAlert size={18} aria-hidden /><span><b>{NETS[tgt.net].n} is on the roadmap.</b> Cross chain sends need NEAR Intents bridges, which do not support test money yet. Pocket will not send there yet.</span></div>}
+        {tgt && live && !tgt.pocket && asset === 'pUSD' && <div className="note2"><ShieldCheck size={18} aria-hidden /><span>pUSD lives in NEAR Intents. They can see it with any Intents app, or you can switch to USDC.</span></div>}
         {tgt && tgt.net === 'near' && !tgt.exists && asset !== 'NEAR' && <div className="errline">This account does not exist yet. Send NEAR first to create it.</div>}
         <div style={{ marginTop: 'auto' }}><button className="btn big" disabled={!tgt || !live || !!derr || !assetOk || (!tgt.exists && asset !== 'NEAR')} onClick={() => setStep(amt ? 'review' : 'amount')}>Continue</button></div>
       </main>}

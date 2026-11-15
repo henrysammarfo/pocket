@@ -117,7 +117,7 @@ function ReviewInner() {
           ) : (
             <HoldButton label={label} doneLabel={running ? 'Working' : 'Done'} hint={single ? 'Keep holding to send' : 'Keep holding to approve'} onDone={run} disabled={(!chk?.ok && !running) || !!badRecipient || running} />
           )}
-          <div className="fine">Test money on NEAR testnet. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
+          <div className="fine">Test money. Nothing real moves.{rules.passkey ? ' Your passkey is asked after you hold.' : ''}</div>
           {res.some((r) => r.hash) && <div className="fine">{res.filter((r) => r.hash).map((r) => <a key={r.hash} href={txUrl(r.hash!)} target="_blank" rel="noreferrer" style={{ marginRight: '.6rem' }}>Explorer <ExternalLink size={11} aria-hidden /></a>)}</div>}
         </div>
       </main>

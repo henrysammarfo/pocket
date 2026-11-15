@@ -70,7 +70,7 @@ function InvestInner() {
               <span className="chev2"><ChevronRight size={16} aria-hidden /></span>
             </Link>); })}
         </section>
-        <div className="src">{q.data ? `Live. Tokens: CoinGecko, ${ago(age)}. Shares: ${st ? st.source + ', ' + st.lastTrade.replace(/^.*\d{4} /, '') : 'not available'}. Paper money on testnet, not advice.` : q.error ? 'Prices are offline right now.' : 'Loading live prices'}</div>
+        <div className="src">{q.data ? `Live. Tokens: CoinGecko, ${ago(age)}. Shares: ${st ? st.source + ', ' + st.lastTrade.replace(/^.*\d{4} /, '') : 'not available'}. Paper money, not advice.` : q.error ? 'Prices are offline right now.' : 'Loading live prices'}</div>
       </main>
     </AppShell>
   );

@@ -14,7 +14,7 @@ import type { Balances } from '@/lib/client/data';
 import type { Check, Plan, Step } from '@/lib/shared/plan';
 
 const stepTitle = (s: Step) => (s.type === 'send' ? `Send to ${s.toLabel}` : `${s.type === 'buy' ? 'Buy' : 'Sell'} ${s.ticker}on`);
-const stepSub = (s: Step) => (s.type === 'send' ? (s.note ? `Note: ${s.note}` : 'Gas paid by Pocket') : 'Paper stock, live CoinGecko price');
+const stepSub = (s: Step) => (s.type === 'send' ? (s.note ? `Note: ${s.note}` : 'Fee paid by Pocket') : 'Paper stock, live CoinGecko price');
 const stepVal = (s: Step) => (s.type === 'send' ? `$${fmt(s.amount)}` : `$${fmt(s.usd || 0)}`);
 
 function PlanCard({ plan, check, keep, onReview, onChange }: { plan: Plan; check?: Check; keep: number; onReview: () => void; onChange: () => void }) {

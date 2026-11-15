@@ -32,13 +32,13 @@ function Welcome() {
       const j = JSON.parse(bk.trim()) as { account?: string; secretKey?: string };
       if (!j.account || !j.secretKey) throw new Error('That backup is missing the account or the key.');
       const k = keyFromString(j.secretKey);
-      setBusy('Checking your key on NEAR testnet');
+      setBusy('Checking your key');
       const ak = await viewAccessKey(j.account, k.publicKey);
       const acct = await viewAccount(j.account);
       const wallet = !!acct && (!!acct.global_contract_hash || acct.code_hash !== '11111111111111111111111111111111');
       // Wallet v2 recovery keys are not access keys: the contract lists them as owner keys.
       const owner = wallet && !ak && ((await view<{ owner_keys?: string[] }>(j.account, 'get_config').catch(() => ({} as { owner_keys?: string[] }))).owner_keys || []).includes(k.publicKey);
-      if (!ak && !owner) throw new Error('That key does not belong to ' + j.account + ' on NEAR testnet.');
+      if (!ak && !owner) throw new Error('That key does not belong to ' + j.account + '.');
       if (owner || (wallet && ak?.permission === 'FullAccess')) {
         // The recovery key: add a fresh device key and forget the recovery key again.
         setBusy('Adding this device with your recovery key');
@@ -56,7 +56,7 @@ function Welcome() {
     if (!/^[a-z0-9]([a-z0-9_-]{0,30}[a-z0-9])?$/.test(clean) || clean.length < 2) { setErr('Use 2 to 32 letters or numbers. Dash and underscore are fine inside.'); return; }
     try {
       setBusy('Making your key on this device');
-      setTimeout(() => setBusy((b) => (b ? 'Creating your NEAR testnet account' : b)), 900);
+      setTimeout(() => setBusy((b) => (b ? 'Creating your account' : b)), 900);
       if (name.trim()) setProfile({ name: name.trim() });
       await signup(clean);
       setBusy('');
@@ -101,13 +101,13 @@ function Welcome() {
               <button type="button" className="btn text" onClick={() => { setRestore(true); setErr(''); }}>I have a backup key</button>
             </form>
           )}
-          <div className="checks">{['Runs on NEAR testnet', 'Fee $0 on sends', 'You sign every move'].map((t) => <span key={t}><Check size={16} strokeWidth={2.2} aria-hidden />{t}</span>)}</div>
+          <div className="checks">{['Test money only', 'Fee $0 on sends', 'You sign every move'].map((t) => <span key={t}><Check size={16} strokeWidth={2.2} aria-hidden />{t}</span>)}</div>
         </div>
         <div className="hr"><div className="group signup-how"><b>How sign up works</b>
           <ol>
-            <li><b>Pick a username.</b> It becomes your NEAR testnet account, like ama.{ROOT}.</li>
+            <li><b>Pick a username.</b> It becomes your Pocket account, like ama.{ROOT}.</li>
             <li><b>Your key is made here.</b> A private key is created inside this browser and never leaves it. No email, password, seed phrase or login service.</li>
-            <li><b>Pocket pays the setup.</b> We create the account, pay the gas and add 1,000 test dollars.</li>
+            <li><b>Pocket pays the setup.</b> We create the account, pay the fees and add 1,000 test dollars.</li>
             <li><b>Make it yours.</b> Add a passkey (Face ID, fingerprint or screen lock) in Settings, and back up your key from Profile.</li>
           </ol></div></div>
       </section>

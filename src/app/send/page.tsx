@@ -32,7 +32,7 @@ function SendInner() {
         </div>
         <div className="quick">{[10, 20, 50].map((x) => <button key={x} onClick={() => setV(String(x))}>${x}</button>)}<button onClick={() => setV(String(Math.floor(Math.min(avail, left) * 100) / 100))}>Max</button></div>
         <Keypad onKey={(k) => setV((x) => press(x, k))} />
-        <div style={{ textAlign: 'center', fontSize: '.875rem' }}><Link href="/private">Private send instead (0.1 NEAR notes)</Link></div>
+        <div style={{ textAlign: 'center', fontSize: '.875rem' }}><Link href="/private">Want to send privately? Pick NEAR and turn on Send privately</Link></div>
         <div className="cta"><button className="btn big" disabled={!(n > 0) || !!err} onClick={() => router.push('/send/to?amt=' + n)}>Choose who</button></div>
       </main>
     </AppShell>

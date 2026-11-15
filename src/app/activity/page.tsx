@@ -11,5 +11,5 @@ function CsvButton() {
     onClick={() => { try { downloadReceiptsCsv(items); toast(`Saved ${items.length} receipts as CSV`); } catch (e) { toastErr(e); } }}><Download size={20} aria-hidden /></button>;
 }
 export default function Page() {
-  return <Gate><AppShell screen="activity" tab="wallet"><BackNav href="/wallet" title="Activity" right={<CsvButton />} /><main className="body"><ActivityList max={200} /><div className="src">Every row opens a receipt rebuilt from NEAR testnet. The download button saves them all as a CSV file with links to each receipt and to NearBlocks.</div></main></AppShell></Gate>;
+  return <Gate><AppShell screen="activity" tab="wallet"><BackNav href="/wallet" title="Activity" right={<CsvButton />} /><main className="body"><ActivityList max={200} /><div className="src">Every row opens a receipt rebuilt from the public record. The download button saves them all as a CSV file with links to each receipt and to NearBlocks.</div></main></AppShell></Gate>;
 }
