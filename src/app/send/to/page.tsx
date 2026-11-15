@@ -18,10 +18,10 @@ import { privateReady, sendPrivately, walletHasPool } from '@/lib/client/private
 
 type Asset = 'pUSD' | 'USDC' | 'NEAR';
 type Net = 'near' | 'sol' | 'eth' | 'pol';
-const NETS: Record<Net, { n: string; logo: string; t: string }> = { near: { n: 'NEAR', logo: 'near', t: 'testnet' }, sol: { n: 'Solana', logo: 'solana', t: 'devnet' }, eth: { n: 'Ethereum', logo: 'ethereum', t: 'Sepolia' }, pol: { n: 'Polygon', logo: 'polygon', t: 'Amoy' } };
+const NETS: Record<Net, { n: string; logo: string; t: string }> = { near: { n: 'NEAR', logo: 'near', t: 'test money' }, sol: { n: 'Solana', logo: 'solana', t: 'test money' }, eth: { n: 'Ethereum', logo: 'ethereum', t: 'test money' }, pol: { n: 'Polygon', logo: 'polygon', t: 'test money' } };
 const ASSETS: { sym: Asset; logo: string; sub: string }[] = [{ sym: 'pUSD', logo: 'pusd', sub: 'Pocket test dollar, NEAR accounts' }, { sym: 'USDC', logo: 'usdc', sub: 'Circle test USDC, NEAR accounts' }, { sym: 'NEAR', logo: 'near', sub: 'NEAR accounts only' }];
 const NB = ({ k }: { k: Net }) => <span className="nbadge"><span className={'nl ' + k}><Logo name={NETS[k].logo} /></span>{NETS[k].n}</span>;
-const short = (a: string) => (a.length > 22 ? a.slice(0, 6) + '…' + a.slice(-6) : a);
+const short = (a: string) => (a.length > 22 ? a.slice(0, 10) + '…' : a);
 type Target = { account: string; label: string; net: Net; kind: string; why: string; pocket: boolean; exists: boolean; contact?: Contact };
 
 function XSend() {
@@ -55,7 +55,7 @@ function XSend() {
   const dollars = asset === 'NEAR' ? n * (qq.data?.tokens.NEAR?.price || 0) : n;
   const left = Math.max(0, (b.data?.limit ?? rules.limit) - (b.data?.usedToday ?? 0));
   const keepOk = asset === 'NEAR' || sm.dollars - n >= rules.keep;
-  const amtErr = n > bal ? `You have ${fmt(bal, asset === 'NEAR' ? 4 : 2)} ${asset}.` : asset === 'NEAR' && sm.near - n < 0.05 ? 'Leave 0.05 NEAR for your account storage.' : !keepOk ? `That goes under the $${fmt(rules.keep)} you keep.` : dollars > left ? `Over your daily limit. $${fmt(left)} left today.` : asset === 'NEAR' && n > 5 ? 'Pocket sends up to 5 NEAR at a time on testnet.' : '';
+  const amtErr = n > bal ? `You have ${fmt(bal, asset === 'NEAR' ? 4 : 2)} ${asset}.` : asset === 'NEAR' && sm.near - n < 0.05 ? 'Leave 0.05 NEAR for your account storage.' : !keepOk ? `That goes under the $${fmt(rules.keep)} you keep.` : dollars > left ? `Over your daily limit. $${fmt(left)} left today.` : asset === 'NEAR' && n > 5 ? 'Pocket sends up to 5 NEAR at a time.' : '';
 
   const q = qs.trim().toLowerCase();
   const shown = useMemo(() => contacts.filter((c) => !q || c.name.toLowerCase().includes(q) || c.address.includes(q)), [contacts, q]);
@@ -122,13 +122,13 @@ function XSend() {
       </Sheet>
       <Sheet open={sheet === 'network'} onClose={() => setSheet('')} label="Pick the network"><div className="sh-t">Which network is this on?</div>
         <div className="sh-s">0x addresses look the same on Ethereum, Polygon and NEAR. Ask where their wallet lives. Pocket never guesses for you.</div>
-        <section className="group">{([['eth', 'Fee about 0.40 USDC', false], ['pol', 'Fee about 0.03 USDC', false], ['near', 'Fee 0.00, Pocket pays it', true]] as [Net, string, boolean][]).map(([k, fee, lv]) => <button key={k} className={'opt' + (net === k ? ' on' : '')} onClick={() => setNet(k)}><span className={'logo ' + k}><Logo name={NETS[k].logo} /></span><span className="lft2"><span className="ot">{NETS[k].n} <span className={lv ? 'lv' : 'rm'}>{lv ? 'Live' : 'Roadmap'}</span></span><span className="os">{NETS[k].n} {NETS[k].t}. {fee}</span></span><span className="rd">{net === k && <Check size={14} strokeWidth={3} aria-hidden />}</span></button>)}</section>
+        <section className="group">{([['eth', 'Fee about 0.40 USDC', false], ['pol', 'Fee about 0.03 USDC', false], ['near', 'Sending is free', true]] as [Net, string, boolean][]).map(([k, fee, lv]) => <button key={k} className={'opt' + (net === k ? ' on' : '')} onClick={() => setNet(k)}><span className={'logo ' + k}><Logo name={NETS[k].logo} /></span><span className="lft2"><span className="ot">{NETS[k].n} <span className={lv ? 'lv' : 'rm'}>{lv ? 'Live' : 'Roadmap'}</span></span><span className="os">{NETS[k].n} {NETS[k].t}. {fee}</span></span><span className="rd">{net === k && <Check size={14} strokeWidth={3} aria-hidden />}</span></button>)}</section>
         <button className="btn big" style={{ marginTop: '.9rem' }} disabled={!net} onClick={() => { setSheet(''); runDetect(qs, net!); }}>Use this network</button>
       </Sheet>
       <Sheet open={sheet === 'save'} onClose={() => setSheet('')} label="Save as contact"><div className="sh-t">Save as a contact?</div>
         <div className="sh-s">Next time, type the name instead of the address.</div>
         <label className="field focus"><input className="inp" aria-label="Contact name" placeholder="Name, like Mum" value={saveName} onChange={(e) => setSaveName(e.target.value)} maxLength={40} /></label>
-        {tgt && <div style={{ margin: '.7rem .2rem .9rem', display: 'flex', gap: '.5rem', alignItems: 'center', fontSize: '.875rem', color: 'var(--ink-2)' }}><NB k={tgt.net} /> <span className="mono">{short(tgt.account)}</span></div>}
+        {tgt && <div style={{ margin: '.7rem .2rem .9rem', display: 'flex', gap: '.5rem', alignItems: 'center', fontSize: '.875rem', color: 'var(--ink-2)' }}><NB k={tgt.net} /> <span className="mono">{tgt.pocket ? tgt.label : short(tgt.account)}</span></div>}
         <div className="acts2"><button className="btn ghost" onClick={() => setSheet('')}>Not now</button><button className="btn" disabled={!saveName.trim()} onClick={() => { if (tgt) { saveContact({ name: saveName.trim(), address: tgt.account, network: tgt.net, kind: tgt.pocket ? 'pocket' : 'wallet', sends: 1, lastAt: Date.now() }); toast(`Saved. Next time type ${saveName.trim()}`); } setSheet(''); }}>Save contact</button></div>
       </Sheet>
     </>}>
@@ -167,7 +167,7 @@ function XSend() {
 
       {step === 'amount' && <main className="body stepv send on">
         <div className="amtwrap"><div className={'amt bold' + (amtErr ? ' over' : '')}>{amt || '0'}<span className="unit asym">{asset}</span></div><div className="bal">Balance <b>{fmt(bal, asset === 'NEAR' ? 4 : 2)}</b> <span className="asym">{asset}</span></div></div>
-        <div className="feeline"><span className="k">Network fee on NEAR</span><span className="v">0.00, Pocket pays it</span></div>
+        <div className="feeline"><span className="k">Fee</span><span className="v">0.00, sending is free</span></div>
         <div className="feeline" style={{ marginTop: '-.5rem' }}><span className="k">{tgt?.contact?.name || tgt?.label} gets</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
         {amtErr && <div className="errline" role="alert">{amtErr}</div>}
         <Keypad onKey={(k) => setAmt((x) => press(x, k, asset === 'NEAR' ? 4 : 2))} />
@@ -177,10 +177,10 @@ function XSend() {
       {step === 'review' && tgt && <main className="body stepv review on">
         <div className="who">{tgt.pocket || tgt.contact ? <AvatarFor value="" name={(tgt.contact?.name || tgt.label).replace('@', '')} size={56} cls="av" /> : <span className={'logo ' + tgt.net} style={{ width: '3.5rem', height: '3.5rem' }}><Logo name={NETS[tgt.net].logo} /></span>}
           <div className="big2">{fmt(n, asset === 'NEAR' ? 4 : 2)} <span style={{ fontSize: '.45em', opacity: 0.6 }}>{asset}</span></div>
-          <div className="to">to <b>{tgt.contact?.name || tgt.label}</b>{tgt.contact || tgt.pocket ? <>, <span className="mono">{short(tgt.account)}</span></> : null} on <NB k="near" /> {!tgt.contact && <span className="chip">New</span>} {!amtErr && chk && !blocked && <span className="chip ok"><ShieldCheck size={12} aria-hidden />Checked</span>}{blocked && <span className="chip">Blocked</span>}</div></div>
+          <div className="to">to <b>{tgt.contact?.name || tgt.label}</b> on <NB k="near" /> {!tgt.contact && !tgt.pocket && <span className="chip">New</span>} {!amtErr && chk && !blocked && <span className="chip ok"><ShieldCheck size={12} aria-hidden />Checked</span>}{blocked && <span className="chip">Blocked</span>}</div></div>
         <section className="group bd">
           <div className="cell"><span className="k">You send</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
-          <div className="cell"><span className="k">Fee</span><span className="v">0.00<small>Pocket pays it</small></span></div>
+          <div className="cell"><span className="k">Fee</span><span className="v">0.00<small>Sending is free</small></span></div>
           <div className="cell key"><span className="k">They get</span><span className="v">{fmt(n, asset === 'NEAR' ? 4 : 2)} {asset}</span></div>
           <div className="cell"><span className="k">Arrives</span><span className="v">about 2 s</span></div>
           {priv && <div className="cell"><span className="k">Private</span><span className="v">Yes</span></div>}

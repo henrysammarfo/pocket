@@ -31,7 +31,7 @@ function CreditsMeter() {
         <div className="meter" role="progressbar" aria-label="AI credits used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: pct + '%' }} /></div>
         <div className="cs">{c ? `A chat reply uses about ${c.cost.chat}, a voice note about ${c.cost.voice}. Resets ${reset}. ${c.ai ? 'AI is on.' : 'AI is resting, so Pocket uses its built in helper for free.'}` : ' '}</div>
       </div></div></div>
-      {c?.private && <Link className="cell" href="/settings/private-ai"><div className="lft"><span className="ic"><ShieldCheck size={17} aria-hidden /></span><div style={{ minWidth: 0 }}><div className="ct">Private AI on NEAR AI Cloud (TEE)</div><div className="cs">Chats, photos, voice and web search run in attested secure hardware. Tap to verify it live.</div></div></div><span className="cv"><span className="lv">Verify</span> <ChevronRight size={16} aria-hidden /></span></Link>}
+      {c?.private && <Link className="cell" href="/settings/private-ai"><div className="lft"><span className="ic"><ShieldCheck size={17} aria-hidden /></span><div style={{ minWidth: 0 }}><div className="ct">Private AI</div><div className="cs">Chats, photos, voice and web search stay in secure hardware. Tap to check it live.</div></div></div><span className="cv shrink-0"><span className="lv">Verify</span> <ChevronRight size={16} aria-hidden /></span></Link>}
       <button className="cell" onClick={() => setRules({ ...rules, speak: !rules.speak })}><div className="lft"><span className="ic"><Volume2 size={17} aria-hidden /></span><div><div className="ct">Read replies out loud</div><div className="cs">Uses your device voice, free</div></div></div><span className="toggle" role="switch" aria-checked={!!rules.speak} aria-label="Read replies out loud" /></button>
     </section>
     <div className="ghead"><b>What Pocket remembers</b><span>{mem.length}</span></div>
@@ -106,7 +106,7 @@ function SettingsInner() {
     </>}>
       <header className="nav large"><div className="lt">Settings</div></header>
       <main className="body settings">
-        <section className="group"><Link className="cell" href="/profile"><div className="lft"><Avatar size={48} cls="me-av" /><div><div className="ct" style={{ fontWeight: 600 }}>{p.name || '@' + s.username}</div><div className="cs">@{s.username}, {s.account}</div></div></div><span className="chev"><ChevronRight size={18} aria-hidden /></span></Link></section>
+        <section className="group"><Link className="cell" href="/profile"><div className="lft"><Avatar size={48} cls="me-av" /><div><div className="ct" style={{ fontWeight: 600 }}>{p.name || '@' + s.username}</div><div className="cs">@{s.username}</div></div></div><span className="chev"><ChevronRight size={18} aria-hidden /></span></Link></section>
         <div className="ghead"><b>Safety</b></div>
         <section className="group">
           {cell(Gauge, 'Daily send limit', <span>${serverLimit.toLocaleString('en-US')}</span>, () => setSheet('limit'))}

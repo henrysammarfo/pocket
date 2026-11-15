@@ -8,7 +8,6 @@ import { AddSheet, ReceiveSheet } from '@/ui/sheets';
 import { ActivityRow, useActivity } from '@/ui/Activity';
 import { ago, summary, useBalances, useQuotes } from '@/lib/client/data';
 import { useSession } from '@/lib/client/session';
-import { USDC } from '@/lib/shared/deployment';
 
 function CoinInner({ id }: { id: string }) {
   const U = id === 'usdc';
@@ -16,10 +15,23 @@ function CoinInner({ id }: { id: string }) {
   const b = useBalances(); const q = useQuotes(); const sm = summary(b.data, q.data);
   const [range, setRange] = useState('1D');
   const [d, setD] = useState<{ ranges: Record<string, number[]> } | null>(null);
+  const [chartErr, setChartErr] = useState(false);
   const [scrub, setScrub] = useState<number | null>(null);
   const [sheet, setSheet] = useState<'' | 'recv' | 'add'>('');
   const act = useActivity();
-  useEffect(() => { if (!U) fetch('/api/coin?id=near').then((r) => r.json()).then(setD).catch(() => setD(null)); }, [U]);
+  useEffect(() => {
+    if (U) return;
+    let on = true;
+    const wait = setTimeout(() => { if (on) setChartErr(true); }, 8000);
+    fetch('/api/coin?id=near').then((r) => { if (!r.ok) throw new Error('bad'); return r.json(); }).then((j) => {
+      if (!on) return;
+      clearTimeout(wait);
+      setD(j);
+      const has = Object.values(j.ranges || {}).some((a) => Array.isArray(a) && a.length > 1);
+      if (!has) setChartErr(true);
+    }).catch(() => { if (on) { clearTimeout(wait); setChartErr(true); } });
+    return () => { on = false; clearTimeout(wait); };
+  }, [U]);
   const t = q.data?.tokens[U ? 'USDC' : 'NEAR'];
   const bal = U ? sm.usdc : sm.near;
   const usd = U ? sm.usdc * (t?.price || 1) : sm.nearUsd;
@@ -41,19 +53,19 @@ function CoinInner({ id }: { id: string }) {
         </div>
         {U ? <div className="note2"><ShieldCheck size={18} aria-hidden /><span>{t ? `Pegged to 1 dollar. Now $${fmt(t.price, 4)}.` : 'Pegged to 1 dollar.'}</span></div> : <>
           {t && base ? <Chg d={price - base} base={base} when={RANGE_WORD[range]} /> : <span className="chg">&nbsp;</span>}
-          <Chart pts={pts} base={base || undefined} onScrub={setScrub} fmtV={(v) => '$' + fmt(v, 3)} />
+          {chartErr && (!pts || pts.length < 2) ? <div className="chart"><div className="ld">The chart could not be loaded right now. Try again in a minute.</div></div> : <Chart pts={pts} base={base || undefined} onScrub={setScrub} fmtV={(v) => '$' + fmt(v, 3)} empty="The chart could not be loaded right now. Try again in a minute." />}
           <Ranges value={range} onChange={setRange} />
         </>}
         <div className="ghead"><b>Networks you hold it on</b></div>
         <section className="group list">
-          <div className="row"><span className="logo near"><Logo name="near" /></span><span className="rn"><span className="nm">NEAR (test money)</span><span className="sb">{s.account}</span></span><span className="px"><span className="p">{fmt(bal, U ? 2 : 4)}</span><span className="lv">Live</span></span></div>
+          <div className="row"><span className="logo near"><Logo name="near" /></span><span className="rn"><span className="nm">NEAR (test money)</span><span className="sb">{'@' + s.username}</span></span><span className="px"><span className="p">{fmt(bal, U ? 2 : 4)}</span><span className="lv">Live</span></span></div>
           {U && <>
-            <div className="row"><span className="logo sol"><Logo name="solana" /></span><span className="rn"><span className="nm">Solana devnet</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
-            <div className="row"><span className="logo eth"><Logo name="ethereum" /></span><span className="rn"><span className="nm">Ethereum Sepolia</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
+            <div className="row"><span className="logo sol"><Logo name="solana" /></span><span className="rn"><span className="nm">Solana</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
+            <div className="row"><span className="logo eth"><Logo name="ethereum" /></span><span className="rn"><span className="nm">Ethereum</span><span className="sb">Send out only, via a bridge</span></span><span className="px"><span className="p">0.00</span><span className="rm">Roadmap</span></span></div>
           </>}
         </section>
         <div className="ghead"><b>About</b></div>
-        <section className="group"><div className="about">{U ? <>USDC is a digital dollar issued by Circle. On NEAR it is native, not bridged. Token id <span className="mono">{USDC.slice(0, 4)}…{USDC.slice(-4)}</span>. Get some free at faucet.circle.com.</> : 'NEAR is the coin of the NEAR network. Pocket keeps a little in your account for storage. Pocket pays the gas for your sends.'}</div></section>
+        <section className="group"><div className="about">{U ? 'USDC is a digital dollar issued by Circle. On NEAR you can send it like any other balance. Get free test USDC from the Circle site if you need some.' : 'NEAR is the coin of the NEAR network. Pocket keeps a little in your account so it stays open. Sending is free.'}</div></section>
         <div className="ghead"><b>Activity</b></div>
         <section className="group list">{items.length ? items.slice(0, 6).map((a) => <ActivityRow key={a.kind + a.tx} a={a} />) : <div className="empty">No {U ? 'USDC' : 'NEAR'} activity yet.</div>}</section>
         <div className="srcline"><Info size={14} aria-hidden /><span>{t ? `Price: CoinGecko, ${ago(t.updatedAt)}.` : 'Loading price'}{!U ? ' Charts: CoinGecko market chart.' : ''}</span></div>
