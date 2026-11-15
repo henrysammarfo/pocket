@@ -45,7 +45,8 @@ const hid = /is now hidden/.test(addMsg);
 ok(hid || /limit/i.test(addMsg), (hid ? 'hiding 0.1 NEAR worked: ' : 'hiding over the daily limit is refused with the reason: ') + addMsg.slice(0, 160).replace(/\s+/g, ' '));
 await p.screenshot({ path: SHOTS + '/2-hide.png' });
 
-if (note || hid) {
+const canSend = !!(note || hid);
+{
 // The normal Send screen with the Send privately toggle, as a user would do it.
 const to = crypto.randomBytes(32).toString('hex');
 await p.goto(BASE + `/send/to?to=${to}&amt=0.1&asset=NEAR`);
@@ -61,6 +62,12 @@ const hb = p.locator('button.hold:not([disabled])').first(); await hb.waitFor({ 
 const bb = await hb.boundingBox(); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up();
 const prog = await p.locator('[data-testid="send-progress"]').innerText({ timeout: 15000 }).catch(() => '');
 ok(/privately|ready/i.test(prog), 'friendly progress text while sending: ' + prog);
+if (!canSend) {
+  // No hidden money and the daily limit is used up: the account itself must refuse, in plain words.
+  const t = await p.locator('.toast.err').innerText({ timeout: 180000 }).catch(() => '');
+  ok(/limit/i.test(t) && !/panicked|ActionError|\{/.test(t), 'Send privately over the daily limit is refused in plain words: ' + t.slice(0, 160));
+  await p.screenshot({ path: SHOTS + '/4-refused.png' });
+} else {
 await p.locator('text=Sent privately to').waitFor({ timeout: 240000 }).catch(() => {});
 const done = await p.locator('body').innerText();
 const rec = await p.locator('a:has-text("View receipt")').getAttribute('href').catch(() => null);
@@ -70,6 +77,7 @@ const hash = rec ? rec.split('/').pop() : null;
 fs.writeFileSync(SHOTS + '/result.json', JSON.stringify({ hash, link: hash ? 'https://testnet.nearblocks.io/txns/' + hash : null, to, at: new Date().toISOString() }, null, 1));
 const acct = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'view_account', finality: 'final', account_id: to } }) }).then((x) => x.json());
 ok(acct.result && BigInt(acct.result.amount) === 10n ** 23n, 'the new account holds exactly 0.1 NEAR from the private fund');
+}
 }
 ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
 
