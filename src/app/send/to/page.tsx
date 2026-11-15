@@ -13,6 +13,7 @@ import { summary, useBalances, useQuotes } from '@/lib/client/data';
 import { getRules, saveContact, useContacts, useRules, useSession, type Contact } from '@/lib/client/session';
 import { detect } from '@/lib/shared/address';
 import { ROOT } from '@/lib/shared/deployment';
+import { BLOCKLIST } from '@/lib/shared/wallet';
 
 type Asset = 'pUSD' | 'USDC' | 'NEAR';
 type Net = 'near' | 'sol' | 'eth' | 'pol';
@@ -64,6 +65,9 @@ function XSend() {
     if (exact) return pickContact(exact);
     const d = detect(raw, ROOT);
     setStep('detect');
+    // Pocket's shared block list (burn addresses, known drainers) is checked before anything else.
+    const listed = BLOCKLIST.find((x) => x.account === raw.trim().toLowerCase());
+    if (listed) { setDerr(`Pocket blocks this address. ${listed.reason} Evidence: ${listed.evidence}`); return; }
     if (d.kind === 'empty') { setStep('to'); return; }
     if (d.kind === 'mainnet' || d.kind === 'unsupported') { setDerr(d.reason); return; }
     if (d.kind === 'solana') { setNet('sol'); setTgt({ account: d.address, label: short(d.address), net: 'sol', kind: 'Solana address', why: 'Base58, 32 to 44 characters', pocket: false, exists: true }); return; }
@@ -77,7 +81,7 @@ function XSend() {
       if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not exist on NEAR testnet.`); return; }
       if (r.account === s.account) { setDerr('That is you.'); return; }
       setNet('near');
-      setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR implicit account' : 'NEAR testnet account', why: r.exists ? r.account : 'New implicit account, it will be created by the send', pocket: r.pocket, exists: r.exists });
+      setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR implicit account' : 'NEAR testnet account', why: r.exists ? r.account : 'This address has never been used on NEAR testnet', pocket: r.pocket, exists: r.exists });
     } catch (e) { setDerr(e instanceof Error ? e.message : String(e)); }
   };
   useEffect(() => { const t = sp.get('to'); if (t) runDetect(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -145,7 +149,7 @@ function XSend() {
       {step === 'detect' && <main className="body stepv on">
         <div className="field focus"><span className="in val mono" style={{ overflowWrap: 'anywhere' }}>{qs || tgt?.account}</span><button className="fx" aria-label="Clear" onClick={back}><CircleX size={18} aria-hidden /></button></div>
         <section className="group"><div className="detect">
-          {derr ? <><span className="logo ph">?</span><div><div className="dt">Can&apos;t send here</div><div className="ds">{derr}</div></div></>
+          {derr ? <><span className="logo ph">?</span><div role="alert" data-testid="cant-send"><div className="dt">Can&apos;t send here</div><div className="ds">{derr}</div></div></>
             : tgt ? <><span className={'logo ' + tgt.net}><Logo name={NETS[tgt.net].logo} /></span><div><div className="dt">{tgt.kind} <span className="lv">Detected</span></div><div className="ds" style={{ overflowWrap: 'anywhere' }}>{tgt.why}</div></div></>
             : <><span className="logo ph">…</span><div><div className="dt">Checking</div><div className="ds">Looking it up on NEAR testnet</div></div></>}
         </div></section>

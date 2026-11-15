@@ -90,3 +90,13 @@ describe('receiver check: shared list and account age', () => {
   it('a 3 day old account does not', () => expect(checkReceiver(f('old.testnet', { createdMs: 1_000_000_000_000 - 3 * 86_400_000, nowMs: 1_000_000_000_000 })).reasons.map((r) => r.code)).not.toContain('new_account'));
   it('unknown age never warns or blocks', () => expect(checkReceiver(f('x1.testnet', { createdMs: null })).reasons.map((r) => r.code)).not.toContain('new_account'));
 });
+
+import { checkPlan } from '@/lib/shared/plan';
+describe('plan check knows the wallet per send cap', () => {
+  const ctx = { dollars: 1000, pusd: 1000, usdc: 0, near: 1, holdings: {}, keep: 0, limit: 200, usedToday: 0, prices: {} };
+  const plan = (amount: number, asset: 'auto' | 'NEAR' = 'auto') => ({ id: 'x', summary: '', steps: [{ type: 'send' as const, to: 'b.testnet', toLabel: 'B', amount, asset }] });
+  it('a $150 send over a $100 per send cap is blocked with a reason', () => { const c = checkPlan(plan(150), { ...ctx, perSend: 100 }); expect(c.ok).toBe(false); expect(c.reasons.join(' ')).toMatch(/\$100 a send/); });
+  it('exactly the cap is fine', () => expect(checkPlan(plan(100), { ...ctx, perSend: 100 }).ok).toBe(true));
+  it('no per send cap known (older accounts) keeps the old behaviour', () => expect(checkPlan(plan(150), ctx).ok).toBe(true));
+  it('NEAR sends are not judged by the dollar per send cap here', () => expect(checkPlan(plan(0.5, 'NEAR'), { ...ctx, perSend: 0.1 }).ok).toBe(true));
+});

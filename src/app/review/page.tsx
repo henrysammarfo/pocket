@@ -38,7 +38,7 @@ function ReviewInner() {
   }, [plan]);
   if (!plan) return <AppShell screen="review" tab="chat" noTabs><BackNav href="/chat" title="Review" /><main className="body review"><div className="empty">This plan is no longer here. Ask Pocket again in Chat.</div><Link className="btn" href="/chat">Back to Chat</Link></main></AppShell>;
 
-  const ctx = { dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, prices: sm.prices };
+  const ctx = { dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, perSend: b.data?.onchain ? Number(b.data.onchain.limits.usd_per_send) / 1e6 : undefined, prices: sm.prices };
   const chk = b.data && q.data ? checkPlan(plan, ctx) : null;
   const sends = plan.steps.filter((s) => s.type === 'send') as Extract<Step, { type: 'send' }>[];
   const single = plan.steps.length === 1 && sends.length === 1 ? sends[0] : null;

@@ -154,7 +154,7 @@ function ChatInner() {
     try { const fresh = await api<Balances>(`/api/balances?account=${encodeURIComponent(s.account)}`); const f = summary(fresh, q.data); return { ...ctx(), dollars: f.dollars, pusd: f.pusd, usdc: f.usdc, near: f.near, holdings: f.holdings, limit: fresh.limit ?? rules.limit, usedToday: fresh.usedToday ?? 0 }; } catch { return ctx(); }
   };
   const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; } };
-  const ctx = () => ({ tz: tz(), dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, prices: sm.prices, name: profile.name || s.username, contacts: contacts.map((c) => ({ name: c.name, address: c.address })) });
+  const ctx = () => ({ tz: tz(), dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, perSend: b.data?.onchain ? Number(b.data.onchain.limits.usd_per_send) / 1e6 : undefined, prices: sm.prices, name: profile.name || s.username, contacts: contacts.map((c) => ({ name: c.name, address: c.address })) });
   const metaOf = (r: { source: string; model?: string; plan?: unknown; check?: Check }, voice?: boolean) => [
     ...(voice ? ['Heard your voice'] : []),
     r.source === 'ai' ? (r.model ? 'AI: ' + r.model.split('/').pop() : 'AI') : r.source === 'rules' ? 'Pocket rules parser' : 'AI is off',

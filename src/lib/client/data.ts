@@ -9,7 +9,7 @@ export type Quotes = {
   tokens: Record<string, { price: number; change24h: number; updatedAt: number; spark?: number[] }>;
   stocks: Record<string, { price: number | null; changePct: number | null; change: number | null; lastTrade: string; marketStatus: string | null; source: string; spark: number[]; prevClose: number | null } | null>;
 };
-export type Balances = { account: string; exists: boolean; near: string; usdc: string; pool: Record<string, string>; limit: number; usedToday: number };
+export type Balances = { account: string; exists: boolean; near: string; usdc: string; pool: Record<string, string>; limit: number; usedToday: number; onchain?: { limits: { usd_per_send: string; usd_per_day: string; blocked: string[] }; spentUsd: number; pending: unknown } | null };
 
 export const useQuotes = () => useLive<Quotes>(() => api('/api/quotes'), [], 10000);
 export function useBalances() {

@@ -4,7 +4,7 @@ export type SendStep = { type: 'send'; to: string; toLabel: string; amount: numb
 export type TradeStep = { type: 'buy' | 'sell'; ticker: string; usd?: number; qty?: number };
 export type Step = SendStep | TradeStep;
 export type Plan = { id: string; steps: Step[]; summary: string };
-export type Ctx = { dollars: number; pusd: number; usdc: number; near: number; holdings: Record<string, number>; keep: number; limit: number; usedToday: number; prices: Record<string, number> };
+export type Ctx = { dollars: number; pusd: number; usdc: number; near: number; holdings: Record<string, number>; keep: number; limit: number; usedToday: number; prices: Record<string, number>; perSend?: number };
 export type Check = { ok: boolean; reasons: string[]; after: number; sendTotal: number; tradeTotal: number };
 
 const TICKERS: Record<string, string> = { tesla: 'TSLA', tsla: 'TSLA', tslaon: 'TSLA', nvidia: 'NVDA', nvda: 'NVDA', nvdaon: 'NVDA', apple: 'AAPL', aapl: 'AAPL', aaplon: 'AAPL', 's&p': 'SPY', 'sp500': 'SPY', 's&p 500': 'SPY', spy: 'SPY', spyon: 'SPY', nasdaq: 'QQQ', 'nasdaq 100': 'QQQ', qqq: 'QQQ', qqqon: 'QQQ' };
@@ -19,6 +19,7 @@ export function checkPlan(p: Plan, c: Ctx): Check {
       if (!(s.amount > 0) || !Number.isFinite(s.amount)) reasons.push('A send needs an amount above zero.');
       else if (s.asset !== 'NEAR' && s.amount < 0.01) reasons.push('Dollar sends start at one cent.');
       else if (s.asset === 'NEAR' && s.amount < 0.00001) reasons.push('NEAR sends start at 0.00001 NEAR.');
+      if (s.asset !== 'NEAR' && c.perSend != null && Number.isFinite(c.perSend) && s.amount > c.perSend + 1e-9) reasons.push(`Your wallet allows up to $${c.perSend.toFixed(0)} a send, and this one is $${s.amount.toFixed(2)}. Split it or raise the cap in Settings.`);
       if (s.asset !== 'NEAR') sendTotal += s.amount; else nearTotal += s.amount;
     } else {
       const px = c.prices[s.ticker] || 0;
