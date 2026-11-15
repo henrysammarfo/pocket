@@ -1,6 +1,6 @@
 # Wallet v2 live testnet checks
 
-Run 15 Nov 2026, about 06:50 Accra time (UTC+0), with `npm run test:v2live` on the demo account
+Run 15 Nov 2026, about 06:43 Accra time (UTC+0), with `npm run test:v2live` on the demo account
 `vtwomwhgwkx5.pocket-7e2413.testnet`. The account runs the v2 wallet code directly (same wasm as
 `vendor/pocket_wallet.wasm`, sha256 `7e3ecd0d…a856`), because deploying v2 as a global contract for
 every new signup needs about 22 testnet NEAR and the NEAR faucet has answered 429 all morning.

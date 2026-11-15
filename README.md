@@ -107,6 +107,30 @@ BASE=https://pocket-git-onchain-limits-teamtitanlink.vercel.app TO=<a pocket acc
 
 Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
 
+## Wallet v2: no full access key, dollar caps on NEAR and stocks, private by default (this branch)
+
+Wallet v2 is in `contracts/wallet` (75 Rust tests) and ran live on testnet, see [docs/TEST_REPORT.v2live.md](docs/TEST_REPORT.v2live.md). New signups on the preview still get v1 until v2 is deployed as the global contract, which needs about 22 testnet NEAR; the faucet has refused every polite retry today, so that deploy is waiting on funds. The app already speaks both versions.
+
+**The recovery key is no longer an access key.** In v1 the recovery key was a full access key, so whoever held it could remove the contract. In v2 the account has only the phone key. The recovery key signs owner messages (`pocket.wallet.owner.v1` + JSON with the account and a nonce that must go up by one), and the contract checks that ed25519 signature itself in `owner_action`. Anyone may submit the message, Pocket's relayer included, so this is a signer check that still holds when NEAR reports the relayer as the signer. What owner messages do:
+
+| Owner message | Takes effect |
+| --- | --- |
+| Stricter rules | at once |
+| Looser rules | after the raise delay (24 hours by default); the phone can cancel |
+| Add a phone key (restore) | at once, limited to the device methods |
+| Remove a key (lost phone) | at once |
+| Change owner keys, for example add up to three guardian keys | after the raise delay; the phone can cancel, so a stolen recovery key cannot swap owners at once |
+
+Trade off, said plainly: with no full access key nobody can redeploy or delete the account, not even you. If you lose both the phone and the recovery key, the money stays where it is. Guardian keys are the way to avoid that; Pocket does not hold one for you.
+
+**Dollar caps on NEAR and stocks.** v1 counted NEAR and stocks in units because there is no price on chain. v2 asks for a price signed by Pocket's price key (`GET /api/price?token=near`, CoinGecko, valid five minutes, signed over `pocket.price.v1`). The contract checks the signature, the token and the age (at most ten minutes ahead), works out the dollar value and counts it against the same dollar caps as pUSD and USDC. A missing, foreign, forged or expired price is refused. This trusts Pocket's price key for the price, not for the money: a wrong price can only make a send count for more or less against your own caps, and the unit caps still apply. A decentralised oracle would remove that trust; none we could verify is on testnet for these paper stocks.
+
+**Shared block list.** [data/blocklist.json](data/blocklist.json) lists burn addresses, protocol accounts and the demo drainer, each with a reason and evidence. Every new wallet starts with it in its on chain block list, the receiver check blocks it on every screen, and section 11 of the testnet run shows a hijacked chat trying to pay the drainer: the receiver check, the relayer and the contract all refuse ([tx](https://testnet.nearblocks.io/txns/J9DBXpR2d3HhQraFZbiSavkjyrJPqDSQA8wiSewU5rnx)).
+
+**Private AI only, on by default.** Chat, photos and voice run only on NEAR AI Cloud inside an attested TEE. If NEAR AI is busy or at Pocket's daily cap, Pocket fails closed: chat answers with its built in helper and nothing goes to Groq. You can turn this off in Settings, Privacy. Settings, Private AI now checks the TEE evidence in your own browser, straight against NEAR AI Cloud with a fresh random nonce, so the check does not depend on Pocket's server.
+
+**What stays public.** Balances and sends on NEAR testnet are public, like any public ledger; anyone who knows your account name can see them. NEAR's Confidential Intents would hide that, but it runs on mainnet only and NEAR Intents has no testnet, so Pocket does not claim it. It is the planned path for a mainnet version.
+
 ## Receipts export, request links and receiver checks (this branch)
 
 **Receipts as CSV.** Activity has a download button that saves every receipt as a CSV file: date in UTC, type, asset, amount (minus for money out), dollars for trades, the other account, the memo, the transaction id, a link to the Pocket receipt and a link to NearBlocks. Text that a spreadsheet would run as a formula gets a leading apostrophe, so a memo someone sent you cannot run code in Excel or Google Sheets. Code: `src/lib/shared/csv.ts`, tests: `tests/unit/receipts.test.ts`.
@@ -214,7 +238,7 @@ ALL PASS
 flowchart LR
   U[Your message, photo or voice] --> S[Pocket server<br/>rules, limits, credits]
   S -->|first: chat, photos, voice, web search| N[NEAR AI Cloud<br/>TEE: TDX + NVIDIA CC<br/>store: false]
-  S -.->|error, rate limit or daily cap| G[Groq fallback<br/>not private]
+  S -.->|only if you turn off Private AI only| G[Groq fallback<br/>not private]
   N --> P[Plan card<br/>you hold to approve]
   G --> P
   B[(Your browser<br/>key, chat history)] --- U
@@ -244,7 +268,7 @@ flowchart LR
 * Pocket's server relays chat text to the model and stores none of it. Chat history lives only in your browser. Copies saved by older versions were deleted on 14 Nov 2026, so the `pocket_chat` table now has 0 rows.
 * The AI never holds keys, so a leaked or tampered prompt cannot move money. The model can only propose a plan card.
 * Every send is signed by the key on your own device after you hold to approve, and is checked against your server enforced daily limit and keep amount and the relayer allow list (allowed contracts and methods only, with a cap per send). On this branch the device key is a function call key that can only call the Pocket wallet contract on your own account, and the contract enforces the caps on chain; see [On chain spending limits](#on-chain-spending-limits-this-branch).
-* Web search queries go to Brave Search through NEAR AI, so a query does leave the enclave for the search provider. When NEAR AI returns no results with real links, that one search falls back to Groq, which is not private.
+* Web search queries go to Brave Search through NEAR AI, so a query does leave the enclave for the search provider. When NEAR AI returns no results with real links, that one search falls back to Groq, which is not private, but only if you turned off Private AI only (on by default on this branch).
 
 ## What is stored, where
 | Data | Where it lives | Notes |
@@ -294,8 +318,8 @@ Settings shows your **AI credits meter** and **what Pocket remembers** about you
 | Sign up with a username | Browser makes an ed25519 key; sponsor creates `name.root.testnet` with 0.05 NEAR |
 | Gasless sends of pUSD, USDC, NEAR | pUSD: NEP-413 signed `transfer` intent, relayed `execute_intents`. USDC and NEAR: NEP-366 delegate actions paid by the relayer |
 | Send by saved name, `@username`, `.testnet` account, NEAR 0x account or pay link `/pay/name` | `src/lib/shared/address.ts`, never guesses a network |
-| Chat that talks about anything | Small talk, money questions and planning privately on NEAR AI Cloud (`Qwen/Qwen3.6-35B-A3B-FP8` in a TEE), falling back to Groq (`openai/gpt-oss-120b`); any OpenAI compatible API works. Tool calls `propose_plan`, `confirm_intent`, `remember`. The AI never signs; money only moves through plan cards. With no key, a built in helper still reads money commands |
-| Voice | Tap or hold the mic, or attach a voice note (m4a, mp3, ogg, opus, wav, webm). Whisper large v3 (private on NEAR AI Cloud, Groq fallback) transcribes with a prompt tuned for Ghanaian English and Pidgin; `src/lib/shared/speech.ts` strips fillers, stutters and repeats; Pocket says back what it understood before the plan. Falls back to the browser's own speech recognition with no key. Optional spoken replies in Settings |
+| Chat that talks about anything | Small talk, money questions and planning privately on NEAR AI Cloud (`Qwen/Qwen3.6-35B-A3B-FP8` in a TEE), falling back to Groq (`openai/gpt-oss-120b`) only if you turn off Private AI only; any OpenAI compatible API works. Tool calls `propose_plan`, `confirm_intent`, `remember`. The AI never signs; money only moves through plan cards. With no key, a built in helper still reads money commands |
+| Voice | Tap or hold the mic, or attach a voice note (m4a, mp3, ogg, opus, wav, webm). Whisper large v3 (private on NEAR AI Cloud; Groq only if Private AI only is off) transcribes with a prompt tuned for Ghanaian English and Pidgin; `src/lib/shared/speech.ts` strips fillers, stutters and repeats; Pocket says back what it understood before the plan. Falls back to the browser's own speech recognition with no key. Optional spoken replies in Settings |
 | Memory | Short facts you ask Pocket to remember, per account in Neon Postgres, behind a NEP-413 signed session. Never keys or passwords, and never chat text |
 | AI credits | 1,000 free a month per account, metered on the server from real token use, refunded on failure. Server wide caps keep it inside the free tier. See [docs/BUSINESS.md](docs/BUSINESS.md) |
 | Hold to approve | 1.2 s fill, 200 ms reset on early release, then optional passkey, then the device key signs |
@@ -305,8 +329,8 @@ Settings shows your **AI credits meter** and **what Pocket remembers** about you
 | Faucet | 1,000 pUSD per account per day. Testnet USDC from faucet.circle.com |
 | Live Invest | Token prices (Ondo tokenized stocks on CoinGecko), share prices and key stats (Nasdaq.com), charts 1D to All |
 | Receipts `/r/<tx>` | Rebuilt from the transaction: signed intents, maker memo with price, mid, spread and source |
-| Live answers | Today's date and time in your zone; news and current events through NEAR AI Cloud `web_search` on the private model (Groq `browser_search` as fallback), with source links; product finds with prices and photos read from the real store pages (Pocket opens every link and drops any page that does not exist) |
-| Photos | Share a receipt or bill; a private vision model on NEAR AI Cloud (`Qwen/Qwen3-VL-30B-A3B-Instruct`, Groq `qwen/qwen3.8-27b` as fallback) reads items and total, and "split it with @ama" becomes a plan card. Photos are not stored |
+| Live answers | Today's date and time in your zone; news and current events through NEAR AI Cloud `web_search` on the private model (Groq `browser_search` only if Private AI only is off), with source links; product finds with prices and photos read from the real store pages (Pocket opens every link and drops any page that does not exist) |
+| Photos | Share a receipt or bill; a private vision model on NEAR AI Cloud (`Qwen/Qwen3-VL-30B-A3B-Instruct`, Groq `qwen/qwen3.8-27b` only if Private AI only is off) reads items and total, and "split it with @ama" becomes a plan card. Photos are not stored |
 | Chats | ChatGPT style list: new chat, rename, delete; a drawer on phones and a sidebar on desktop; saved only in your browser |
 | QR | Receive shows your pay link as a QR code; Send can scan one from the camera (works on iPhone through the photo picker) |
 | Profile | Name, email photo (Gravatar), original jersey or emoji avatars, pay link, key backup and restore |
