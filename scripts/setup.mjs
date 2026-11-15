@@ -12,7 +12,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 const RPC = process.env.NEAR_RPC_URL || 'https://test.rpc.fastnear.com';
-const NEED = Number(process.env.SETUP_MIN_NEAR || 40);
+const NEED = Number(process.env.SETUP_MIN_NEAR || 80); // the wallet global contract burns about 19 NEAR once
 const creds = (a) => path.join(os.homedir(), '.near-credentials/testnet', a + '.json');
 // near CLI: a local `near` binary if there is one, otherwise the npm build of near-cli-rs through npx.
 let NEAR_BIN = ['near'];
@@ -40,7 +40,7 @@ if (!ROOT || !fs.existsSync(creds(ROOT))) {
   near('account', 'create-account', 'sponsor-by-faucet-service', ROOT, 'autogenerate-new-keypair', 'save-to-legacy-keychain', 'network-config', 'testnet', 'create');
   await sleep(3000);
 }
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 12; i++) {
   const bal = (await balance(ROOT)) ?? 0;
   console.log(`${ROOT} has ${bal.toFixed(2)} NEAR`);
   if (bal >= NEED) break;
@@ -53,5 +53,6 @@ for (let i = 0; i < 8; i++) {
 }
 const env = { ...process.env, ROOT, NEAR_RPC_URL: RPC };
 execFileSync('node', ['scripts/bootstrap-testnet.mjs'], { env, stdio: 'inherit' });
+execFileSync('node', ['scripts/bootstrap-onchain.mjs'], { env: { ...env, NEAR_BIN: NEAR_BIN.join(' ') }, stdio: 'inherit' });
 execFileSync('node', ['scripts/write-env.mjs'], { env, stdio: 'inherit' });
 console.log(`\nDone. Pocket runs on ${ROOT}. Start it with: npm run dev\nOptional: add AI_API_KEY (NEAR AI Cloud) and DATABASE_URL (Neon) to .env.local.`);

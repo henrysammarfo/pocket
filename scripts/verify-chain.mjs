@@ -19,6 +19,14 @@ async function codeHash(account) {
 }
 const want = { verifier: hashOf('defuse.wasm'), token: hashOf('pocket_token.wasm') };
 const checks = [[dep.verifier, want.verifier, 'NEAR Intents verifier, defuse v0.4.2 release wasm'], ...dep.tokens.map((t) => [t.contract, want.token, `${t.symbol} fixed supply NEP-141`])];
+// On chain limits: the market contract, and the global wallet code every new account uses.
+if (dep.market) checks.push([dep.market, hashOf('pocket_maker.wasm'), 'Pocket market contract (contracts/maker)']);
+if (dep.walletCodeHash) {
+  const ok = dep.walletCodeHash === hashOf('pocket_wallet.wasm');
+  if (!ok) console.log('FAIL deployment walletCodeHash does not match vendor/pocket_wallet.wasm');
+  else console.log(`PASS wallet global contract code hash ${dep.walletCodeHash} matches vendor/pocket_wallet.wasm (contracts/wallet)`);
+  if (!ok) process.exitCode = 1;
+}
 let fail = 0;
 for (const [account, expected, what] of checks) {
   const got = await codeHash(account);

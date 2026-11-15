@@ -7,7 +7,9 @@ import fs from 'node:fs';
 const LIVE = process.env.SMOKE_URL || 'https://pocket-zeta-lime.vercel.app';
 const run = (cmd, args) => spawnSync(cmd, args, { stdio: 'inherit' }).status ?? 1;
 if (fs.existsSync('.env.local')) {
-  process.exit(run(process.execPath, ['--conditions=react-server', '--env-file=.env.local', '--import', 'tsx', 'scripts/judge.mts']));
+  // A deployment with on chain limits runs the testnet attack suite against the wallet contract.
+  const onchain = !!JSON.parse(fs.readFileSync('deployment/testnet.json', 'utf8')).walletCodeHash;
+  process.exit(run(process.execPath, ['--conditions=react-server', '--env-file=.env.local', '--import', 'tsx', onchain ? 'tests/onchain/limits.mts' : 'scripts/judge.mts']));
 }
 console.log(`No .env.local, so no server keys. Running the no setup checks against ${LIVE} instead.`);
 console.log('For the full testnet flow with your own accounts: npm run setup, then npm run judge.\n');

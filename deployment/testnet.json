@@ -1,11 +1,11 @@
 {
   "network": "testnet",
-  "root": "pocketnear.testnet",
-  "admin": "admin.pocketnear.testnet",
-  "verifier": "verifier.pocketnear.testnet",
-  "maker": "maker.pocketnear.testnet",
-  "faucet": "faucet.pocketnear.testnet",
-  "relayer": "relayer.pocketnear.testnet",
+  "root": "pocket-7e2413.testnet",
+  "admin": "admin.pocket-7e2413.testnet",
+  "verifier": "verifier.pocket-7e2413.testnet",
+  "maker": "maker.pocket-7e2413.testnet",
+  "faucet": "faucet.pocket-7e2413.testnet",
+  "relayer": "relayer.pocket-7e2413.testnet",
   "verifierRelease": "near/intents defuse/v0.4.2 release asset defuse.wasm",
   "verifierWasmSha256": "f67f9559b3b512c52dfa11723a28b9119bcf773ac01780370d6409e5f1fb20e5",
   "usdc": "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af",
@@ -14,118 +14,257 @@
       "symbol": "pUSD",
       "name": "Pocket test dollar (testnet, no value)",
       "decimals": 6,
-      "contract": "pusd.pocketnear.testnet",
-      "assetId": "nep141:pusd.pocketnear.testnet"
+      "contract": "pusd.pocket-7e2413.testnet",
+      "assetId": "nep141:pusd.pocket-7e2413.testnet"
     },
     {
       "symbol": "TSLAon",
       "name": "Pocket paper TSLAon, tracks TSLA (testnet, no value)",
       "decimals": 18,
-      "contract": "tslaon.pocketnear.testnet",
-      "assetId": "nep141:tslaon.pocketnear.testnet"
+      "contract": "tslaon.pocket-7e2413.testnet",
+      "assetId": "nep141:tslaon.pocket-7e2413.testnet"
     },
     {
       "symbol": "NVDAon",
       "name": "Pocket paper NVDAon, tracks NVDA (testnet, no value)",
       "decimals": 18,
-      "contract": "nvdaon.pocketnear.testnet",
-      "assetId": "nep141:nvdaon.pocketnear.testnet"
+      "contract": "nvdaon.pocket-7e2413.testnet",
+      "assetId": "nep141:nvdaon.pocket-7e2413.testnet"
     },
     {
       "symbol": "AAPLon",
       "name": "Pocket paper AAPLon, tracks AAPL (testnet, no value)",
       "decimals": 18,
-      "contract": "aaplon.pocketnear.testnet",
-      "assetId": "nep141:aaplon.pocketnear.testnet"
+      "contract": "aaplon.pocket-7e2413.testnet",
+      "assetId": "nep141:aaplon.pocket-7e2413.testnet"
     },
     {
       "symbol": "SPYon",
       "name": "Pocket paper SPYon, tracks SPY (testnet, no value)",
       "decimals": 18,
-      "contract": "spyon.pocketnear.testnet",
-      "assetId": "nep141:spyon.pocketnear.testnet"
+      "contract": "spyon.pocket-7e2413.testnet",
+      "assetId": "nep141:spyon.pocket-7e2413.testnet"
     },
     {
       "symbol": "QQQon",
       "name": "Pocket paper QQQon, tracks QQQ (testnet, no value)",
       "decimals": 18,
-      "contract": "qqqon.pocketnear.testnet",
-      "assetId": "nep141:qqqon.pocketnear.testnet"
+      "contract": "qqqon.pocket-7e2413.testnet",
+      "assetId": "nep141:qqqon.pocket-7e2413.testnet"
     }
   ],
   "bootstrapTxs": [
     {
+      "label": "create admin.pocket-7e2413.testnet",
+      "hash": "13MpHJ9X16pYtDoirKMF9EZeKrrK8v4hrnTzDm5tFR7r"
+    },
+    {
+      "label": "create verifier.pocket-7e2413.testnet",
+      "hash": "7By4S7nvPEddAoAEkxrE1WDV21tEzEZcQ89CHUDNi4j3"
+    },
+    {
+      "label": "deploy verifier.pocket-7e2413.testnet",
+      "hash": "3ULackBSAHMTL9FRtZ4XXQBQycx1KWnYyURqXpjsLNVm"
+    },
+    {
+      "label": "init verifier",
+      "hash": "Hq9gpjX7b4qrY9K4byfT4F9Fk4RnbyxHfHX6cEP32mxS"
+    },
+    {
+      "label": "create maker.pocket-7e2413.testnet",
+      "hash": "DSmhBVpZtAsthWkFAZV1x7v4sHSj2dRCgRHNAjMZHvMs"
+    },
+    {
+      "label": "create faucet.pocket-7e2413.testnet",
+      "hash": "uvUthknBrw5oo12FsaEr4BoxzDQeu3mP38q2CWW2p8E"
+    },
+    {
+      "label": "create relayer.pocket-7e2413.testnet",
+      "hash": "9Ww9jdYfTTtRB2b81WyCp1yeyguXGrSLXaqz5N7SCzPC"
+    },
+    {
+      "label": "create pusd.pocket-7e2413.testnet",
+      "hash": "3b1rggRX1FT9h9jSEAGmkVJPd7ZKb6YxChLm1sZnr8Uw"
+    },
+    {
+      "label": "deploy pusd.pocket-7e2413.testnet",
+      "hash": "9mcrKFuZXSkTLnEPFSiRVGaV9H8Um5sh3JKppA12gTgH"
+    },
+    {
+      "label": "init pUSD",
+      "hash": "GCHiA2DLWHDhDt1qNR1D9BXLZa1YoPEMiyLdKAWySpQ4"
+    },
+    {
+      "label": "register verifier on pUSD",
+      "hash": "3EucmbxBsTxUf3g8j84GoFFeFmFp7BoG6PxYzWsMLYVM"
+    },
+    {
+      "label": "create tslaon.pocket-7e2413.testnet",
+      "hash": "2UpV2shxM7SJeCZSZuB17Kx3G6kgjx6Cob3aMut18Gr2"
+    },
+    {
+      "label": "deploy tslaon.pocket-7e2413.testnet",
+      "hash": "58YUnaNN9tnCmavaSu3yJhhmq7wBLCvVU54sWmoXG959"
+    },
+    {
+      "label": "init TSLAon",
+      "hash": "FkbHkPK2DeScvNk7Dv3ja4RdYrnLXVK7jkHuSRBYm2pS"
+    },
+    {
+      "label": "register verifier on TSLAon",
+      "hash": "B5KGGVFBtCRYbjXAC9DaNHjRkPmMGigGf7uPaTRu1dFP"
+    },
+    {
+      "label": "create nvdaon.pocket-7e2413.testnet",
+      "hash": "AFj2L1Q3ji4cQCbAjpY6Gt4pehsFhMnqnqvPmxX9U9Cw"
+    },
+    {
+      "label": "deploy nvdaon.pocket-7e2413.testnet",
+      "hash": "522y1NKGTFgJz6vcqh1CrkeKMtpcVmNxqffm5Y3mcgvg"
+    },
+    {
+      "label": "init NVDAon",
+      "hash": "3qhGxtX2WuyWQf9xG78BnabW362wonutcVpFavsPMM6t"
+    },
+    {
+      "label": "register verifier on NVDAon",
+      "hash": "EXm6V5zfMDVEYSSs23JxQH5vPZ7LPoMBJdiMhqjUsBN3"
+    },
+    {
+      "label": "create aaplon.pocket-7e2413.testnet",
+      "hash": "Av8ZiHcxyY9TezumCakcU5JK7yYUxf93R1zEJ3onV7dJ"
+    },
+    {
+      "label": "deploy aaplon.pocket-7e2413.testnet",
+      "hash": "7kEBPTvFnNF3DKM2sVvTXm8x52xN3oK4xmL8BHsKLn8G"
+    },
+    {
+      "label": "init AAPLon",
+      "hash": "35vKSuiqQs5whgW4pxqkqCCfejawNAoo8LpFvfjJRmyH"
+    },
+    {
       "label": "register verifier on AAPLon",
-      "hash": "BmzH4Ma7y37v5rBDBzfL53vajQFSfv4cYZRs4rJvK6Zr"
+      "hash": "6gPS3V9VhkgPfAchiWTJp43jaszFyubU6ZESZkdnKKw"
     },
     {
-      "label": "create spyon.pocketnear.testnet",
-      "hash": "BSsix2Z7dQDa7HC3RauxmcbtCU77pT1ZiMVzS4L3Wm7M"
+      "label": "create spyon.pocket-7e2413.testnet",
+      "hash": "EE76jCzKwrFE4qTHMRs8RqvHr25EEMiYeLTzjMPNZLGm"
     },
     {
-      "label": "deploy spyon.pocketnear.testnet",
-      "hash": "2qtL4zMJzZRqfNRoPjMHYwc88w79JFgoFqmSHuXLHT8Z"
+      "label": "deploy spyon.pocket-7e2413.testnet",
+      "hash": "AHdSKCLXkiR83UUDYMuKGnYRsqMpKTFNaKB7kvmwmQDf"
     },
     {
       "label": "init SPYon",
-      "hash": "3pSoRsE7xkAEbpV7nyQqNAwKwejJPRV758ktWfnjTCCk"
+      "hash": "9wmGUY2o8DvKtWV4NjhG43xQyRqEPFf6aEzPSEwi8fiq"
     },
     {
       "label": "register verifier on SPYon",
-      "hash": "HWfRqLGhZowABQEEH7nofveXbDR4YV7kr3JouHfvFHyW"
+      "hash": "C2AFfjVYwEJafepwpdmUQu6uAx9fckiZ1FzAMixTdEhB"
     },
     {
-      "label": "create qqqon.pocketnear.testnet",
-      "hash": "FRd9VpRrEtofXxdx5VMhHawx2Z68J9HxgPotPBnjaLRb"
+      "label": "create qqqon.pocket-7e2413.testnet",
+      "hash": "2mSu5jjjhdNWMN9k5CfesiwKym3A1f4bQo4H6HYRsJMc"
     },
     {
-      "label": "deploy qqqon.pocketnear.testnet",
-      "hash": "2eyoVqrRH7zpDDVch6WzzVNJ4h4JHDzXEYV5pgASFmdq"
+      "label": "deploy qqqon.pocket-7e2413.testnet",
+      "hash": "3b3Jd7snjWyow8cP5HgxcDDD1BsgFahsJDrgpnzNzYrL"
     },
     {
       "label": "init QQQon",
-      "hash": "51XaeH6hdyM7w5eeEyJY33L4BptH8Pig1tGBUDSXWSbF"
+      "hash": "5V661mysj8cyPg4Jk7Rq74peez4zmZ76DVYNW72ne5dG"
     },
     {
       "label": "register verifier on QQQon",
-      "hash": "DYU65MgnMUMBfADMC4KdgQJ5qsZHsL4ouZKRNm8b4C9A"
+      "hash": "F4rzUZfj7QEbjYk1dkhHhSXwgvkhbNKCmJVLC8fLKCnU"
     },
     {
       "label": "deposit pUSD for faucet",
-      "hash": "CJxESvut5X8ELHrXof78n54KKbc1cPwPNEAjbGUnyFuj"
+      "hash": "CFsavBx6npaNgiUboUsLVkGPGrgaHUbRHWJ6Ko7wyYYF"
     },
     {
       "label": "deposit pUSD for maker",
-      "hash": "7y6ngSCCCnhSfmZjG3Bu9qrxYEFi1WSUn9fkfpEhRFNX"
+      "hash": "FSuxCRr2bjFSCXvq3vuECi7zngsqwqsw5HgqUXzfKBx"
     },
     {
       "label": "deposit TSLAon for maker",
-      "hash": "HR8dTVvL2gnt412fNSUokTCcZjFfhqWEXXLyEWAsWfgo"
+      "hash": "BZmzRcmjYPYjy7cdp1k12YLDMcGB5FBG6VcoNepLxANC"
     },
     {
       "label": "deposit NVDAon for maker",
-      "hash": "FoDVzA6Y3fiFRxx4JFyC6UVxRn5FZwExyD99kNLPrBWF"
+      "hash": "Fjk15vEM4XrSmMWdR1RE9oJiHH2hyCHsDdxsLzrhuB7b"
     },
     {
       "label": "deposit AAPLon for maker",
-      "hash": "6ZUY312fHQCGi9YDuFQLgCGjCrZ6oMyULZ39GvUH9dM5"
+      "hash": "FX7z7fvLRnTfu2BBnPPAGjqonUeySNPSgz63ppNXbFjr"
     },
     {
       "label": "deposit SPYon for maker",
-      "hash": "3To1VYbzu2GTJjFM4CkayC5vitswqXWE6EcGaUtZcWvm"
+      "hash": "Aqjq84c1KWhbJ3eZx2SPAnAjX1m6RS4XCtfFXTvvybuc"
     },
     {
       "label": "deposit QQQon for maker",
-      "hash": "Ev4skmfFPNMAVhLfhPt4kfntjE5uasZ7itAqxS3fz1rq"
+      "hash": "HGmpm4K5MtoSZKogKVzJNiYGahmLRbCZ5nVYBgoeFiE4"
     },
     {
-      "label": "verifier key for maker.pocketnear.testnet",
-      "hash": "13CSmWzWv5ituuwzfTnJJGPtxoBG7vXaGa9SSa4xyfwa"
+      "label": "verifier key for maker.pocket-7e2413.testnet",
+      "hash": "G3VSUaJevZP84TMcdbBUZjJWpPdaQZ98EdrCAor1hT43"
     },
     {
-      "label": "verifier key for faucet.pocketnear.testnet",
-      "hash": "BZA6vkxa9PrJj94EA6cvkokNhhFL8W4g92ZAzB17B3xy"
+      "label": "verifier key for faucet.pocket-7e2413.testnet",
+      "hash": "67RJ8HMv5ZkisPvb86p1aTL3tNjGVVUt2prv9mvseFK4"
     }
   ],
-  "updatedAt": "2026-11-13T21:03:02.654Z"
+  "updatedAt": "2026-11-15T05:11:19.409Z",
+  "market": "market.pocket-7e2413.testnet",
+  "walletCodeHash": "C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz",
+  "walletWasmSha256": "a4972ae5e956d157249c578135dc1faf6053329c9a319e861c2bda60f605bc2f",
+  "marketWasmSha256": "f0e7247003838a988b84f6820d49b83df6c10b8c633ad440b6b605c6fb54f732",
+  "quoteKey": "ed25519:74xViWFeP5auzixe9TqKAKnMYt1KYXooyM2X85bsR8DV",
+  "onchainTxs": [
+    {
+      "label": "global wallet code Gm3G2tonatXr6VSxyNg71dtEKWYnLEvdHM9Gjx6s1Zju",
+      "hash": "see pocket-7e2413.testnet"
+    },
+    {
+      "label": "create market.pocket-7e2413.testnet",
+      "hash": "H95gqYnREu2R7Q6LEVu9hMk3xn61qUyPdd1rDYURb8KC"
+    },
+    {
+      "label": "deploy market.pocket-7e2413.testnet",
+      "hash": "9gxGhHTHtFXPiRuZvHQLwVRJpAUn51dSG8xNRWw9nFQq"
+    },
+    {
+      "label": "init market",
+      "hash": "AGP6oRLeaKJDXhBYnMB3TTFzkCtwWFGZkHT9EDwvWGm4"
+    },
+    {
+      "label": "inventory pUSD for market",
+      "hash": "2EVrFwAir5QrUgySHorrvRHDMkiTtzrjnTsJNBj5qcJo"
+    },
+    {
+      "label": "inventory TSLAon for market",
+      "hash": "DAgvHXYQGVvgYn1VCJ3tpjNyh1UeF2WnG72LYQpw3XUX"
+    },
+    {
+      "label": "inventory NVDAon for market",
+      "hash": "4a2z7t1PtYBpQmRUCP3zgzrXVf34YnxCgFJEbGMgAGG1"
+    },
+    {
+      "label": "inventory AAPLon for market",
+      "hash": "Hc7XihTEQv1iTQ7g86kDqiYA6h5iXiP93CoaaUSqLZn9"
+    },
+    {
+      "label": "inventory SPYon for market",
+      "hash": "3w3PmnFX3uk1hpWfuFib263s3Htyz9recMyqakPam6Wo"
+    },
+    {
+      "label": "inventory QQQon for market",
+      "hash": "4obNqQeZ4qriirBXLNzD6CyQSngtwGUes2tnjZLvzhWf"
+    },
+    {
+      "label": "global wallet code C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz",
+      "hash": "see pocket-7e2413.testnet"
+    }
+  ]
 }

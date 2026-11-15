@@ -25,7 +25,10 @@
     "vercel:env": "python3 scripts/vercel-env.py",
     "e2e:hosted": "node tests/e2e/hosted.mjs",
     "attack": "node tests/attack.mjs",
-    "video": "bash scripts/video/make.sh"
+    "video": "bash scripts/video/make.sh",
+    "test:onchain": "node --conditions=react-server --env-file=.env.local --import tsx tests/onchain/limits.mts",
+    "test:contracts": "cd contracts/wallet && cargo test && cd ../maker && cargo test",
+    "bootstrap:onchain": "node scripts/bootstrap-onchain.mjs"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",
