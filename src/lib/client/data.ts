@@ -43,7 +43,7 @@ export async function resolveRecipient(input: string): Promise<Resolved> {
   if (d.kind === 'username' || d.kind === 'near-named' || d.kind === 'near-implicit') {
     const q = d.kind === 'username' ? d.username : d.account;
     const r = await api<{ account: string; exists: boolean; pocket: boolean }>(`/api/account/lookup?q=${encodeURIComponent(q)}`);
-    if (!r.exists && d.kind !== 'near-implicit') return { error: d.kind === 'username' ? `I could not find ${raw} on Pocket or a saved contact with that name. Add them in Contacts, or use their NEAR testnet account.` : `${q} does not exist on NEAR testnet.` };
+    if (!r.exists && d.kind !== 'near-implicit') return { error: d.kind === 'username' ? `I could not find ${raw} on Pocket or a saved contact with that name. Add them in Contacts, or use their NEAR account.` : `${q} does not exist on NEAR.` };
     return { account: r.account, label: d.kind === 'username' ? '@' + d.username : r.account, kind: r.pocket ? 'pocket' : 'near', exists: r.exists };
   }
   if (d.kind === 'mainnet' || d.kind === 'unsupported') return { error: d.reason };

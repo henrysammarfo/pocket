@@ -97,12 +97,12 @@ function ReviewInner() {
               <div className={'cell' + (r?.state === 'err' ? ' bad' : '')} key={i}>
                 <span className="k">{icon} {s.type === 'send' ? `Send to ${s.toLabel}` : `${s.type === 'buy' ? 'Buy' : 'Sell'} ${s.ticker}on`}</span>
                 <span className="v">{s.type === 'send' ? `$${fmt(s.amount)}` : s.usd ? `$${fmt(s.usd)}` : `${s.qty} shares`}
-                  <small>{r?.state === 'ok' && r.hash ? <a href={`/r/${r.hash}`}>{r.msg || 'Receipt'} <ExternalLink size={11} aria-hidden /></a> : r?.state === 'err' ? r.msg : s.type === 'send' ? (resolved[i]?.startsWith('!') ? resolved[i].slice(1) : 'Pocket pays the gas') : 'Live price, 0.20% spread'}</small>
+                  <small>{r?.state === 'ok' && r.hash ? <a href={`/r/${r.hash}`}>{r.msg || 'Receipt'} <ExternalLink size={11} aria-hidden /></a> : r?.state === 'err' ? r.msg : s.type === 'send' ? (resolved[i]?.startsWith('!') ? resolved[i].slice(1) : 'Sending is free') : 'Live price, 0.20% spread'}</small>
                 </span>
               </div>
             );
           })}
-          <div className="cell"><span className="k">Network fee</span><span className="v">0.00<small>Pocket pays it</small></span></div>
+          <div className="cell"><span className="k">Fee</span><span className="v">0.00<small>Sending is free</small></span></div>
           <div className="cell"><span className="k">Arrives</span><span className="v">about 2 s</span></div>
           {chk && <div className="cell after"><span className="k">Your balance after</span><span className="v">${fmt(snap ?? chk.after)}</span></div>}
         </section>

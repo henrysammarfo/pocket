@@ -73,7 +73,7 @@ function StockInner({ ticker }: { ticker: string }) {
         <section className="group"><div className="about"><span>{ABOUT[st.ticker]}</span><div className="meta">{[s.Sector, s.Industry].filter(Boolean).map((x) => <span key={x} className="chip">{x}</span>)}</div></div></section>
         <div className="ghead"><b>Key stats</b><span>Nasdaq.com</span></div>
         <section className="group stats">{stats.map(([k, v]) => <div key={k}><div className="k">{k}</div><div className="v">{d ? v : '…'}</div></div>)}</section>
-        <div className="srcline"><Info size={14} aria-hidden /><span>{sq ? `Share price: ${sq.source}, last trade ${sq.lastTrade.replace(/^.*\d{4} /, '')}. ` : ''}{tok ? `Token price: CoinGecko (${st.cg}), ${ago(tok.updatedAt)}. ` : ''}Paper money on testnet, not advice.</span></div>
+        <div className="srcline"><Info size={14} aria-hidden /><span>{sq ? `Share price: ${sq.source}, last trade ${sq.lastTrade.replace(/^.*\d{4} /, '')}. ` : ''}{tok ? `Token price: CoinGecko (${st.cg}), ${ago(tok.updatedAt)}. ` : ''}Paper money, not advice.</span></div>
       </div></main>
     </AppShell>
   );

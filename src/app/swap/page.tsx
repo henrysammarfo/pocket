@@ -53,7 +53,7 @@ function SwapInner() {
         </div>
         <section className="group bd">
           <div className="cell"><span className="k">Rate</span><span className="v">{rate ? `1 ${from} = ${fmt(rate, rate < 1 ? 6 : 2)} ${to}` : '…'}</span></div>
-          <div className="cell"><span className="k">Spread</span><span className="v">{q ? fmt(q.quote.spreadBps / 100) + '%' : '0.20%'}<small>{q ? `In the signed quote. ${q.quote.priceSource}, ${ago(q.quote.priceAt)}` : 'Network fee 0.00, Pocket pays it'}</small></span></div>
+          <div className="cell"><span className="k">Spread</span><span className="v">{q ? fmt(q.quote.spreadBps / 100) + '%' : '0.20%'}<small>{q ? `In the signed quote. ${q.quote.priceSource}, ${ago(q.quote.priceAt)}` : 'Fee 0.00, sending is free'}</small></span></div>
           <div className="cell"><span className="k">Price can move</span><span className="v">No. The quote is fixed for 60 s</span></div>
           <div className="cell"><span className="k">Route</span><span className="v">{live ? <>NEAR Intents <span className="lv">Live</span></> : <>NEAR Intents 1Click <span className="rm">Roadmap</span></>}</span></div>
         </section>

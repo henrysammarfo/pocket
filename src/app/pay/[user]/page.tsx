@@ -46,7 +46,7 @@ function Pay({ user }: { user: string }) {
         {st === 'load' && <div className="skel" style={{ height: '3rem', width: '100%' }} />}
         {st === 'no' && <div className="empty">There is no Pocket user called @{u}.</div>}
         {st === 'ok' && (req && req.status !== 'pending' ? null : s ? (mine ? <div className="empty">{req ? 'This is your request. It shows Paid as soon as the money arrives.' : 'This is your pay link. Share it so people can send to you.'}</div> : <Link className="btn big" style={{ width: '100%' }} href={payHref}>{req ? `Pay ${fmt(Number(req.amount))} ${req.token}` : `Pay @${u}`}</Link>)
-          : <><Link className="btn big" style={{ width: '100%' }} href={`/welcome?next=${encodeURIComponent(payHref)}`}>Create a Pocket to pay @{u}</Link><div className="fine">Free, takes a few seconds, and you get 1,000 test dollars. NEAR testnet only.</div></>)}
+          : <><Link className="btn big" style={{ width: '100%' }} href={`/welcome?next=${encodeURIComponent(payHref)}`}>Create a Pocket to pay @{u}</Link><div className="fine">Free, takes a few seconds, and you get 1,000 test dollars. Test money only.</div></>)}
       </main>
     </AppShell>
   );

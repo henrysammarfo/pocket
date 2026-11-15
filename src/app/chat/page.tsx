@@ -158,7 +158,7 @@ function ChatInner() {
   const ctx = () => ({ tz: tz(), dollars: sm.dollars, pusd: sm.pusd, usdc: sm.usdc, near: sm.near, holdings: sm.holdings, keep: rules.keep, limit: b.data?.limit ?? rules.limit, usedToday: b.data?.usedToday ?? 0, perSend: b.data?.onchain ? Number(b.data.onchain.limits.usd_per_send) / 1e6 : s.onchain ? Math.min(100, rules.limit) : undefined, prices: sm.prices, name: profile.name || s.username, contacts: contacts.map((c) => ({ name: c.name, address: c.address })) });
   const metaOf = (r: { source: string; model?: string; plan?: unknown; check?: Check }, voice?: boolean) => [
     ...(voice ? ['Heard your voice'] : []),
-    r.source === 'ai' ? (r.model ? 'AI: ' + r.model.split('/').pop() : 'AI') : r.source === 'rules' ? 'Pocket rules parser' : 'AI is off',
+    r.source === 'ai' ? 'AI is on' : r.source === 'rules' ? 'Checked by your rules' : 'AI is off',
     ...(r.plan ? [r.check?.ok ? 'Safety check passed' : 'Blocked by your rules', 'Prices read'] : []),
   ];
   type Out = { reply: string; link?: { label: string; href: string }; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean; photoText?: string };
@@ -224,7 +224,7 @@ function ChatInner() {
       </Sheet>
     }>
       <Threads open={drawer} mini={mini} onClose={closeDrawer} onToggle={toggleMini} onNew={() => { setDrawer(false); newChat(); }} onPick={(id) => { setDrawer(false); pick(id); }} />
-      <header className="nav"><button className="nb tp-menu" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><PanelLeft size={21} aria-hidden /></button><Brand /><span className="nav-r"><button className="nb" aria-label="New chat" onClick={newChat}><SquarePen size={20} aria-hidden /></button><Link href="/profile" aria-label="Profile"><Avatar size={36} cls="me-av" /></Link></span></header>
+      <header className="nav"><button className="nb tp-menu" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><PanelLeft size={21} aria-hidden /></button><Brand /><span className="nav-r"><button className="nb" aria-label="New chat" onClick={newChat}><SquarePen size={20} aria-hidden /></button><Link href="/profile" aria-label="Profile"><Avatar size={44} cls="me-av" /></Link></span></header>
       <main className="body chat" ref={body}>
         <div className="thread">
           <div className="when">Today</div>
