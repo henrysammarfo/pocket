@@ -26,10 +26,12 @@
     "e2e:hosted": "node tests/e2e/hosted.mjs",
     "attack": "node tests/attack.mjs",
     "video": "bash scripts/video/make.sh",
+    "test:v2live": "node --conditions=react-server --env-file=.env.local --import tsx tests/onchain/v2-live.mts",
     "test:onchain": "node --conditions=react-server --env-file=.env.local --import tsx tests/onchain/limits.mts",
     "test:contracts": "cd contracts/wallet && cargo test && cd ../maker && cargo test",
     "bootstrap:onchain": "node scripts/bootstrap-onchain.mjs",
-    "e2e:onchain": "node tests/e2e/onchain.mjs"
+    "e2e:onchain": "node tests/e2e/onchain.mjs",
+    "e2e:personas": "node tests/e2e/personas.mjs"
   },
   "dependencies": {
     "@near-js/crypto": "^1.4.2",

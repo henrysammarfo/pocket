@@ -54,7 +54,9 @@ export async function viewAccount(account: string): Promise<{ amount: string; lo
 
 export async function viewAccessKey(account: string, publicKey: string): Promise<{ nonce: number; permission: unknown } | null> {
   try {
-    return await rpc('query', { request_type: 'view_access_key', finality: 'optimistic', account_id: account, public_key: publicKey });
+    // Some RPC nodes answer a missing key with a result that carries an error instead of failing.
+    const r = await rpc<{ nonce: number; permission: unknown; error?: string }>('query', { request_type: 'view_access_key', finality: 'optimistic', account_id: account, public_key: publicKey });
+    return r && r.permission && !r.error ? r : null;
   } catch {
     return null;
   }

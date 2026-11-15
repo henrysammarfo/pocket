@@ -103,7 +103,7 @@ BASE=https://pocket-git-onchain-limits-teamtitanlink.vercel.app TO=<a pocket acc
 | paying with the request memo marks it paid | [tx](https://testnet.nearblocks.io/txns/HoBCJQN9HVqjTVAST2MEcW8ZcV5SH9HGQwyx527mXcKa) |
 | sending it back with the refund memo marks it refunded | [tx](https://testnet.nearblocks.io/txns/5ie5LquXhczhfeCKvP3TBwARNPyeYZG9cMcPNr6N7TMe) |
 
-**Test counts on this branch:** 266 TypeScript unit tests (`npm test`), 64 Rust contract tests (51 wallet, 13 market), and 67 live testnet checks, 397 in total, all passing.
+**Test counts on this branch:** 314 TypeScript unit tests (`npm test`), 88 Rust contract tests (75 wallet v2, 13 market), 74 live testnet checks (67 in the full run, plus 7 in the hijacked chat demo, section 11), and a five persona browser run (`npm run e2e:personas`). All passing; the persona results are in [docs/PERSONAS.md](docs/PERSONAS.md).
 
 Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
 
@@ -115,18 +115,18 @@ Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by ru
 
 **Receiver check: allow, warn or block, with reasons.** Before every send Pocket looks at who gets the money.
 
-* **Block:** not a valid NEAR name, your own account, a NEAR mainnet name (Pocket is testnet only), a Pocket system or token contract, an account on your block list, an account outside your allow only list, or a named account that does not exist on chain.
-* **Warn:** you never paid them before, the account is outside Pocket, it is a smart contract rather than a Pocket wallet, it is an unused implicit address, Pocket could not reach the chain, or the name looks like someone you paid before (one letter off, swapped letters, 0 for o, 1 for l, rn for m, the same name under another root).
+* **Block:** an address on Pocket's shared block list ([data/blocklist.json](data/blocklist.json): burn addresses, protocol accounts and known drainers, each with a reason and a link to evidence), not a valid NEAR name, your own account, a NEAR mainnet name (Pocket is testnet only), a Pocket system or token contract, an account on your block list, an account outside your allow only list, or a named account that does not exist on chain.
+* **Warn:** the account was created in the last 24 hours (from the public NearBlocks indexer), you never paid them before, the account is outside Pocket, it is a smart contract rather than a Pocket wallet, it is an unused implicit address, Pocket could not reach the chain, or the name looks like someone you paid before (one letter off, swapped letters, 0 for o, 1 for l, rn for m, the same name under another root).
 * **Allow:** a saved contact or someone you paid before.
 
-The send screen shows the reasons and will not let you hold to send on a block. The server runs the same check again before it pays gas and refuses a block, so a modified app cannot skip it; the wallet contract enforces your block and allow lists on chain as well. Code: `src/lib/shared/receiver.ts`, tests: `tests/unit/receiver.test.ts`.
+The send screen, the chat plan card and the review screen show the reasons and will not let you hold to send on a block. The server runs the same check again before it pays gas and refuses a block, so a modified app cannot skip it; the wallet contract enforces your block and allow lists on chain as well. Code: `src/lib/shared/receiver.ts`, tests: `tests/unit/receiver.test.ts`.
 
 ## How it works
 
 ```mermaid
 flowchart LR
   U([You: text, voice or photo]) --> C[Pocket chat]
-  C -->|propose_plan| AI[Private AI on NEAR AI Cloud TEE<br/>Groq fallback<br/>no keys, no signing]
+  C -->|propose_plan| AI[Private AI on NEAR AI Cloud TEE<br/>Private only by default<br/>no keys, no signing]
   AI --> P[Plan card]
   P --> R{Rules in code<br/>plan.ts and policy.ts}
   R -->|blocked| B[Blocked sheet, nothing moves]
