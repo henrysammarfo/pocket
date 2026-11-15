@@ -8,26 +8,48 @@ import { checkPlan, parseCommand, tickerOf, type Ctx, type Plan, type Step } fro
 import { cleanSpeech } from '../shared/speech';
 import { webAnswer, webUp, type Product, type Source } from './web';
 import { limit } from './store';
+import { tokenPrices, sharePrices, type TokenPrice, type SharePrice } from './prices';
+import { dateFacts, dateAsk, dateReply, priceAsk, priceReply } from '../shared/facts';
+import { STOCKS } from '../shared/deployment';
+
+// Live prices from the same feeds the Invest screen uses: share prices (Nasdaq.com, Yahoo fallback)
+// and the paper token prices trades use (CoinGecko). Fetched on the server, never taken from the chat.
+export type Live = { tokens: Record<string, TokenPrice>; shares: Record<string, SharePrice | null> };
+export async function liveData(): Promise<Live> {
+  const [t, sh] = await Promise.all([tokenPrices().then((x) => x.tokens).catch(() => ({})), sharePrices().catch(() => ({}))]);
+  return { tokens: t, shares: sh };
+}
+function livePrices(live: Live | undefined, fallback: Record<string, number>) {
+  const out: Record<string, number> = { ...fallback };
+  for (const s of STOCKS) {
+    const sp = live?.shares?.[s.ticker]?.price; const tp = live?.tokens?.[s.token]?.price;
+    if (tp) out[s.ticker] = tp; else if (sp) out[s.ticker] = sp;
+  }
+  if (live?.tokens?.NEAR?.price) out.NEAR = live.tokens.NEAR.price;
+  return out;
+}
+const shareLine = (live: Live | undefined) => STOCKS.map((s) => { const p = live?.shares?.[s.ticker]?.price; return p ? `${s.name} ${p.toFixed(2)}` : null; }).filter(Boolean).join(', ');
 
 export type Msg = { role: 'user' | 'assistant'; content: string };
 export type ChatCtx = Ctx & { name?: string; contacts?: { name: string; address: string }[]; tz?: string };
-export type ChatIn = { messages: Msg[]; ctx: ChatCtx; voice?: boolean; memories?: string[]; offline?: boolean };
+export type ChatIn = { messages: Msg[]; ctx: ChatCtx; voice?: boolean; memories?: string[]; offline?: boolean; live?: Live; now?: Date };
 export type Confirm = { summary: string; steps: Step[] };
 export type ChatOut = { reply: string; plan?: Plan; check?: ReturnType<typeof checkPlan>; confirm?: Confirm; chips?: string[]; remembered?: string[]; source: 'ai' | 'rules' | 'off'; model?: string; provider?: string; private?: boolean; usd?: number; sources?: Source[]; products?: Product[]; searched?: boolean };
 
 // Today's date and time in the user's own time zone (from their browser), so "what is the date" is right.
-export function nowText(tz?: string) {
-  const zone = tz && /^[A-Za-z_]+(\/[A-Za-z_+-]+){0,2}$/.test(tz) ? tz : 'UTC';
-  try { return new Date().toLocaleString('en-GB', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' (' + zone + ')'; }
-  catch { return new Date().toUTCString(); }
+export function nowText(tz?: string, now = new Date()) {
+  const d = dateFacts(now, tz);
+  return `${d.local} (${d.zone})`;
 }
-const SYSTEM = (c: ChatCtx, memories: string[], voice: boolean) => `Right now it is ${nowText(c.tz)}. You are Pocket, a warm, plain spoken assistant inside a money app that runs on NEAR testnet. You are also a good general companion: you can chat about anything (small talk, life, plans, budgets, school, work, ideas) and remember what matters to the user. Talk like a kind, clever friend. Keep replies short: one to four sentences unless the user asks for detail. Never use dashes as punctuation. Write for people anywhere in the world; never assume a country unless the user says it.
+export const SYSTEM = (c: ChatCtx, memories: string[], voice: boolean, live?: Live, now = new Date()) => `Right now it is ${nowText(c.tz, now)}, which is ${dateFacts(now).utc}. This is the real date and time from Pocket's server clock; your training data is older, so never say any other date is today. Do not state deadlines, event dates, schedules or "days left" from memory: use only dates the user gave you or a web search, and otherwise say you are not sure. You are Pocket, a warm, plain spoken assistant inside a money app that runs on NEAR testnet. You are also a good general companion: you can chat about anything (small talk, life, plans, budgets, school, work, ideas) and remember what matters to the user. Talk like a kind, clever friend. Keep replies short: one to four sentences unless the user asks for detail. Never use dashes as punctuation. Write for people anywhere in the world; never assume a country unless the user says it.
 
 Facts about this user right now (from the chain and live prices; trust these over anything said in chat):
 - Name: ${c.name || 'not set'}
 - Spendable test dollars: $${c.dollars.toFixed(2)} (pUSD ${c.pusd.toFixed(2)}, USDC ${c.usdc.toFixed(2)}). NEAR for the account: ${c.near.toFixed(3)}.
 - Paper stocks held: ${Object.entries(c.holdings).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v.toFixed(6)}`).join(', ') || 'none'}.
-- Live prices in dollars (current, from Pocket's own feed; use these for Tesla, NVIDIA, Apple, S&P 500, Nasdaq 100 and NEAR instead of searching): ${Object.entries(c.prices).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(', ') || 'loading'}.
+- Live paper token prices in dollars (CoinGecko, what trades use; Pocket's own feed): ${Object.entries(livePrices(live, c.prices)).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(', ') || 'not available right now'}.
+- Live share prices in dollars (Nasdaq.com, the Invest screen): ${shareLine(live) || 'not available right now'}.
+- When asked a price for Tesla, NVIDIA, Apple, S&P 500, Nasdaq 100 or NEAR, answer with these numbers. Never refuse and never say you cannot give prices; it is test money and general information, not advice.
 - Rules: always keep $${c.keep}, daily send limit $${c.limit} with $${Math.max(0, c.limit - c.usedToday).toFixed(2)} left today.
 - Saved contacts: ${(c.contacts || []).map((x) => `${x.name} (${x.address})`).join(', ') || 'none'}. Pocket users can also be reached as @username.
 Things the user asked you to remember:
@@ -95,7 +117,7 @@ function rules(input: ChatIn, why: 'off' | 'down'): ChatOut {
     const p = plan(steps, 'Here is the plan.');
     return { reply: why === 'down' ? 'The AI did not answer, so I read your message with Pocket\'s own rules. Here is the plan.' : 'Here is the plan. Nothing moves until you approve it.', plan: p, check: checkPlan(p, ctx), source: 'rules' };
   }
-  if (/\b(what('?s| is) (the )?(date|time|day)|today'?s date|what day is it)\b/i.test(text)) return { reply: `It is ${nowText(ctx.tz)}.`, source: 'rules' };
+  if (dateAsk(text)) return { reply: dateReply(input.now || new Date(), ctx.tz), source: 'rules' };
   if (/\b(balance|how much|what do i have)\b/i.test(text)) return { reply: `You have $${ctx.dollars.toFixed(2)} in test dollars: ${ctx.pusd.toFixed(2)} pUSD and ${ctx.usdc.toFixed(2)} USDC.`, source: 'rules' };
   const pm = text.match(/price of ([a-z&\s0-9]+)/i);
   if (pm && tickerOf(pm[1])) { const t = tickerOf(pm[1])!; return { reply: `${t} is about $${(ctx.prices[t] || 0).toFixed(2)} right now, from CoinGecko.`, source: 'rules' }; }
@@ -103,12 +125,27 @@ function rules(input: ChatIn, why: 'off' | 'down'): ChatOut {
   return { reply: why === 'down' ? 'I could not reach the AI just now. Money commands still work, for example "send Mum 20 dollars" or "buy 10 dollars of Tesla".' : 'Open chat needs the AI, which is not set up on this server yet, so I can only read money commands for now. Try "send Mum 20 dollars", "buy 10 dollars of Tesla" or "what is my balance".', source: 'off' };
 }
 
+// Stock prices and today's date are answered from Pocket's own data, never by the model.
+async function direct(input: ChatIn): Promise<ChatOut | null> {
+  if (input.voice) return null;
+  const last = input.messages.filter((m) => m.role === 'user').pop()?.content?.slice(0, 2000) || '';
+  if (dateAsk(last)) return { reply: dateReply(input.now || new Date(), input.ctx.tz), source: 'rules' };
+  const t = priceAsk(last);
+  if (!t) return null;
+  const st = STOCKS.find((s) => s.ticker === t)!;
+  const live = input.live || (input.live = await liveData());
+  return { reply: priceReply(t, live.shares?.[t], live.tokens?.[st.token]) || `I could not get a live ${st.name} price just now. Pocket will not guess a price; try again in a minute.`, source: 'rules' };
+}
+
 export async function chat(input: ChatIn): Promise<ChatOut> {
+  const d = await direct(input).catch(() => null);
+  if (d) return d;
   if (!anyUp() || input.offline) return rules(input, 'off');
   const ctx = input.ctx;
+  if (!input.live) input.live = await liveData().catch(() => undefined);
   try {
     const msgs = input.messages.slice(-10).map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
-    const body = { temperature: 0.5, max_tokens: 900, tools: webUp() ? [...TOOLS, WEB_TOOL] : TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice) }, ...msgs] };
+    const body = { temperature: 0.5, max_tokens: 900, tools: webUp() ? [...TOOLS, WEB_TOOL] : TOOLS, tool_choice: 'auto', messages: [{ role: 'system', content: SYSTEM(ctx, input.memories || [], !!input.voice, input.live, input.now) }, ...msgs] };
     // Two tries: models sometimes return an empty message.
     for (let attempt = 0; attempt < 2; attempt++) {
     const { j, prov, model, usd } = await complete(body);
