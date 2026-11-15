@@ -72,16 +72,37 @@ npm run test:onchain     # testnet attack suite (needs .env.local from npm run s
 ```
 
 
-**Explorer links from the latest testnet attack run** (67 passed, 0 failed):
+**Explorer links from the latest testnet attack run** (67 passed, 0 failed, 15 Nov 2026). Refused attacks that reached the chain link to the failed transaction:
 
 | Step | Transaction |
 | --- | --- |
-| olamwhenffw.pocket-7e2413.testnet | [tx](https://testnet.nearblocks.io/txns/EEoGBJYyTTWuTWGqrZ8gENujZ7h1TWHp5MAgvDx4rUGT) |
-| send $50 pUSD gasless through the relayer | [tx](https://testnet.nearblocks.io/txns/5oo6dD7qD3wwTTvZiq8mv6nnB391eUa3MNu9J8YjqpLd) |
-| $100 send within caps goes through | [tx](https://testnet.nearblocks.io/txns/GfHt6LhfgMty9H9a9EWcRrBktfJe1Cy6dRajZ454i7uS) |
-| buy $20 of TSLAon through the wallet and the market | [tx](https://testnet.nearblocks.io/txns/5bbzbSjudbhTiNFCA31s1tZUnmkwm6jmmdw1jN87mrza) |
-| paying with the request memo marks it paid | [tx](https://testnet.nearblocks.io/txns/3XgXvmix7kspgCtcLDQpoDaZ5CAGp6TFFepXjtqz4Ugi) |
-| sending it back with the refund memo marks it refunded | [tx](https://testnet.nearblocks.io/txns/Haq6fkQsPJvi37hsecZF4zXf3nZddXd5pemokFVUSHEy) |
+| signup: account A gets the wallet contract, a limited phone key and a recovery key in one transaction | [tx](https://testnet.nearblocks.io/txns/8YAuk5sU8yvFsExwFyNBpKTVk3WYXxA53ExnqdKfvDox) |
+| send $50 pUSD gasless through the relayer | [tx](https://testnet.nearblocks.io/txns/4bay1ARGcRwhnpE3LhqfcbyU89eZcUqp244rSHQsGksG) |
+| a $150 send is refused on chain (per send cap $100) | [tx](https://testnet.nearblocks.io/txns/5sRzmoSzsDazweLeP9ha2RUy1xHegdoT2MUxvCSYJD2g) |
+| $100 send within caps goes through | [tx](https://testnet.nearblocks.io/txns/7Ng1QTf3HpvGbk9Vog3BhJYUNrZ1yTD8dwLrt3ZQ9Qzt) |
+| USDC send fails (no USDC in the account), and the callback gives the reservation back | [tx](https://testnet.nearblocks.io/txns/7thgniY5Tvm7PQfuYRcWTvQ3QMEiPx8X4vau1vrFdPA8) |
+| next $50 reaches exactly $200 for the day | [tx](https://testnet.nearblocks.io/txns/GxVRBjw1tkSWfTZkmmjHJePgD37LuXgRuiBHyZy4UbHv) |
+| one more micro dollar is refused on chain (24 hour cap $200) | [tx](https://testnet.nearblocks.io/txns/CdmNtVR3VEtpc9HR9VyJ1Tj9f16Mn6UR3TpKNVYWfdwa) |
+| 1.5 NEAR send refused on chain | [tx](https://testnet.nearblocks.io/txns/A6LxRaR63K1XJgfypPPZznxGAACTHUvxinw1CEXVwXvh) |
+| stock send with no stock is refused and not counted | [tx](https://testnet.nearblocks.io/txns/FFDZZzsyMXnbta3XQ4iqeJG2NKBn8nkMPdgbQC8mUuJN) |
+| phone key cannot raise through lower_limits | [tx](https://testnet.nearblocks.io/txns/8PKgQHo3TG57y3xnh941MgUK2FqKBkkAcSMfKgjpeejC) |
+| another account's full key cannot change A's rules | [tx](https://testnet.nearblocks.io/txns/4N1AEwxBNpMKXLTr5U4VzV3P4uBunck7zGFeCYC9KxVu) |
+| another account cannot spend from A's wallet | [tx](https://testnet.nearblocks.io/txns/97HKavWj6RHxXzm5AVZ74zrVVgRsnxXGAsWYdBt9Jbsp) |
+| even the owner cannot fake a refund callback to reset the counter | [tx](https://testnet.nearblocks.io/txns/E3KVfKo8tvA8hRXyR4J4ryqRsq5xxQJ1QXdPRpzUQAqB) |
+| sends are still capped while the raise waits | [tx](https://testnet.nearblocks.io/txns/9uXhYqg8VtBV6RfMWA74zCL3HCehQePUBtyiHP4vi4P9) |
+| the phone can cancel a waiting raise (a stolen recovery key gives a day to react) | [tx](https://testnet.nearblocks.io/txns/ErX9xsp7th19kiSMvmp96ZrdDGUgh4AeY4AdNwUB1uD2) |
+| the phone lowers the cap to $150 at once | [tx](https://testnet.nearblocks.io/txns/CwUnggb6aih335ii7gxteDpuihAH3YAReA9fhotbiwxn) |
+| recovery key adds ten limited phone keys | [tx](https://testnet.nearblocks.io/txns/8xCe5foVGzsQBk7J31BU9Evp3oVzjYfN8r2EaSEpHVHf) |
+| exactly five $40 sends fit under $200, the other five were refused by the chain | [tx](https://testnet.nearblocks.io/txns/8HZLx5pZHnu3JCdAKUS9kvqda22pktkmnurd2Yp2qME1) |
+| buy $20 of TSLAon through the wallet and the market | [tx](https://testnet.nearblocks.io/txns/DgjoqfH7dPhVApSiJvxXTto4gCRLyftjC2YG1Ku5RBWh) |
+| a tampered quote is refunded in full by the market (server skipped) | [tx](https://testnet.nearblocks.io/txns/PkQsDJiRrWuT1bRxMGmUoWwmFo2St8Mt3Bs2TTDDdgn) |
+| B's quote used by A is refunded in full | [tx](https://testnet.nearblocks.io/txns/8ad9N52V8tx459fZ9FeEuZQ8kyyWxfrDoh2dQzEFvCPZ) |
+| a used quote replayed is refunded in full | [tx](https://testnet.nearblocks.io/txns/8Uvg17zKvLHoAtHVZpZvaE1zbtocdUdXfQpkJqAqeLvi) |
+| a $1,001 buy is refused on chain | [tx](https://testnet.nearblocks.io/txns/7N66kuufCchFtH4EFaXDdyjaXu4LXNxUfwD9hY2CDDJT) |
+| paying with the request memo marks it paid | [tx](https://testnet.nearblocks.io/txns/HoBCJQN9HVqjTVAST2MEcW8ZcV5SH9HGQwyx527mXcKa) |
+| sending it back with the refund memo marks it refunded | [tx](https://testnet.nearblocks.io/txns/5ie5LquXhczhfeCKvP3TBwARNPyeYZG9cMcPNr6N7TMe) |
+
+**Test counts on this branch:** 266 TypeScript unit tests (`npm test`), 64 Rust contract tests (51 wallet, 13 market), and 67 live testnet checks, 397 in total, all passing.
 
 Full log: [docs/TEST_REPORT.onchain.md](docs/TEST_REPORT.onchain.md). Rule by rule detail: [docs/POLICY.md](docs/POLICY.md).
 
