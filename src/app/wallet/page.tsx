@@ -41,7 +41,7 @@ function WalletInner() {
           <Link className="row w-chev" href="/invest"><span className="logo txt"><ChartLine size={18} aria-hidden /></span><span className="rn"><span className="nm">Paper stocks</span><span className="sb">{held} {held === 1 ? 'holding' : 'holdings'}</span></span><span className="px"><span className="p">${fmt(sm.stocks)}</span><span className={'c ' + (sm.stocksDay >= 0 ? 'up' : 'dn')}>{sm.stocksDay >= 0 ? '+' : '−'}${fmt(Math.abs(sm.stocksDay))} today</span></span><span className="chev2"><ChevronRight size={16} aria-hidden /></span></Link>
         </section>
         {b.error && <div className="errline">Could not read balances: {String(b.error)}</div>}
-        <div className="ghead"><b>Activity</b><Link className="link" href="/activity">See all</Link></div>
+        <div className="ghead"><b>Activity</b><span style={{ display: 'flex', gap: '.9rem' }}><Link className="link" href="/request">Request money</Link><Link className="link" href="/activity">See all</Link></span></div>
         <ActivityList />
       </main>
     </AppShell>

@@ -11,7 +11,9 @@ import { PUSD, ROOT, USDC, USDC_DECIMALS, VERIFIER, tokenBySymbol } from '../sha
 import { DEVICE_ALLOWANCE, DEVICE_METHODS, RULE_GAS, SEND_GAS, TRADE_GAS, isRaise, withDaily, type Limits } from '../shared/wallet';
 import { keyFromString } from '../shared/nep413';
 import { toUnits, nearToYocto } from '../shared/units';
-import { addLocalActivity, bumpContact, getSession, seedOf, setSession, setRules, refreshAll, type Session } from './session';
+import { receiptsCsv, csvFileName, type ReceiptItem } from '../shared/csv';
+import type { PayRequest, RequestStatus } from '../shared/request';
+import { addLocalActivity, bumpContact, getContacts, getSession, seedOf, setSession, setRules, refreshAll, type Session } from './session';
 
 // A signed session proves to the server which account is asking (for memory, chat history, credits).
 // Made with the device key, valid 24 h, kept in sessionStorage. It cannot move money.
@@ -217,3 +219,22 @@ export async function passkeyApprove(id?: string) {
 }
 export const tokenOf = tokenBySymbol;
 export { ROOT };
+
+// ---------- receiver check, receipts CSV, request money ----------
+export type ReceiverCheck = import('../shared/receiver').Check;
+export async function checkReceiverApi(to: string): Promise<ReceiverCheck> {
+  const s = must();
+  const contacts = getContacts().filter((c) => c.network === 'near').map((c) => ({ name: c.name, account: c.address }));
+  return api<ReceiverCheck>('/api/receiver', { from: s.account, to, contacts });
+}
+export function downloadReceiptsCsv(items: ReceiptItem[]) {
+  const s = must();
+  const blob = new Blob([receiptsCsv(items, window.location.origin)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = csvFileName(s.account); document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+export type RequestView = PayRequest & RequestStatus & { path?: string };
+export const createRequest = (amount: string, token: 'pUSD' | 'USDC', note: string) => api<RequestView>('/api/request', { amount, token, note });
+export const myRequests = () => api<{ items: RequestView[] }>('/api/request');
+export const getRequest = (id: string) => api<RequestView>(`/api/request/${encodeURIComponent(id)}`);

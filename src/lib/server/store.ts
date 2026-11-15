@@ -4,6 +4,7 @@ import 'server-only';
 // always come from the chain, so losing this store never loses money or receipts.
 import { neon } from '@neondatabase/serverless';
 import { DATABASE_URL } from './env';
+import type { PayRequest } from '../shared/request';
 
 export type Activity = { account: string; kind: 'send' | 'receive' | 'buy' | 'sell' | 'faucet' | 'signup'; tx: string; data: Record<string, unknown>; at: number };
 
@@ -16,6 +17,9 @@ interface Store {
   memories(account: string): Promise<Memo[]>;
   deleteMemory(account: string, id: string): Promise<void>;
   clearChat(account: string, thread?: string): Promise<void>;
+  addRequest(r: PayRequest): Promise<void>;
+  getRequest(id: string): Promise<PayRequest | null>;
+  requests(account: string, limit?: number): Promise<PayRequest[]>;
 }
 export type Memo = { id: string; text: string; at: number };
 const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -39,6 +43,10 @@ class Memory implements Store {
   async deleteMemory(account: string, id: string) { this.mem.set(account, (this.mem.get(account) || []).filter((m) => m.id !== id)); }
   // No chat text is kept on the server (privacy). clearChat only exists to delete rows saved by older versions.
   async clearChat() { /* nothing stored in memory mode */ }
+  reqs = new Map<string, PayRequest>();
+  async addRequest(r: PayRequest) { this.reqs.set(r.id, r); }
+  async getRequest(id: string) { return this.reqs.get(id) || null; }
+  async requests(account: string, limit = 50) { return [...this.reqs.values()].filter((r) => r.account === account).sort((a, b) => b.at - a.at).slice(0, limit); }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
@@ -59,6 +67,8 @@ class Neon implements Store {
       await this.sql`create index if not exists pocket_chat_account on pocket_chat (account, id desc)`;
       await this.sql`alter table pocket_chat add column if not exists thread text not null default 'main'`;
       await this.sql`create index if not exists pocket_chat_thread on pocket_chat (account, thread, id desc)`;
+      await this.sql`create table if not exists pocket_request (id text primary key, account text not null, amount text not null, token text not null, note text not null, at timestamptz not null default now())`;
+      await this.sql`create index if not exists pocket_request_account on pocket_request (account, at desc)`;
       await this.sql`create table if not exists pocket_thread (account text not null, id text not null, title text not null, primary key (account, id))`;
     })();
   }
@@ -102,8 +112,18 @@ Neon.prototype.clearChat = async function (this: Neon, account: string, thread?:
   if (!thread) { await this.sql`delete from pocket_chat where account = ${account}`; await this.sql`delete from pocket_thread where account = ${account}`; return; }
   await this.sql`delete from pocket_chat where account = ${account} and thread = ${thread}`; await this.sql`delete from pocket_thread where account = ${account} and id = ${thread}`;
 };
+const toReq = (x: Record<string, unknown>): PayRequest => ({ id: String(x.id), account: String(x.account), amount: String(x.amount), token: x.token as PayRequest['token'], note: String(x.note), at: new Date(x.at as string).getTime() });
+Neon.prototype.addRequest = async function (this: Neon, r: PayRequest) {
+  await this.ready; await this.sql`insert into pocket_request (id, account, amount, token, note, at) values (${r.id}, ${r.account}, ${r.amount}, ${r.token}, ${r.note}, ${new Date(r.at).toISOString()})`;
+};
+Neon.prototype.getRequest = async function (this: Neon, id: string) {
+  await this.ready; const r = await this.sql`select * from pocket_request where id = ${id}`; return r.length ? toReq(r[0]) : null;
+};
+Neon.prototype.requests = async function (this: Neon, account: string, limit = 50) {
+  await this.ready; const r = await this.sql`select * from pocket_request where account = ${account} order by at desc limit ${limit}`; return r.map(toReq);
+};
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
-interface Neon extends Pick<Store, 'addMemory' | 'memories' | 'deleteMemory' | 'clearChat'> {}
+interface Neon extends Pick<Store, 'addMemory' | 'memories' | 'deleteMemory' | 'clearChat' | 'addRequest' | 'getRequest' | 'requests'> {}
 
 const g = globalThis as unknown as { __pocketStore?: Store };
 export const store: Store = g.__pocketStore || (g.__pocketStore = DATABASE_URL ? new Neon() : new Memory());
