@@ -84,7 +84,7 @@ function XSend() {
     const qy = d.kind === 'username' ? d.username : d.account;
     try {
       const r = await api<{ account: string; exists: boolean; pocket: boolean }>(`/api/account/lookup?q=${encodeURIComponent(qy)}`);
-      if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not existnet.`); return; }
+      if (!r.exists && d.kind !== 'near-implicit') { setDerr(d.kind === 'username' ? `No Pocket user called @${d.username} and no saved contact by that name.` : `${r.account} does not exist.`); return; }
       if (r.account === s.account) { setDerr('That is you.'); return; }
       setNet('near');
       setTgt({ account: r.account, label: r.pocket ? '@' + r.account.split('.')[0] : short(r.account), net: 'near', kind: r.pocket ? 'Pocket user' : d.kind === 'near-implicit' ? 'NEAR address' : 'NEAR account', why: r.exists ? r.account : 'This address has never been used', pocket: r.pocket, exists: r.exists });
