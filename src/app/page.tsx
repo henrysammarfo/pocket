@@ -6,7 +6,7 @@ import './landing.css';
 
 export const metadata: Metadata = {
   title: 'Pocket, the money app you talk to',
-  description: 'Say what your money should do. Pocket turns it into one plan, checks it against your rules, and nothing moves until you hold to approve. Live on NEAR testnet.',
+  description: 'Say what your money should do. Pocket turns it into one plan, checks it against your rules, and nothing moves until you hold to approve. Test money only.',
 };
 
 // A phone frame that keeps the exact 390 by 844 shape of each screenshot, so nothing is cropped or stretched.
@@ -32,17 +32,17 @@ const SAFE = [
   ['The AI has no keys', 'It can only propose a plan. Code checks it, and you sign it. Nothing else can move your money.'],
   ['Rules that hold', 'Your daily limit and keep amount are enforced on the server. Raising a limit needs your signature and passkey.'],
   ['Private AI', 'Chats, photos and voice run on NEAR AI Cloud inside attested secure hardware, so the host cannot read them.'],
-  ['A relayer with a policy', 'Pocket only pays fees for allowed calls, caps every send, and refuses its own service accounts.'],
+  ['Fees paid, with rules', 'Pocket only pays fees for allowed calls, caps every send, and refuses its own service accounts.'],
   ['Tested against attacks', 'A suite of prompt injection and abuse attempts runs on every release. Every one must be refused.'],
 ];
 const FAQ = [
-  ['Is this real money?', 'No. Pocket runs on NEAR testnet. You get 1,000 test dollars when you join, and the stock tokens are paper. Nothing here has real value, so it is a safe place to learn.'],
-  ['Do I need a wallet, an email or a seed phrase?', 'No. Pick a username and Pocket makes a private key inside your browser, creates your NEAR testnet account and pays the fee. You can back the key up from Profile and add a passkey in Settings.'],
+  ['Is this real money?', 'No. Pocket uses test money on NEAR. You get 1,000 test dollars when you join, and the stock tokens are paper. Nothing here has real value, so it is a safe place to learn.'],
+  ['Do I need a wallet, an email or a seed phrase?', 'No. Pick a username and Pocket makes a private key inside your browser, creates your account and pays the fee. You can back the key up from Profile and add a passkey in Settings.'],
   ['Does Pocket use Privy or another login service?', 'No. There is no third party login. Your key is made and kept on your own device, which is why Pocket can never move money without you. A passkey (Face ID, fingerprint or screen lock) can guard every approval.'],
   ['Can the AI move my money?', 'No. The AI can only propose a plan card. Your rules are checked in code, and nothing moves until you press and hold to approve on your own device. Instructions hidden in pasted text or photos are ignored.'],
   ['Who can see my chats?', 'Chats, photos, voice notes and web searches are processed by private models on NEAR AI Cloud, inside attested secure hardware. Your chat history stays in your own browser, and the Pocket server keeps no chat text.'],
-  ['What does it cost?', 'Pocket is free while on testnet, with 1,000 AI credits a month. Sends cost you nothing; Pocket pays the network fee.'],
-  ['Can I run my own copy?', 'Yes. The code is open source under the MIT licence. One command sets up your own testnet copy with its own keys.'],
+  ['What does it cost?', 'Pocket is free while it uses test money, with 1,000 AI credits a month. Sends cost you nothing; Pocket pays the network fee.'],
+  ['Can I run my own copy?', 'Yes. The code is open source under the MIT licence. One command sets up your own test copy with its own keys.'],
 ];
 
 export default function Home() {
@@ -53,7 +53,7 @@ export default function Home() {
 
       <section className="lp-hero">
         <div className="lp-hero-copy">
-          <a className="lp-pill" href="#security"><span className="dot" />Live on NEAR testnet<ArrowRight size={14} aria-hidden /></a>
+          <a className="lp-pill" href="#security"><span className="dot" />Live with test money<ArrowRight size={14} aria-hidden /></a>
           <h1>Talk to your money.</h1>
           <p className="lp-lead">Pocket, the money app you talk to. Say <q>send Mum 50 dollars and put 25 in Tesla</q>. Pocket makes one clear plan, checks it against your rules, and nothing moves until you hold to approve.</p>
           <div className="lp-ctas"><Cta /><a className="btn ghost big" href="#how">See how it works</a></div>

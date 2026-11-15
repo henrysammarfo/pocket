@@ -35,7 +35,7 @@ export function SiteFooter() {
         <nav aria-label="Legal"><h2>Legal</h2><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><a href={REPO + '/blob/main/LICENSE'}>MIT licence</a></nav>
       </div>
       <div className="ft-bot">
-        <p>© 2026 Pocket. Pocket runs on NEAR testnet. Test dollars and paper stocks have no real value. Nothing here is financial advice.</p>
+        <p>© 2026 Pocket. Pocket uses test money on NEAR. Test dollars and paper stocks have no real value. Nothing here is financial advice.</p>
         <p>Prices from CoinGecko and Nasdaq.com.</p>
       </div>
     </footer>
