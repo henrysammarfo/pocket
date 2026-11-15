@@ -41,7 +41,7 @@ function PrivateInner() {
           <label className="field"><input id="pto" className="inp" placeholder="name.testnet or an account address" value={to} onChange={(e) => setTo(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
           <button className="btn" disabled={!!busy || !toOk || !bal?.count} onClick={() => run('send', () => privateSend(to.trim()), `Sent ${POOL_NOTE_NEAR} NEAR privately. The chain shows the pool paying ${to.trim()}, not you.`)}>{busy === 'send' ? 'Making the proof on this phone…' : 'Private send'}</button>
         </section>
-        {msg && <div role={msg.err ? 'alert' : 'status'} className={msg.err ? 'errline' : ''}>{msg.text} {msg.hash && <a href={txUrl(msg.hash)} target="_blank" rel="noreferrer">See it on NearBlocks</a>}</div>}
+        {msg && <div data-testid="pmsg" role={msg.err ? 'alert' : 'status'} className={msg.err ? 'errline' : ''}>{msg.text} {msg.hash && <a href={txUrl(msg.hash)} target="_blank" rel="noreferrer">See it on NearBlocks</a>}</div>}
         <section aria-label="What is hidden" style={{ fontSize: '.9rem', lineHeight: 1.45 }}>
           <h3 style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}><Shield size={16} aria-hidden /> What this hides, and what it does not</h3>
           <ul>

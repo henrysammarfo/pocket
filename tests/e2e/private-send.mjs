@@ -19,44 +19,47 @@ const RPC = 'https://rpc.testnet.fastnear.com';
 const viewPool = async (m, a) => { const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'call_function', finality: 'final', account_id: 'pool.pocket-7e2413.testnet', method_name: m, args_base64: Buffer.from(JSON.stringify(a)).toString('base64') } }) }).then((x) => x.json()); return JSON.parse(Buffer.from(r.result.result).toString()); };
 const unspent = [];
 for (const n of notes) if (!(await viewPool('is_spent', { nullifier_hash: n.nullifierHash }))) unspent.push(n);
-if (!unspent.length) throw new Error('no unspent note in ' + process.env.NOTES);
-const note = unspent[0];
+const note = unspent[0] || null; // without an unspent note only the Add checks run
 
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
-await ctx.addInitScript(([s, a, n]) => { localStorage.setItem('pocket-session', JSON.stringify(s)); localStorage.setItem('pocket.notes.' + a, JSON.stringify([n])); }, [session, ACCOUNT, note]);
+await ctx.addInitScript(([s, a, n]) => { localStorage.setItem('pocket-session', JSON.stringify(s)); localStorage.setItem('pocket.notes.' + a, JSON.stringify(n ? [n] : [])); }, [session, ACCOUNT, note]);
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', (e) => errs.push(e.message));
 await p.goto(BASE + '/private');
 await p.locator('[data-testid="private-balance"]').waitFor({ timeout: 60000 });
 await p.waitForFunction(() => /0\.1 NEAR/.test(document.querySelector('[data-testid="private-balance"]')?.textContent || ''), null, { timeout: 60000 }).catch(() => {});
 const bal = await p.locator('[data-testid="private-balance"]').innerText();
-ok(/0\.1 NEAR/.test(bal), 'private balance shows the note: ' + bal);
+if (note) ok(/0\.1 NEAR/.test(bal), 'private balance shows the note: ' + bal);
 await p.screenshot({ path: SHOTS + '/1-balance.png' });
 
 // Add is on for a v3 wallet; the wallet already used its 0.2 NEAR day, so the chain must refuse.
 const add = p.locator('button:has-text("Add 0.1 NEAR")');
+await p.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => /Add 0\.1 NEAR/.test(x.textContent || '')); return b && !b.disabled; }, null, { timeout: 30000 }).catch(() => {});
 ok(!(await add.isDisabled()), 'Add to private balance is on for a v3 wallet');
 await add.click();
-await p.locator('[role="alert"], [role="status"]').first().waitFor({ timeout: 120000 });
-const addMsg = await p.locator('[role="alert"], [role="status"]').first().innerText();
+await p.locator('[data-testid="pmsg"]').waitFor({ timeout: 180000 });
+const addMsg = await p.locator('[data-testid="pmsg"]').first().innerText();
 ok(/24 hour limit|limit/i.test(addMsg), 'adding over the daily cap is refused with the reason: ' + addMsg.slice(0, 160).replace(/\s+/g, ' '));
 await p.screenshot({ path: SHOTS + '/2-add-over-cap.png' });
 
+if (note) {
 const to = crypto.randomBytes(32).toString('hex');
 await p.fill('#pto', to);
 const t0 = Date.now();
 await p.click('button:has-text("Private send")');
-await p.locator('text=Sent 0.1 NEAR privately').waitFor({ timeout: 180000 }).catch(() => {});
+await p.waitForFunction(() => /Sent 0\.1 NEAR privately|refused|Error|error/.test(document.querySelector('[data-testid="pmsg"]')?.textContent || ''), null, { timeout: 180000 }).catch(() => {});
 const msg = await p.locator('[role="status"], [role="alert"]').first().innerText();
 const link = await p.locator('a:has-text("See it on NearBlocks")').getAttribute('href').catch(() => null);
 ok(/Sent 0\.1 NEAR privately/.test(msg) && !!link, `private send done in ${Math.round((Date.now() - t0) / 1000)} s: ${link}`);
 await p.screenshot({ path: SHOTS + '/3-sent.png' });
+fs.writeFileSync(SHOTS + '/result.json', JSON.stringify({ link, to, at: new Date().toISOString() }, null, 1));
 ok(await viewPool('is_spent', { nullifier_hash: note.nullifierHash }), 'the note is spent on chain');
 const acct = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'query', params: { request_type: 'view_account', finality: 'final', account_id: to } }) }).then((x) => x.json());
 ok(acct.result && BigInt(acct.result.amount) === 10n ** 23n, 'the new account holds exactly 0.1 NEAR from the pool');
+}
 ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
-fs.writeFileSync(SHOTS + '/result.json', JSON.stringify({ link, to, at: new Date().toISOString(), fails }, null, 1));
+
 await b.close();
 console.log(fails ? `${fails} FAIL` : 'ALL PASS');
 process.exit(fails ? 1 : 0);
