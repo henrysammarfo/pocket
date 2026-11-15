@@ -160,9 +160,9 @@ function ChatInner() {
     r.source === 'ai' ? (r.model ? 'AI: ' + r.model.split('/').pop() : 'AI') : r.source === 'rules' ? 'Pocket rules parser' : 'AI is off',
     ...(r.plan ? [r.check?.ok ? 'Safety check passed' : 'Blocked by your rules', 'Prices read'] : []),
   ];
-  type Out = { reply: string; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean; photoText?: string };
+  type Out = { reply: string; link?: { label: string; href: string }; plan?: Plan; check?: Check; confirm?: unknown; chips?: string[]; remembered?: string[]; source: string; model?: string; sources?: WebSource[]; products?: WebProduct[]; searched?: boolean; photoText?: string };
   const land = (next: ChatMsg[], r: Out, voice?: boolean, id = getThreadId()) => {
-    setChat([...next, { role: 'assistant', content: r.reply, at: Date.now(), plan: r.plan ? { plan: r.plan, check: r.check } : undefined, confirm: r.confirm, chips: r.chips, sources: r.sources, products: r.products, meta: [...metaOf(r, voice), ...(r.searched ? ['Searched the web'] : []), ...(r.remembered?.length ? ['Saved to memory'] : [])] }], id);
+    setChat([...next, { role: 'assistant', content: r.reply, at: Date.now(), plan: r.plan ? { plan: r.plan, check: r.check } : undefined, confirm: r.confirm, chips: r.chips, link: r.link && r.link.href.startsWith('/') ? r.link : undefined, sources: r.sources, products: r.products, meta: [...metaOf(r, voice), ...(r.searched ? ['Searched the web'] : []), ...(r.remembered?.length ? ['Saved to memory'] : [])] }], id);
     if (r.check && !r.check.ok) setBlocked({ reasons: r.check.reasons });
     if (getRules().speak) speak(r.reply);
   };
@@ -234,6 +234,7 @@ function ChatInner() {
               <div className={m.role === 'user' ? 'me' : 'ai'}>{m.voice && <Mic size={13} aria-label="Said by voice" style={{ marginRight: '.3rem', verticalAlign: '-2px', opacity: 0.7 }} />}{m.content}</div>
               {m.role === 'assistant' && <Found sources={m.sources} products={m.products} />}
               {m.plan ? <PlanCard plan={(m.plan as { plan: Plan }).plan} check={(m.plan as { check?: Check }).check} keep={rules.keep} onReview={() => review(m.plan as { plan: Plan; check?: Check })} onChange={() => { setText((msgs[i - 1]?.content) || ''); ta.current?.focus(); }} /> : null}
+              {m.link && <div className="chips"><Link className="chipbtn" href={m.link.href}>{m.link.label}</Link></div>}
               {m.chips && <div className="chips">{m.chips.map((c) => <button key={c} className="chipbtn" onClick={() => chip(i, c)}>{c}</button>)}</div>}
               {m.meta && <div className="strip">{m.meta.map((x) => <span key={x} className={'chip' + (/passed|read|Heard|Saved/.test(x) ? ' ok' : '')}>{x}</span>)}</div>}
             </div>

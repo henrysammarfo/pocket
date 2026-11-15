@@ -74,3 +74,14 @@ describe('today\'s date', () => {
     expect(sys).toContain('Sunday, 15 November 2026');
   });
 });
+
+import { requestAsk } from '@/lib/shared/facts';
+describe('request link from chat', () => {
+  it.each([
+    ['Make a request link for $15 from my brother for rent', '15', 'rent'],
+    ['request money: $12.50 for lunch', '12.50', 'lunch'],
+    ['Make me a request for 40 dollars for school fees', '40', 'school fees'],
+    ['payment link $8', '8', ''],
+  ])('%s', (t, amount, note) => expect(requestAsk(t)).toEqual({ amount, note }));
+  it.each(['send $15 to mum', 'what is a request?', 'request link please', 'Buy $20 of Tesla'])('not a request with an amount: %s', (t) => expect(requestAsk(t)).toBeNull());
+});

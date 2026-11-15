@@ -93,11 +93,24 @@ if (run('kofi')) {
     const t = await P.p.locator('body').innerText();
     P.ok(/20/.test(t) && /nearblocks|explorer|NEAR/i.test(t), 'receipt page shows the amount and an explorer link');
   });
-  await P.step('requests money by chat', async () => { const r = await P.ask('Make a request link for $15 from my brother for rent'); const t = r.reply + ' ' + r.plan; P.ok(/request|link|\/pay\//i.test(t), 'request reply: ' + t.slice(0, 160).replace(/\s+/g, ' ')); if (!/\/pay\//.test(await P.p.locator('main').innerText())) P.snag('chat did not hand back a pay link directly'); });
-  await P.step('request page link', async () => {
-    await P.p.goto(BASE + '/request'); await P.p.fill('input[aria-label="Amount"]', '15'); await P.p.fill('input[aria-label="What it is for"]', 'rent');
+  await P.step('requests money by chat, with a due date', async () => {
+    const r = await P.ask('Make a request link for $15 from my brother for rent');
+    P.ok(/request/i.test(r.reply), 'chat reply: ' + r.reply.slice(0, 140).replace(/\s+/g, ' '));
+    const link = P.p.locator('a:has-text("Open request link form")').last();
+    P.ok(await link.isVisible(), 'chat hands back a button to the prefilled request form');
+    await link.click(); await P.p.waitForURL('**/request**', { timeout: 20000 });
+    P.ok((await P.p.inputValue('input[aria-label="Amount"]')) === '15' && (await P.p.inputValue('input[aria-label="What it is for"]')) === 'rent', 'request form is prefilled with $15 for rent');
+    const due = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+    await P.p.fill('input[aria-label="Due by (optional)"]', due);
     await P.p.click('button:has-text("Make request link")'); await P.p.locator('[data-request]').first().waitFor({ timeout: 30000 });
-    P.ok(/Pending/.test(await P.p.locator('[data-request]').first().innerText()), 'request listed as Pending'); await P.shot('request');
+    await P.p.waitForTimeout(1500);
+    const row = await P.p.locator('[data-request]').first().innerText();
+    P.ok(/Pending/.test(row) && /due/i.test(row), 'request listed as Pending with its due date: ' + row.replace(/\s+/g, ' ').slice(0, 100));
+    await P.shot('request');
+    const id = await P.p.locator('[data-request]').first().getAttribute('data-request');
+    await P.p.goto(`${BASE}/pay/${me.split('.')[0]}?r=${id}`); await P.p.locator('[aria-label="Money request"]').waitFor({ timeout: 30000 });
+    const t = await P.p.locator('[aria-label="Money request"]').innerText(); await P.shot('pay-link');
+    P.ok(/15/.test(t) && /rent/.test(t) && /Due by/.test(t), 'the pay link shows $15, rent and the due date');
   });
   await P.step('receipts CSV', async () => {
     await P.p.goto(BASE + '/activity'); await P.p.waitForTimeout(3000);

@@ -9,7 +9,7 @@ import { cleanSpeech } from '../shared/speech';
 import { webAnswer, webUp, type Product, type Source } from './web';
 import { limit } from './store';
 import { tokenPrices, sharePrices, type TokenPrice, type SharePrice } from './prices';
-import { dateFacts, dateAsk, dateReply, priceAsk, priceReply } from '../shared/facts';
+import { dateFacts, dateAsk, dateReply, priceAsk, priceReply, requestAsk } from '../shared/facts';
 import { STOCKS } from '../shared/deployment';
 
 // Live prices from the same feeds the Invest screen uses: share prices (Nasdaq.com, Yahoo fallback)
@@ -34,7 +34,7 @@ export type Msg = { role: 'user' | 'assistant'; content: string };
 export type ChatCtx = Ctx & { name?: string; contacts?: { name: string; address: string }[]; tz?: string };
 export type ChatIn = { messages: Msg[]; ctx: ChatCtx; voice?: boolean; memories?: string[]; offline?: boolean; live?: Live; now?: Date };
 export type Confirm = { summary: string; steps: Step[] };
-export type ChatOut = { reply: string; plan?: Plan; check?: ReturnType<typeof checkPlan>; confirm?: Confirm; chips?: string[]; remembered?: string[]; source: 'ai' | 'rules' | 'off'; model?: string; provider?: string; private?: boolean; usd?: number; sources?: Source[]; products?: Product[]; searched?: boolean };
+export type ChatOut = { reply: string; link?: { label: string; href: string }; plan?: Plan; check?: ReturnType<typeof checkPlan>; confirm?: Confirm; chips?: string[]; remembered?: string[]; source: 'ai' | 'rules' | 'off'; model?: string; provider?: string; private?: boolean; usd?: number; sources?: Source[]; products?: Product[]; searched?: boolean };
 
 // Today's date and time in the user's own time zone (from their browser), so "what is the date" is right.
 export function nowText(tz?: string, now = new Date()) {
@@ -131,6 +131,8 @@ async function direct(input: ChatIn): Promise<ChatOut | null> {
   if (input.voice) return null;
   const last = input.messages.filter((m) => m.role === 'user').pop()?.content?.slice(0, 2000) || '';
   if (dateAsk(last)) return { reply: dateReply(input.now || new Date(), input.ctx.tz), source: 'rules' };
+  const rq = requestAsk(last);
+  if (rq) return { reply: `Here is a request for $${rq.amount}${rq.note ? ` for ${rq.note}` : ''}. Open it, check the amount, add a due date if you like, and tap Make request link. The link shows Pending until they pay, then Paid.`, link: { label: 'Open request link form', href: `/request?amt=${encodeURIComponent(rq.amount)}${rq.note ? `&note=${encodeURIComponent(rq.note)}` : ''}` }, source: 'rules' };
   const t = priceAsk(last);
   if (!t) return null;
   const st = STOCKS.find((s) => s.ticker === t)!;

@@ -19,6 +19,8 @@ function RequestInner() {
   const [items, setItems] = useState<RequestView[] | null>(null);
   const load = () => myRequests().then((r) => setItems(r.items)).catch(() => setItems([]));
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
+  // Prefilled from chat ("make a request link for $15 for rent").
+  useEffect(() => { const q = new URLSearchParams(window.location.search); if (q.get('amt')) setAmount(q.get('amt')!.slice(0, 9)); if (q.get('note')) setNote(q.get('note')!.slice(0, 80)); }, []);
   const c = cleanRequest({ amount, token, note, due });
   const make = async () => {
     setBusy(true);

@@ -24,6 +24,16 @@ export function priceAsk(text: string): string | null {
 export const dateAsk = (text: string) =>
   /\b(what('?s| is) (the |today'?s )?(date|time|day)( today| now)?|today'?s date|what day is (it|today)|what time is it|what year is it|what month is it|date today)\b/i.test(String(text || ''));
 
+/** "Make a request link for $15 from my brother for rent" -> { amount: '15', note: 'rent' }. Null otherwise. */
+export function requestAsk(text: string): { amount: string; note: string } | null {
+  const t = String(text || '').slice(0, 300);
+  if (!/\b(request (link|money|for)|make (a |me a )?request|ask .{1,40} to pay me|payment link|pay ?link|collect)\b/i.test(t)) return null;
+  const m = t.match(/\$\s?(\d{1,6}(?:\.\d{1,2})?)|(\d{1,6}(?:\.\d{1,2})?)\s?(?:dollars|usd|pusd|usdc)\b/i);
+  if (!m) return null;
+  const note = (t.match(/\bfor ([a-z][a-z0-9 '\-]{1,60})$/i)?.[1] || t.match(/\bfor ([a-z][a-z0-9 '\-]{1,40}?)(?: from|[.,!?]|$)/i)?.[1] || '').trim().replace(/^(a|the|my) /i, '');
+  return { amount: m[1] || m[2], note: /^(\$|\d)/.test(note) ? '' : note.slice(0, 80) };
+}
+
 export type SharePx = { price: number | null; lastTrade?: string; marketStatus?: string | null; source?: string } | null | undefined;
 export type TokenPx = { price: number; updatedAt?: number } | null | undefined;
 
