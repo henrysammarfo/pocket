@@ -52,7 +52,7 @@ export type DelegateJson = { senderId: string; receiverId: string; nonce: string
  */
 export function delegatePolicy(d: unknown): number {
   if (!isObj(d)) return deny(400, 'Send a delegate action.');
-  if (!isPocketUser(d.senderId)) return deny(403, 'Only Pocket accounts can use the Pocket relayer.');
+  if (!isPocketUser(d.senderId)) return deny(403, 'Only Pocket accounts get free sends.');
   if (!validAccountId(d.receiverId)) return deny(400, 'Bad receiver.');
   if (!uint(d.nonce) || !uint(d.maxBlockHeight)) return deny(400, 'Bad nonce or block height.');
   if (typeof d.publicKey !== 'string' || !ED25519.test(d.publicKey)) return deny(400, 'Bad public key.');
@@ -66,7 +66,7 @@ export function delegatePolicy(d: unknown): number {
     if (a.type === 'transfer') {
       if (!uint(a.deposit) || BigInt(a.deposit) === 0n) return deny(400, 'Bad NEAR amount.');
       near += BigInt(a.deposit);
-      if (near > MAX_NEAR_PER_DELEGATE) return deny(400, 'NEAR sends are capped at 5 NEAR on testnet.');
+      if (near > MAX_NEAR_PER_DELEGATE) return deny(400, 'NEAR sends are capped at 5 NEAR.');
       continue;
     }
     if (a.type !== 'functionCall' || typeof a.method !== 'string' || !isObj(a.args) || !uint(a.gas) || !uint(a.deposit)) return deny(400, 'Bad action.');

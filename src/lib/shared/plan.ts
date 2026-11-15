@@ -37,7 +37,7 @@ export function checkPlan(p: Plan, c: Ctx): Check {
   if (after < c.keep - 1e-9) reasons.push(`Your rule keeps $${c.keep.toFixed(0)}. This plan would leave $${Math.max(after, 0).toFixed(2)}.`);
   if (after < -1e-9) reasons.push(`You have $${c.dollars.toFixed(2)}, and this plan needs $${(sendTotal + buyTotal - sellTotal).toFixed(2)}.`);
   if (nearTotal > 0 && nearTotal > c.near + 1e-12) reasons.push(`You have ${c.near} NEAR, and this plan sends ${nearTotal} NEAR.`);
-  if (nearTotal > 5) reasons.push('NEAR sends are capped at 5 NEAR on testnet.');
+  if (nearTotal > 5) reasons.push('NEAR sends are capped at 5 NEAR.');
   const left = Math.max(0, c.limit - c.usedToday);
   if (sendTotal > left + 1e-9) reasons.push(`Your daily send limit is $${c.limit.toFixed(0)}, and $${left.toFixed(2)} is left today.`);
   return { ok: reasons.length === 0, reasons, after, sendTotal, tradeTotal: buyTotal + sellTotal };

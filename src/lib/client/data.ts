@@ -48,7 +48,7 @@ export async function resolveRecipient(input: string): Promise<Resolved> {
   }
   if (d.kind === 'mainnet' || d.kind === 'unsupported') return { error: d.reason };
   if (d.kind === 'solana' || d.kind === 'evm-or-near') return { error: 'That is an outside wallet address. Use Send to pick the network; cross chain routes are on the roadmap.' };
-  return { error: 'Who should get it? Use a saved name, @username or a NEAR testnet account.' };
+  return { error: 'Who should get it? Use a saved name, @username or an account name.' };
 }
 
 export const ago = (ms: number) => { const s = Math.max(0, Math.round((Date.now() - ms) / 1000)); return s < 60 ? `${s} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`; };

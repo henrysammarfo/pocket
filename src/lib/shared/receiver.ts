@@ -57,13 +57,13 @@ export function checkReceiver(f: ReceiverFacts): Check {
   if (!validAccountId(to)) { add('block', 'invalid', 'That is not a valid NEAR account name.'); return done(); }
   if (to === f.from) { add('block', 'self', 'That is your own account.'); return done(); }
   const implicit = isImplicit(to);
-  if (!implicit && !to.endsWith('.testnet') && to !== 'testnet') { add('block', 'mainnet', 'That looks like a NEAR mainnet account. Pocket is testnet only, so the money would never arrive.'); return done(); }
-  if (f.services.includes(to) || to === f.root) add('block', 'service', 'That is a Pocket system contract, not a person. Money sent there would be stuck.');
+  if (!implicit && !to.endsWith('.testnet') && to !== 'testnet') { add('block', 'mainnet', 'That looks like a real money NEAR account. Pocket uses test money only, so the money would never arrive.'); return done(); }
+  if (f.services.includes(to) || to === f.root) add('block', 'service', 'That is a Pocket system account, not a person. Money sent there would be stuck.');
   const listed = (f.shared || []).find((b) => b.account === to);
   if (listed) add('block', 'shared_block', `On Pocket's shared block list: ${listed.reason} Evidence: ${listed.evidence}`);
   else if ((f.blocked || []).includes(to)) add('block', 'blocked', 'You blocked this account in your rules.');
   if ((f.allowOnly || []).length && !(f.allowOnly || []).includes(to)) add('block', 'not_allowed', 'Your rules only allow sends to your allowed list, and this account is not on it.');
-  if (f.exists === false && !implicit) add('block', 'missing', 'This account does not exist on NEAR testnet.');
+  if (f.exists === false && !implicit) add('block', 'missing', 'This account does not exist.');
   if (reasons.some((r) => r.level === 'block')) return done();
 
   const contact = (f.contacts || []).find((c) => c.account === to);
@@ -72,7 +72,7 @@ export function checkReceiver(f: ReceiverFacts): Check {
   if (implicit && f.exists === false) add('warn', 'new_implicit', 'This address has never been used. Make sure it is copied exactly.');
   // Someone you already paid or saved is not a stranger, however new their account is.
   if (!contact && !paid && f.createdMs && (f.nowMs ?? Date.now()) - f.createdMs < 86_400_000) add('warn', 'new_account', 'This account was created in the last 24 hours. Scammers often use brand new accounts.');
-  if (f.isContract) add('warn', 'contract', 'This is a smart contract, not a Pocket wallet. It may not be able to send money back.');
+  if (f.isContract) add('warn', 'contract', 'This is an app account, not a person. It may not be able to send money back.');
   if (!to.endsWith('.' + f.root) && !contact && !paid) add('warn', 'outside', 'This account is outside Pocket. Sends cannot be reversed.');
   if (!contact && !paid) {
     const mine = label(to, f.root);
