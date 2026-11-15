@@ -23,7 +23,7 @@ const note = unspent[0] || null; // without an unspent note only the Add checks 
 
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
-await ctx.addInitScript(([s, a, n]) => { localStorage.setItem('pocket-session', JSON.stringify(s)); localStorage.setItem('pocket.notes.' + a, JSON.stringify(n ? [n] : [])); }, [session, ACCOUNT, note]);
+await ctx.addInitScript(([s, a, n]) => { if (sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded', '1'); localStorage.setItem('pocket-session', JSON.stringify(s)); localStorage.setItem('pocket.notes.' + a, JSON.stringify(n ? [n] : [])); }, [session, ACCOUNT, note]);
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', (e) => errs.push(e.message));
 await p.goto(BASE + '/private');
