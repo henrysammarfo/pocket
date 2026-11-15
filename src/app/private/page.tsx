@@ -29,7 +29,7 @@ function PrivateInner() {
     <AppShell screen="private" tab="wallet">
       <header className="nav"><Link className="nb" href="/wallet" aria-label="Back"><ChevronLeft size={22} aria-hidden /></Link><div className="tt">Private balance</div><span style={{ width: 36 }} /></header>
       <main className="body" style={{ display: 'grid', gap: '1rem', paddingBottom: '2rem' }}>
-        <section className="pcard" aria-label="Private balance">
+        <section className="pcard" aria-label="Private balance" style={{ aspectRatio: 'auto', maxHeight: 'none', gap: '.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}><EyeOff size={18} aria-hidden /> <b>Private balance</b></div>
           <div style={{ fontSize: '2rem', fontWeight: 700 }} data-testid="private-balance">{bal ? bal.near : '…'} NEAR</div>
           <div style={{ opacity: .8 }}>{bal ? `${bal.count} note${bal.count === 1 ? '' : 's'} of ${POOL_NOTE_NEAR} NEAR, kept only on this device` : 'Checking the pool…'}</div>
@@ -38,7 +38,7 @@ function PrivateInner() {
         <button className="btn big" disabled={!!busy || !v3} onClick={() => run('add', addToPrivate, `${POOL_NOTE_NEAR} NEAR moved into your private balance. Your limits counted it.`)}>{busy === 'add' ? 'Moving…' : `Add ${POOL_NOTE_NEAR} NEAR to private balance`}</button>
         <section style={{ display: 'grid', gap: '.5rem' }}>
           <label htmlFor="pto"><b>Private send</b> {POOL_NOTE_NEAR} NEAR to</label>
-          <input id="pto" className="inp" placeholder="name.testnet" value={to} onChange={(e) => setTo(e.target.value)} autoCapitalize="none" autoCorrect="off" />
+          <label className="field"><input id="pto" className="inp" placeholder="name.testnet or an account address" value={to} onChange={(e) => setTo(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
           <button className="btn" disabled={!!busy || !toOk || !bal?.count} onClick={() => run('send', () => privateSend(to.trim()), `Sent ${POOL_NOTE_NEAR} NEAR privately. The chain shows the pool paying ${to.trim()}, not you.`)}>{busy === 'send' ? 'Making the proof on this phone…' : 'Private send'}</button>
         </section>
         {msg && <div role={msg.err ? 'alert' : 'status'} className={msg.err ? 'errline' : ''}>{msg.text} {msg.hash && <a href={txUrl(msg.hash)} target="_blank" rel="noreferrer">See it on NearBlocks</a>}</div>}
