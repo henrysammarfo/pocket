@@ -3,7 +3,7 @@
 // counts money against a limit. Kept free of I/O so every rule is unit and property tested
 // (tests/unit/policy.test.ts). The formal statement of each rule is in docs/POLICY.md.
 import { PUSD, ROOT, TOKENS, USDC, VERIFIER } from './deployment';
-import { DEVICE_ALLOWANCE, DEVICE_METHODS, OWNER_METHODS, TRADE_GAS } from './wallet';
+import { DEVICE_ALLOWANCE, DEVICE_METHODS, OWNER_METHODS, TRADE_GAS, microUsdOf, type PricePayload } from './wallet';
 
 export class PolicyError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -111,10 +111,24 @@ export function walletPolicy(d: DelegateJson): { usd: number; method: string } {
   const args = a.args;
   const amt = (v: unknown) => (uint(v) && BigInt(v) > 0n ? BigInt(v) : deny(400, 'Bad amount.'));
   const memo = (v: unknown) => (v == null || (typeof v === 'string' && v.length <= 256) ? true : deny(400, 'Memo too long.'));
+  // A Pocket signed price (wallet v2). The contract checks the signature; here only its shape, and
+  // its dollar value counts toward the server's own daily total as a second layer.
+  const priced = (v: unknown, token: string, units: bigint): number => {
+    if (v == null) return 0;
+    if (!isObj(v) || typeof v.payload !== 'string' || v.payload.length > 512 || typeof v.signature !== 'string' || !/^[0-9a-f]{128}$/.test(v.signature)) return deny(400, 'Bad price.');
+    let p: PricePayload;
+    try { p = JSON.parse(v.payload); } catch { return deny(400, 'Bad price.'); }
+    if (p?.v !== 1 || p.token !== token || !uint(p.micro_usd) || !Number.isInteger(p.decimals) || p.decimals < 0 || p.decimals > 30) return deny(400, 'Bad price.');
+    return Number(microUsdOf(units, p)) / 1e6;
+  };
   switch (a.method) {
-    case 'send_near':
+    case 'send_near': {
       if (!validAccountId(args.receiver_id) || args.receiver_id === d.senderId) return deny(400, 'Bad receiver.');
-      amt(args.amount);
+      const v = amt(args.amount);
+      return { usd: priced(args.price, 'near', v), method: a.method };
+    }
+    case 'owner_action':
+      if (typeof args.payload !== 'string' || args.payload.length > 8192 || typeof args.public_key !== 'string' || !ED25519.test(args.public_key) || typeof args.signature !== 'string' || !/^[0-9a-f]{128}$/.test(args.signature)) return deny(400, 'Bad owner message.');
       return { usd: 0, method: a.method };
     case 'send_usdc':
       if (!validAccountId(args.receiver_id) || args.receiver_id === d.senderId) return deny(400, 'Bad receiver.');
@@ -126,7 +140,7 @@ export function walletPolicy(d: DelegateJson): { usd: number; method: string } {
       if (!tok) return deny(400, 'Unknown token.');
       memo(args.memo);
       const v = amt(args.amount);
-      return { usd: tok.assetId === PUSD.assetId ? Number(v) / 10 ** tok.decimals : 0, method: a.method };
+      return { usd: tok.assetId === PUSD.assetId ? Number(v) / 10 ** tok.decimals : priced(args.price, tok.assetId, v), method: a.method };
     }
     case 'trade':
       if (!TOKENS.some((t) => t.assetId === args.pay_token) || typeof args.msg !== 'string' || args.msg.length > 4096) return deny(400, 'Bad trade.');

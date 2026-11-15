@@ -5,12 +5,12 @@ import { handler, ipOf } from '@/lib/server/http';
 import { limit, HttpError } from '@/lib/server/store';
 import { sessionOf } from '@/lib/server/auth';
 import { COST, creditsOf, spend } from '@/lib/server/credits';
-import { anyUp, transcribe } from '@/lib/server/llm';
+import { anyUp, privateFrom, transcribe, withPrivacy } from '@/lib/server/llm';
 import { refund } from '@/lib/server/credits';
 export const maxDuration = 60;
 
 const PROMPT = 'Pocket money app. Names: Mum, Dad, Kofi, Ama, Kwame, Akosua, Yaw, Efua. Words: send, pay, buy, sell, Tesla, NVIDIA, Apple, S&P 500, Nasdaq, pUSD, USDC, NEAR, dollars, cedis, abeg, chale. Ghanaian English and Pidgin are welcome.';
-export const POST = handler(async (req) => {
+export const POST = handler((req) => withPrivacy(privateFrom(req), async () => {
   const account = (await sessionOf(req))!;
   if (!anyUp('stt')) throw new HttpError(503, 'Voice transcription is not set up on this server. Your browser can still listen if it supports speech.');
   await limit('voice:' + ipOf(req), Number(process.env.VOICE_PER_IP_HOUR || 60), 3600);
@@ -33,4 +33,4 @@ export const POST = handler(async (req) => {
   if (/^(you|thank you|thanks|thanks for watching|bye|okay|\.|,)[.!]?$/i.test(text)) text = '';
   if (!text) throw new HttpError(422, 'I could not hear any words in that. Try again a bit closer to the mic.');
   return { text, credits: await creditsOf(account) };
-});
+}));

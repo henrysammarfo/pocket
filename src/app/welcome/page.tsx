@@ -7,7 +7,7 @@ import { Brand } from '@/ui/kit';
 import { signup, takeRecovery, restoreWithRecovery, ROOT } from '@/lib/client/api';
 import { useSession, setProfile, setSession } from '@/lib/client/session';
 import { keyFromString } from '@/lib/shared/nep413';
-import { viewAccessKey, viewAccount } from '@/lib/shared/rpc';
+import { view, viewAccessKey, viewAccount } from '@/lib/shared/rpc';
 
 function Welcome() {
   const router = useRouter();
@@ -34,10 +34,12 @@ function Welcome() {
       const k = keyFromString(j.secretKey);
       setBusy('Checking your key on NEAR testnet');
       const ak = await viewAccessKey(j.account, k.publicKey);
-      if (!ak) throw new Error('That key does not belong to ' + j.account + ' on NEAR testnet.');
       const acct = await viewAccount(j.account);
       const wallet = !!acct && (!!acct.global_contract_hash || acct.code_hash !== '11111111111111111111111111111111');
-      if (wallet && ak.permission === 'FullAccess') {
+      // Wallet v2 recovery keys are not access keys: the contract lists them as owner keys.
+      const owner = wallet && !ak && ((await view<{ owner_keys?: string[] }>(j.account, 'get_config').catch(() => ({} as { owner_keys?: string[] }))).owner_keys || []).includes(k.publicKey);
+      if (!ak && !owner) throw new Error('That key does not belong to ' + j.account + ' on NEAR testnet.');
+      if (owner || (wallet && ak?.permission === 'FullAccess')) {
         // The recovery key: add a fresh device key and forget the recovery key again.
         setBusy('Adding this device with your recovery key');
         await restoreWithRecovery(j.account, k.secretKey);
@@ -74,7 +76,7 @@ function Welcome() {
           {rec ? (
             <div id="start" className="welcome-form" data-testid="recovery">
               <b>Save your recovery key now</b>
-              <p className="note2"><span>This is the only full key to your account. Pocket shows it once and does not keep it, and this phone does not store it. Your phone only holds a limited key that can spend inside your limits. You need the recovery key to raise a limit or to move Pocket to a new phone.</span></p>
+              <p className="note2"><span>This is the owner key to your account. Pocket shows it once and does not keep it, and this phone does not store it. Your phone only holds a limited key that can spend inside your limits. You need the recovery key to raise a limit or to move Pocket to a new phone.</span></p>
               <textarea className="inp mono" rows={3} readOnly aria-label="Your recovery key" value={recText} />
               <div className="hb"><button type="button" className="btn" onClick={() => navigator.clipboard?.writeText(recText)}>Copy</button><button type="button" className="btn" onClick={download}>Download</button></div>
               <label><input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} /> I saved my recovery key somewhere safe</label>

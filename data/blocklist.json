@@ -1,0 +1,10 @@
+{
+  "about": "Accounts Pocket refuses to send to, with the reason and the evidence. Every new Pocket wallet starts with these in its on chain block list, and the receiver check blocks them. Add an entry with a pull request that links evidence.",
+  "updated": "2026-11-15",
+  "entries": [
+    { "account": "0000000000000000000000000000000000000000000000000000000000000000", "reason": "Burn address. It is the implicit account of the all zero public key, which no one can sign for, so money sent there is gone.", "evidence": "https://docs.near.org/protocol/account-id#implicit-address" },
+    { "account": "0x0000000000000000000000000000000000000000", "reason": "Burn address. The zero Ethereum style implicit account on NEAR; no one holds its key.", "evidence": "https://docs.near.org/protocol/account-id#implicit-address" },
+    { "account": "system", "reason": "NEAR protocol system account. It cannot hold or return money.", "evidence": "https://nomicon.io/DataStructures/Account#system-account" },
+    { "account": "drainer.pocket-7e2413.testnet", "reason": "Demo drainer used by Pocket's own attack run: a hijacked chat is told to pay it, and the wallet contract refuses on chain.", "evidence": "docs/TEST_REPORT.onchain.md, section 11" }
+  ]
+}

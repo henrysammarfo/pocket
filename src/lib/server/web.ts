@@ -7,7 +7,7 @@ import 'server-only';
 // Fallback: Groq browser_search on gpt-oss (not private), when NEAR AI is resting or at its daily cap.
 // Links: Groq returns the pages it opened, so only those are shown. NEAR AI returns no URLs, so the model
 // lists them and Pocket opens each one and drops any that do not exist, because models invent URLs.
-import { groq, nearai, isUp, underCap, record, rest } from './llm';
+import { groq, nearai, isUp, underCap, record, rest, privateOnly } from './llm';
 import { limit } from './store';
 
 export type Source = { title: string; url: string };
@@ -151,7 +151,7 @@ export async function webAnswer(query: string, kind: 'web' | 'product', now: str
   const linked = (w: WebOut) => (kind === 'product' ? w.products.length > 0 : w.sources.length > 0);
   if (near && linked(near)) return near;
   if (near) console.warn(JSON.stringify({ ai: 'nearai', kind: 'search', fallback: true, error: 'no checked source links' }));
-  if (!groq) { if (near) return near; throw new Error('no web search provider is available'); }
+  if (!groq || privateOnly()) { if (near) return near; throw new Error(privateOnly() ? 'private search is unavailable right now' : 'no web search provider is available'); }
   try { return await groqWeb(query, kind, now); }
   catch (e) { if (near) return near; throw e; }
 }

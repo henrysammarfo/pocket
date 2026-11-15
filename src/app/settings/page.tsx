@@ -5,7 +5,7 @@ import { BookUser, Check, ChevronRight, Gauge, Sparkles, Brain, Volume2, Globe, 
 import { AppShell, Logo, Sheet, fmt, toast, toastErr } from '@/ui/kit';
 import { Gate } from '@/ui/Gate';
 import { Avatar } from '@/ui/Avatar';
-import { api, cancelRaise, passkeyApprove, passkeyCreate, saveLimit } from '@/lib/client/api';
+import { api, cancelRaise, passkeyApprove, passkeyCreate, privateOnly, saveLimit, setPrivateOnly } from '@/lib/client/api';
 import { useBalances } from '@/lib/client/data';
 import { refreshAll, setRules, useContacts, useProfile, useRules, useSession } from '@/lib/client/session';
 
@@ -55,6 +55,8 @@ function SettingsInner() {
   const onchain = !!s.onchain;
   const pending = (b.data as { onchain?: { pending?: { limits: { usd_per_day: string }; effective_at_ns: string | number } | null } } | undefined)?.onchain?.pending;
   const [rk, setRk] = useState('');
+  const [priv, setPriv] = useState(true);
+  useEffect(() => setPriv(privateOnly()), []);
   const saveLim = async () => {
     setBusy(true);
     try {
@@ -118,6 +120,10 @@ function SettingsInner() {
         <section className="group"><div className="opt3" role="radiogroup" aria-label="Theme">
           {([['light', 'Light', 'l'], ['black', 'Black', 'k'], ['system', 'System', 's']] as const).map(([v, l, c]) => <button key={v} role="radio" aria-checked={pref === v} onClick={() => window.setTheme?.(v)}><span className={'pv ' + c}><i /><i /><i /><b /></span><span>{l}</span><span className="rad"><Check size={14} strokeWidth={3} aria-hidden /></span></button>)}
         </div><div className="cell"><div className="lft"><span className="ic"><SunMoon size={17} aria-hidden /></span><div className="ct">System follows your device</div></div><span className="cs">{pref === 'system' ? `Now ${eff === 'black' ? 'black' : 'light'}` : 'Off'}</span></div></section>
+        <div className="ghead"><b>Privacy</b></div>
+        <section className="group">
+          <label className="cell" data-testid="private-only"><div className="lft"><span className="ic"><ShieldCheck size={17} aria-hidden /></span><div><div className="ct">Private AI only</div><div className="cs">{priv ? 'Chat, photos and voice run only on NEAR AI inside a verified secure enclave. If it is busy, Pocket answers with its built in helper and sends your words nowhere else.' : 'If NEAR AI is busy, Pocket may use Groq, which is not private.'}</div></div></div><input type="checkbox" role="switch" aria-label="Private AI only" checked={priv} onChange={(e) => { setPrivateOnly(e.target.checked); setPriv(e.target.checked); }} /></label>
+        </section>
         <div className="ghead"><b>About</b></div>
         <section className="group">
           <a className="cell" href="/api/health" target="_blank" rel="noreferrer"><div className="lft"><span className="ic"><HeartPulse size={17} aria-hidden /></span><div className="ct">Contracts and health</div></div><span className="cv">Open <ChevronRight size={16} aria-hidden /></span></a>

@@ -7,7 +7,7 @@ import path from 'node:path';
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/server/auth', () => ({ sessionOf: vi.fn(async () => 'ama.pocketnear.testnet') }));
-vi.mock('@/lib/server/llm', () => ({ anyUp: () => true }));
+vi.mock('@/lib/server/llm', () => ({ anyUp: () => true, privateFrom: () => true, withPrivacy: (_p: boolean, f: () => unknown) => f() }));
 vi.mock('@/lib/server/vision', () => ({ okImage: () => true, visionUp: () => true, readImage: async () => ({ text: 'Total 12.50', usd: 0 }) }));
 vi.mock('@/lib/server/credits', () => ({ COST: { chat: 1, photo: 1 }, creditsOf: async () => 1000, refund: async () => {}, settleUsage: async () => {}, spend: async () => {} }));
 vi.mock('@/lib/server/brain', () => ({

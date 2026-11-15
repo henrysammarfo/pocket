@@ -19,7 +19,7 @@ import { signNep413, verifyNep413, keyFromString, type SignedNep413 } from '../s
 import { toUnits, fromUnits, nearToYocto } from '../shared/units';
 import { fnCall, signAndSend, signAndSendG, TGAS, type TxResult } from './tx';
 import { G } from './globaltx';
-import { DEVICE_ALLOWANCE, DEVICE_METHODS, DOLLAR_TOKENS, defaultLimits, dollarsOf, type Limits } from '../shared/wallet';
+import { DEVICE_ALLOWANCE, DEVICE_METHODS, DOLLAR_TOKENS, OWNER_TAG, PRICE_TAG, defaultLimits, dollarsOf, signTagged, verifyTagged, BLOCKLIST, type Limits, type SignedPrice } from '../shared/wallet';
 import { secretKey } from './env';
 import { tokenPrices } from './prices';
 import { store, limit, HttpError } from './store';
@@ -242,9 +242,11 @@ export async function createAccount(username: string, publicKey: string, ip: str
       G.createAccount(),
       G.transfer(nearToYocto(process.env.SIGNUP_NEAR || '0.1')),
       G.globalCode(WALLET_CODE_HASH),
-      G.fullKey(ownerKey),
+      // Wallet v2: no full access key at all. The recovery key only signs owner messages that the
+      // contract checks itself; the phone gets a function call key for this account's wallet methods.
+      ...(WALLET_V1 ? [G.fullKey(ownerKey)] : []),
       G.fnKey(publicKey, id, DEVICE_METHODS, BigInt(DEVICE_ALLOWANCE)),
-      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits() }, gas),
+      G.call('new', { owner_keys: [ownerKey], verifier: VERIFIER, usdc: USDC, maker: MARKET, dollar_tokens: DOLLAR_TOKENS, limits: defaultLimits(), price_key: QUOTE_KEY }, gas),
     ]);
     if (!r.ok) throw new HttpError(400, 'Could not create the account: ' + r.failures.join('; ').slice(0, 200));
     const s = await signAndSend(ROOT, sponsor, USDC, [fnCall('storage_deposit', { account_id: id, registration_only: true }, 30n, nearToYocto('0.00125'))]).catch(() => null);
@@ -270,10 +272,11 @@ const SERVICE_ACCOUNTS = () => [ROOT, VERIFIER, MAKER, FAUCET, RELAYER, MARKET, 
 export async function receiverCheck(from: string, to: string, contacts: { name: string; account: string }[] = []): Promise<Check> {
   const t = String(to || '').trim().toLowerCase();
   if (!validAccountId(t)) return checkReceiver({ from, to: t, root: ROOT, services: SERVICE_ACCOUNTS(), exists: null });
-  const [acct, wallet, acts] = await Promise.all([
+  const [acct, wallet, acts, createdMs] = await Promise.all([
     viewAccount(t).then((a) => a, () => undefined),
     walletOf(from),
     store.activity(from, 500).catch(() => []),
+    accountCreatedMs(t),
   ]);
   const a = acct as { code_hash?: string; global_contract_hash?: string } | null | undefined;
   const isContract = !!a && ((!!a.code_hash && a.code_hash !== '11111111111111111111111111111111') || (!!a.global_contract_hash && a.global_contract_hash !== WALLET_CODE_HASH));
@@ -281,7 +284,23 @@ export async function receiverCheck(from: string, to: string, contacts: { name: 
     from, to: t, root: ROOT, services: SERVICE_ACCOUNTS(), exists: acct === undefined ? null : !!acct, isContract,
     blocked: wallet?.limits.blocked ?? undefined, allowOnly: wallet?.limits.allow_only ?? undefined,
     paidBefore: [...new Set(acts.filter((x) => x.kind === 'send').map((x) => String(x.data.to)))], contacts,
+    shared: BLOCKLIST, createdMs,
   });
+}
+// When an account was created, from the public NearBlocks indexer. Cached; null when unknown (never blocks).
+const createdCache = new Map<string, number | null>();
+async function accountCreatedMs(id: string): Promise<number | null> {
+  if (createdCache.has(id)) return createdCache.get(id)!;
+  try {
+    const r = await fetch(`https://api-testnet.nearblocks.io/v1/account/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(2500) });
+    const j = r.ok ? await r.json() : null;
+    const ns = j?.account?.[0]?.created?.block_timestamp;
+    const ms = typeof ns === 'number' || typeof ns === 'string' ? Math.floor(Number(ns) / 1e6) : null;
+    const v = ms && Number.isFinite(ms) ? ms : null;
+    if (createdCache.size > 2000) createdCache.clear();
+    if (v && Date.now() - v > 86_400_000) createdCache.set(id, v);
+    return v;
+  } catch { return null; }
 }
 // Second layer before Pocket pays gas: a block is refused here even if a modified app skipped the check.
 async function assertReceiver(from: string, to: string) {
@@ -377,6 +396,41 @@ async function ensureUsdcStorage(account: string) {
 
 // ---------- quotes signed for the market contract ----------
 const quoteSeed = () => keyFromString(need('QUOTE')).seed;
+// ---------- wallet v2: signed prices and owner messages ----------
+// Until the v2 code is deployed as a global contract, signups keep the v1 layout (recovery = full key).
+const WALLET_V1 = WALLET_CODE_HASH === 'C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz';
+/** Pocket's price attestation for the wallet contract: micro dollars per whole unit, valid 5 minutes.
+ * NEAR from CoinGecko, paper stocks from the same CoinGecko feed the quotes use. */
+export async function priceAttest(token: string): Promise<SignedPrice & { usd: number; source: string }> {
+  const { tokens } = await tokenPrices();
+  const sym = token === 'near' ? 'NEAR' : tokenByAsset(token)?.symbol;
+  const tok = token === 'near' ? { decimals: 24 } : tokenByAsset(token);
+  const p = sym ? tokens[sym] : undefined;
+  if (!sym || !tok || sym === 'pUSD') throw new HttpError(400, 'Pocket signs prices for NEAR and the paper stocks only.');
+  if (!p || Date.now() - p.updatedAt > MAX_PRICE_AGE_MS) throw new HttpError(503, 'No fresh price right now, so Pocket will not sign one.');
+  const payload = JSON.stringify({ v: 1, token, micro_usd: String(Math.round(p.price * 1e6)), decimals: tok.decimals, expires_ms: Date.now() + 5 * 60_000 });
+  return { payload, signature: signTagged(PRICE_TAG, payload, quoteSeed()), usd: p.price, source: 'CoinGecko' };
+}
+
+/** Submit an owner message (signed by the recovery key) to the user's wallet. The relayer pays the
+ * gas; the contract checks the signature and nonce itself. Checked here first so bad ones cost nothing. */
+export async function submitOwner(account: string, payload: string, publicKey: string, signature: string, ip: string) {
+  if (!isPocketUser(account)) throw new HttpError(403, 'Only Pocket accounts.');
+  if (typeof payload !== 'string' || payload.length > 8192 || !/^[0-9a-f]{128}$/.test(String(signature)) || !/^ed25519:[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(String(publicKey))) throw new HttpError(400, 'Bad owner message.');
+  await limit('owner:' + account, 20, 3600);
+  await limit('ownerip:' + ip, 40, 3600);
+  const cfg = await view<{ owner_keys: string[]; owner_nonce: number }>(account, 'get_config').catch(() => null);
+  if (!cfg || cfg.owner_nonce == null) throw new HttpError(400, 'This account does not run wallet v2.');
+  if (!cfg.owner_keys.includes(publicKey)) throw new HttpError(403, 'That is not the recovery key of this account.');
+  if (!verifyTagged(OWNER_TAG, payload, signature, bs58.decode(publicKey.slice(8)))) throw new HttpError(400, 'Bad owner signature.');
+  let m: { account?: string; nonce?: number };
+  try { m = JSON.parse(payload); } catch { throw new HttpError(400, 'Bad owner message.'); }
+  if (m.account !== account || m.nonce !== cfg.owner_nonce + 1) throw new HttpError(400, 'Old or out of order owner message. Try again.');
+  const r = await signAndSend(RELAYER, need('RELAYER'), account, [fnCall('owner_action', { payload, public_key: publicKey, signature }, 60n)]);
+  if (!r.ok) throw new HttpError(400, 'The wallet refused it: ' + r.failures.join('; ').slice(0, 300));
+  return { hash: r.hash, logs: r.logs };
+}
+
 export function signMarketQuote(q: Quote) {
   const quote = JSON.stringify({ v: 1, maker: MARKET, id: q.id, account: q.account, pay_token: q.payAsset, pay_units: q.payUnits, get_token: q.getAsset, get_units: q.getUnits, deadline_ms: q.deadline });
   const signature = Buffer.from(ed25519.sign(new TextEncoder().encode(quote), quoteSeed())).toString('base64');

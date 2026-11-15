@@ -3,13 +3,13 @@ import { chat, planFrom, type ChatIn, type Confirm } from '@/lib/server/brain';
 import { limit, store, HttpError } from '@/lib/server/store';
 import { sessionOf } from '@/lib/server/auth';
 import { COST, creditsOf, refund, settleUsage, spend } from '@/lib/server/credits';
-import { anyUp as aiUp } from '@/lib/server/llm';
+import { anyUp as aiUp, privateFrom, withPrivacy } from '@/lib/server/llm';
 import { okImage, readImage, visionUp } from '@/lib/server/vision';
 
 // Privacy: chat text is never written to the server. The browser keeps the history (localStorage);
 // this route only answers. Saved memory items are the one thing kept, and only when the user asks
 // Pocket to remember something. See README, "What is stored, where".
-export const POST = handler(async (req) => {
+export const POST = handler((req) => withPrivacy(privateFrom(req), async () => {
   const b = await body<ChatIn & { confirm?: Confirm; image?: string }>(req);
   if (!b.ctx || typeof b.ctx.dollars !== 'number') throw new HttpError(400, 'Bad chat request');
   await limit('chat:' + ipOf(req), Number(process.env.CHAT_PER_IP_HOUR || 120), 3600);
@@ -54,4 +54,4 @@ export const POST = handler(async (req) => {
   }
   const { usd: _u, ...rest } = out; void _u;
   return { ...rest, ...(photoText ? { photoText } : {}), credits: account ? await creditsOf(account) : undefined };
-});
+}));

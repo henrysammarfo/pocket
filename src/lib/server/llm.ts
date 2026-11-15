@@ -1,4 +1,5 @@
 import 'server-only';
+import { AsyncLocalStorage } from 'node:async_hooks';
 // AI provider chain. NEAR AI Cloud runs open models inside attested TEEs (Intel TDX plus NVIDIA GPU),
 // so prompts, photos and voice stay private; `npm run verify:tee` checks the attestation. Groq is the
 // automatic fallback when NEAR AI errors, rate limits, or reaches Pocket's daily spend cap.
@@ -26,7 +27,7 @@ export const nearai = P.nearai.key ? P.nearai : null;
 const down: Record<string, number> = {};
 export const rest = (k: string, r: Response | null) => { const s = r ? ([401, 402, 403].includes(r.status) ? 600 : r.status === 429 ? Math.min(120, Number(r.headers.get('retry-after')) || 20) : 30) : 30; down[k] = Date.now() + s * 1000; };
 export const isUp = (p: Prov, kind: 'chat' | 'stt' = 'chat') => !!p.key && Date.now() > (down[p.id + kind] || 0);
-export const anyUp = (kind: 'chat' | 'stt' = 'chat') => ORDER.some((p) => isUp(p, kind));
+export const anyUp = (kind: 'chat' | 'stt' = 'chat') => chain().some((p) => isUp(p, kind));
 
 // NEAR AI credits are prepaid ($10 to last to 25 Nov), so cap the daily spend on the server.
 const CAP = Number(E.NEARAI_USD_PER_DAY || 0.8);
@@ -38,11 +39,21 @@ export async function record(p: Prov, model: string, usd: number, tin: number, t
   console.info(JSON.stringify({ ai: p.id, model, tin, tout, usd: Number(usd.toFixed(6)) }));
 }
 
+// Private only (the default): a request runs only on providers inside an attested TEE. If NEAR AI is
+// resting or at its cap, Pocket fails closed (chat answers with its built in helper, photos and voice
+// say they are unavailable) instead of sending the words to Groq. The user can turn it off in Settings.
+const privacy = new AsyncLocalStorage<boolean>();
+export const withPrivacy = <T>(privateOnly: boolean, f: () => Promise<T>) => privacy.run(privateOnly, f);
+export const privateOnly = () => privacy.getStore() ?? process.env.PRIVATE_ONLY_DEFAULT !== 'off';
+export const chain = () => (privateOnly() ? ORDER.filter((p) => p.private) : ORDER);
+/** Read the user's choice from the request: header x-pocket-private: 0 turns private only off. */
+export const privateFrom = (req: Request) => req.headers.get('x-pocket-private') !== '0';
+
 export type ChatResult = { j: any; prov: Prov; model: string; usd: number };
 // One chat completion through the chain. `vision` picks each provider's vision model.
 export async function complete(body: Record<string, unknown>, opts: { vision?: boolean; timeoutMs?: number; tools?: boolean } = {}): Promise<ChatResult> {
   let last = 'no AI provider is set up';
-  for (const p of ORDER) {
+  for (const p of chain()) {
     if (!isUp(p) || !(await underCap(p))) { last = p.id + (isUp(p) ? ' is at its daily cap' : ' is resting'); continue; }
     const model = opts.vision ? p.vision : p.chat;
     const ask = () => fetch(p.baseUrl.replace(/\/$/, '') + '/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${p.key}` }, signal: AbortSignal.timeout(opts.timeoutMs || 40000), body: JSON.stringify({ ...body, ...(opts.vision ? {} : p.extra), model }) });
@@ -65,7 +76,7 @@ export async function complete(body: Record<string, unknown>, opts: { vision?: b
 // Speech to text through the chain (NEAR AI Whisper first, then Groq Whisper).
 export async function transcribe(make: (p: Prov) => FormData): Promise<{ j: any; prov: Prov }> {
   let last = 'no speech service is set up';
-  for (const p of ORDER) {
+  for (const p of chain()) {
     if (!isUp(p, 'stt') || !(await underCap(p))) continue;
     try {
       const r = await fetch(p.baseUrl.replace(/\/$/, '') + '/audio/transcriptions', { method: 'POST', headers: { authorization: `Bearer ${p.key}` }, body: make(p), signal: AbortSignal.timeout(55000) });

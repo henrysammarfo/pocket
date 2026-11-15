@@ -17,6 +17,9 @@ export type ReceiverFacts = {
   allowOnly?: string[]; // the sender's own allow only list (from the wallet contract)
   paidBefore?: string[]; // accounts the sender paid before
   contacts?: { name: string; account: string }[];
+  shared?: { account: string; reason: string; evidence: string }[]; // Pocket's shared block list (data/blocklist.json)
+  createdMs?: number | null; // when the receiver account was created (NearBlocks), if known
+  nowMs?: number;
 };
 export type Check = { verdict: Verdict; reasons: Reason[]; to: string };
 
@@ -56,7 +59,9 @@ export function checkReceiver(f: ReceiverFacts): Check {
   const implicit = isImplicit(to);
   if (!implicit && !to.endsWith('.testnet') && to !== 'testnet') { add('block', 'mainnet', 'That looks like a NEAR mainnet account. Pocket is testnet only, so the money would never arrive.'); return done(); }
   if (f.services.includes(to) || to === f.root) add('block', 'service', 'That is a Pocket system contract, not a person. Money sent there would be stuck.');
-  if ((f.blocked || []).includes(to)) add('block', 'blocked', 'You blocked this account in your rules.');
+  const listed = (f.shared || []).find((b) => b.account === to);
+  if (listed) add('block', 'shared_block', `On Pocket's shared block list: ${listed.reason} Evidence: ${listed.evidence}`);
+  else if ((f.blocked || []).includes(to)) add('block', 'blocked', 'You blocked this account in your rules.');
   if ((f.allowOnly || []).length && !(f.allowOnly || []).includes(to)) add('block', 'not_allowed', 'Your rules only allow sends to your allowed list, and this account is not on it.');
   if (f.exists === false && !implicit) add('block', 'missing', 'This account does not exist on NEAR testnet.');
   if (reasons.some((r) => r.level === 'block')) return done();
@@ -65,6 +70,7 @@ export function checkReceiver(f: ReceiverFacts): Check {
   const paid = (f.paidBefore || []).includes(to);
   if (f.exists === null) add('warn', 'unknown', 'Pocket could not reach NEAR to check this account. Check the name carefully.');
   if (implicit && f.exists === false) add('warn', 'new_implicit', 'This address has never been used. Make sure it is copied exactly.');
+  if (f.createdMs && (f.nowMs ?? Date.now()) - f.createdMs < 86_400_000) add('warn', 'new_account', 'This account was created in the last 24 hours. Scammers often use brand new accounts.');
   if (f.isContract) add('warn', 'contract', 'This is a smart contract, not a Pocket wallet. It may not be able to send money back.');
   if (!to.endsWith('.' + f.root) && !contact && !paid) add('warn', 'outside', 'This account is outside Pocket. Sends cannot be reversed.');
   if (!contact && !paid) {

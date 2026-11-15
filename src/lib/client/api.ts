@@ -8,7 +8,7 @@ import { latestBlock, view, viewAccessKey } from '../shared/rpc';
 import { buildPayload, type Intent } from '../shared/intents';
 import { signNep413, newKey, randomNonce } from '../shared/nep413';
 import { PUSD, ROOT, USDC, USDC_DECIMALS, VERIFIER, tokenBySymbol } from '../shared/deployment';
-import { DEVICE_ALLOWANCE, DEVICE_METHODS, RULE_GAS, SEND_GAS, TRADE_GAS, isRaise, withDaily, type Limits } from '../shared/wallet';
+import { DEVICE_ALLOWANCE, DEVICE_METHODS, OWNER_TAG, RULE_GAS, SEND_GAS, TRADE_GAS, isRaise, ownerPayload, signTagged, withDaily, type Limits, type OwnerAction, type SignedPrice } from '../shared/wallet';
 import { keyFromString } from '../shared/nep413';
 import { toUnits, nearToYocto } from '../shared/units';
 import { receiptsCsv, csvFileName, type ReceiptItem } from '../shared/csv';
@@ -29,7 +29,10 @@ export function sessionToken(): string | null {
   try { sessionStorage.setItem('pocket-st', JSON.stringify({ account: s.account, exp, token })); } catch { /* private mode */ }
   return token;
 }
-const authHeaders = (): Record<string, string> => { const t = typeof window !== 'undefined' ? sessionToken() : null; return t ? { 'x-pocket-session': t } : {}; };
+/** Private AI only (default on): the server never falls back to a non private AI provider. */
+export const privateOnly = () => typeof window === 'undefined' || localStorage.getItem('pocket.privateOnly') !== '0';
+export const setPrivateOnly = (on: boolean) => localStorage.setItem('pocket.privateOnly', on ? '1' : '0');
+const authHeaders = (): Record<string, string> => { const t = typeof window !== 'undefined' ? sessionToken() : null; return { ...(t ? { 'x-pocket-session': t } : {}), ...(privateOnly() ? {} : { 'x-pocket-private': '0' }) }; };
 export async function apiForm<T = any>(path: string, form: FormData): Promise<T> {
   const r = await fetch(path, { method: 'POST', headers: authHeaders(), body: form });
   const j = await r.json().catch(() => ({ error: `Server error ${r.status}` }));
@@ -64,7 +67,7 @@ export async function metaTx(s: Pick<Session, 'account' | 'publicKey' | 'secretK
 }
 
 // The recovery key from the last signup, held in memory only so the welcome screen can show it
-// once. It is the account's only full access key and is never written to browser storage.
+// once. It signs owner messages for the wallet contract and is never written to browser storage.
 let lastRecovery: { account: string; secretKey: string } | null = null;
 export const takeRecovery = () => { const r = lastRecovery; lastRecovery = null; return r; };
 
@@ -107,7 +110,7 @@ export async function send(req: SendReq) {
     const memo = req.memo ? { memo: req.memo } : {};
     const call = req.asset === 'pUSD' ? { method: 'send_token', args: { token_id: PUSD.assetId, receiver_id: req.to, amount: toUnits(req.amount, PUSD.decimals).toString(), ...memo } }
       : req.asset === 'USDC' ? { method: 'send_usdc', args: { receiver_id: req.to, amount: toUnits(req.amount, USDC_DECIMALS).toString(), ...memo } }
-      : { method: 'send_near', args: { receiver_id: req.to, amount: nearToYocto(req.amount).toString() } };
+      : { method: 'send_near', args: { receiver_id: req.to, amount: nearToYocto(req.amount).toString(), price: await signedPrice('near').catch(() => undefined) } };
     r = await metaTx(s, s.account, [{ type: 'functionCall', ...call, gas: SEND_GAS.toString(), deposit: '0' }]);
   } else if (req.asset === 'pUSD') {
     const intents: Intent[] = [{ intent: 'transfer', receiver_id: req.to, tokens: { [PUSD.assetId]: toUnits(req.amount, PUSD.decimals).toString() }, ...(req.memo ? { memo: req.memo } : {}) }];
@@ -152,6 +155,23 @@ export async function trade(q: QuoteRes) {
   return r;
 }
 
+/** A Pocket signed price for the wallet contract (NEAR and paper stocks count in dollars too). */
+export async function signedPrice(token: string): Promise<SignedPrice> {
+  const p = await api<SignedPrice>(`/api/price?token=${encodeURIComponent(token)}`);
+  return { payload: p.payload, signature: p.signature };
+}
+
+/** Wallet v2: sign an owner message with the recovery key (in memory only) and have Pocket submit it.
+ * The contract checks the signature and nonce itself, so Pocket cannot change what was signed. */
+export async function ownerAction(account: string, recoverySecret: string, action: OwnerAction) {
+  const rk = keyFromString(recoverySecret.trim());
+  const cfg = await view<{ owner_keys: string[]; owner_nonce: number }>(account, 'get_config');
+  if (!cfg.owner_keys.includes(rk.publicKey)) throw new Error('That is not the recovery key of ' + account + '.');
+  const payload = ownerPayload(account, cfg.owner_nonce + 1, action);
+  return api<{ hash: string; logs: string[] }>('/api/wallet/owner', { account, payload, public_key: rk.publicKey, signature: signTagged(OWNER_TAG, payload, rk.seed) });
+}
+const isV2 = async (account: string) => (await view<{ owner_nonce?: number }>(account, 'get_config').catch(() => ({} as { owner_nonce?: number }))).owner_nonce != null;
+
 export class RecoveryNeeded extends Error { constructor() { super('Raising a limit needs your recovery key.'); } }
 /** On chain rules: lowering is signed by this device and applies at once. Raising needs the recovery
  * key (used here in memory, never stored) and only takes effect after the raise delay. */
@@ -166,6 +186,7 @@ export async function saveLimit(limit: number, recoverySecret?: string): Promise
       return {};
     }
     if (!recoverySecret) throw new RecoveryNeeded();
+    if (await isV2(s.account)) { await ownerAction(s.account, recoverySecret, { set_limits: { limits: next } }); return { pending: true }; }
     const rk = keyFromString(recoverySecret.trim());
     await metaTx({ account: s.account, publicKey: rk.publicKey, secretKey: rk.secretKey }, s.account, [{ type: 'functionCall', method: 'propose_limits', args: { limits: next }, gas: RULE_GAS.toString(), deposit: '0' }]);
     return { pending: true };
@@ -185,6 +206,14 @@ export async function cancelRaise() {
 
 /** New phone: the recovery key adds a fresh device key (function call only) and is then forgotten. */
 export async function restoreWithRecovery(account: string, recoverySecret: string) {
+  if (await isV2(account)) {
+    const k = newKey();
+    await ownerAction(account, recoverySecret, { add_device_key: { public_key: k.publicKey } });
+    for (let i = 0; i < 10 && !(await viewAccessKey(account, k.publicKey)); i++) await new Promise((r) => setTimeout(r, 1000));
+    const s: Session = { account, username: account.split('.')[0], secretKey: k.secretKey, publicKey: k.publicKey, createdAt: Date.now(), onchain: true };
+    setSession(s);
+    return s;
+  }
   const rk = keyFromString(recoverySecret.trim());
   const ak = await viewAccessKey(account, rk.publicKey);
   if (!ak || ak.permission !== 'FullAccess') throw new Error('That is not the recovery key of ' + account + '.');

@@ -48,3 +48,4 @@ contracts/token/target/
 
 # Rust build output for the contracts
 contracts/*/target/
+.vitest/
