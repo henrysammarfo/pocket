@@ -217,7 +217,7 @@
   ],
   "updatedAt": "2026-11-15T05:11:19.409Z",
   "market": "market.pocket-7e2413.testnet",
-  "walletCodeHash": "C5VZEhzSt5HdEaiR7bFYj1aVZrg6VX9ScQqgFjKoKgAz",
+  "walletCodeHash": "DQXeGy6AJ1t2q4EhoDJ1MPwPpmSRyzRMrKi3uygwDAkY",
   "walletWasmSha256": "a4972ae5e956d157249c578135dc1faf6053329c9a319e861c2bda60f605bc2f",
   "marketWasmSha256": "f0e7247003838a988b84f6820d49b83df6c10b8c633ad440b6b605c6fb54f732",
   "quoteKey": "ed25519:74xViWFeP5auzixe9TqKAKnMYt1KYXooyM2X85bsR8DV",
@@ -281,6 +281,10 @@
     {
       "label": "init pool (0.1 NEAR notes)",
       "hash": "FigLF6hSRFSgomJFqNAvQiV9A1WzdQCub2ZPyvxboayg"
+    },
+    {
+      "label": "global wallet code v3 DQXeGy6AJ1t2q4EhoDJ1MPwPpmSRyzRMrKi3uygwDAkY",
+      "hash": "Fhc34HyZLYkNaH1syWRzfBTstxFw6F1B5EmoNrxXDZPs"
     }
   ]
 }
